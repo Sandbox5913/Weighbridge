@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Weighbridge"
+             x:Class="Weighbridge.MainPage"
+             x:DataType="local:MainPage"
+             Title="Weighbridge"
+             BackgroundColor="#0D1B34">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Settings" Clicked="OnSettingsClicked" />
+    </ContentPage.ToolbarItems>
+
+    <Grid ColumnDefinitions="*, 1.2*" Padding="20" ColumnSpacing="20">
+
+        <!-- LEFT COLUMN: WEIGHING INTERFACE -->
+        <Border Grid.Column="0" Stroke="#2A3A59" StrokeThickness="2" BackgroundColor="#142444" Padding="20">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="10" />
+            </Border.StrokeShape>
+            <VerticalStackLayout Spacing="15">
+                <!-- Top Weight Type Buttons -->
+                <Grid ColumnDefinitions="*,*,*,*">
+                    <Label Grid.Column="0" Text="2 Weights" TextColor="White" HorizontalOptions="Center" />
+                    <Label Grid.Column="1" Text="Entrance + Tare" TextColor="White" HorizontalOptions="Center" />
+                    <Label Grid.Column="2" Text="Tare + Exit" TextColor="White" HorizontalOptions="Center" />
+                    <Label Grid.Column="3" Text="Single Weight" TextColor="White" HorizontalOptions="Center" />
+                </Grid>
+
+       
+
+                <!-- Item Selector -->
+                <Grid ColumnDefinitions="Auto, *, Auto" HorizontalOptions="Center" WidthRequest="200">
+                    <Label Grid.Column="0" Text="&lt;" TextColor="White" FontSize="Large" VerticalOptions="Center"/>
+                    <Label Grid.Column="1" Text="shkila" TextColor="White" FontSize="Large" HorizontalOptions="Center" VerticalOptions="Center"/>
+                    <Label Grid.Column="2" Text="&gt;" TextColor="White" FontSize="Large" VerticalOptions="Center"/>
+                </Grid>
+
+                <Button Text="Weigh" BackgroundColor="#0078D7" TextColor="White" CornerRadius="5" HeightRequest="50" Clicked="OnWeighClicked" />
+
+                <!-- Weight Details -->
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                    <VerticalStackLayout Grid.Column="0">
+                        <Label Text="Entrance Weight" TextColor="LightGray" HorizontalOptions="Center"/>
+                        <Frame BackgroundColor="#2A3A59" Padding="10" BorderColor="#4A5A79" CornerRadius="5">
+                            <Label x:Name="WeightLabel" Text="0 kg" TextColor="White" HorizontalOptions="Center" FontSize="Large" />
+                        </Frame>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1">
+                        <Label Text="Exit Weight" TextColor="LightGray" HorizontalOptions="Center"/>
+                        <Frame BackgroundColor="#2A3A59" Padding="10" BorderColor="#4A5A79" CornerRadius="5">
+                            <Label Text="" TextColor="White" HorizontalOptions="Center" />
+                        </Frame>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="2">
+                        <Label Text="Netto" TextColor="LightGray" HorizontalOptions="Center"/>
+                        <Frame BackgroundColor="#2A3A59" Padding="10" BorderColor="#4A5A79" CornerRadius="5">
+                            <Label Text="" TextColor="White" HorizontalOptions="Center" />
+                        </Frame>
+                    </VerticalStackLayout>
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- RIGHT COLUMN: DATA ENTRY FORM -->
+        <VerticalStackLayout Grid.Column="1" Spacing="12" x:DataType="local:MainPage">
+            <Label Text="License Number" TextColor="LightGray" />
+            <Picker x:Name="VehiclePicker" Title="Select Vehicle" TextColor="White" TitleColor="Gray" ItemsSource="{Binding Vehicles}" SelectedItem="{Binding SelectedVehicle}" ItemDisplayBinding="{Binding LicenseNumber}"/>
+
+            <Label Text="Source Site" TextColor="LightGray" />
+            <Picker x:Name="SourceSitePicker" Title="Select Site" TextColor="White" TitleColor="Gray" ItemsSource="{Binding Sites}" SelectedItem="{Binding SelectedSourceSite}" ItemDisplayBinding="{Binding Name}"/>
+
+            <Label Text="Destination Site" TextColor="LightGray" />
+            <Picker x:Name="DestinationSitePicker" Title="Select Site" TextColor="White" TitleColor="Gray" ItemsSource="{Binding Sites}" SelectedItem="{Binding SelectedDestinationSite}" ItemDisplayBinding="{Binding Name}"/>
+
+            <Label Text="Item Name" TextColor="LightGray" />
+            <Picker x:Name="ItemPicker" Title="Select item" TextColor="White" TitleColor="Gray" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" ItemDisplayBinding="{Binding Name}"/>
+
+            <Label Text="Customer Name" TextColor="LightGray" />
+            <Picker x:Name="CustomerPicker" Title="Select Customer" TextColor="White" TitleColor="Gray" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer}" ItemDisplayBinding="{Binding Name}"/>
+
+            <Label Text="Transport Name" TextColor="LightGray" />
+            <Picker x:Name="TransportPicker" Title="Select Transport" TextColor="White" TitleColor="Gray" ItemsSource="{Binding Transports}" SelectedItem="{Binding SelectedTransport}" ItemDisplayBinding="{Binding Name}"/>
+
+            <Label Text="Driver Name" TextColor="LightGray" />
+            <Picker x:Name="DriverPicker" Title="Select Driver" TextColor="White" TitleColor="Gray" ItemsSource="{Binding Drivers}" SelectedItem="{Binding SelectedDriver}" ItemDisplayBinding="{Binding Name}"/>
+
+            <Label Text="Remarks" TextColor="LightGray" />
+            <Editor AutoSize="TextChanges" TextColor="White" />
+
+            <!-- Action Buttons -->
+            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10" Margin="0,10,0,0">
+                <Button Grid.Row="0" Grid.Column="0" Text="To Yard" BackgroundColor="#0078D7" TextColor="White" CornerRadius="5" Clicked="OnToYardClicked"/>
+                <Button Grid.Row="0" Grid.Column="1" Text="Save And Print" BackgroundColor="#0078D7" TextColor="White" CornerRadius="5" Clicked="OnSaveAndPrintClicked"/>
+                <Button Grid.Row="0" Grid.Column="2" Text="Yard" BackgroundColor="#0078D7" TextColor="White" CornerRadius="5" Clicked="OnYardClicked"/>
+
+                <Button Grid.Row="1" Grid.Column="0" Text="Update Tare" BackgroundColor="#2A3A59" TextColor="White" CornerRadius="5" Clicked="OnUpdateTareClicked"/>
+                <Button Grid.Row="1" Grid.Column="1" Text="Certificates" BackgroundColor="#2A3A59" TextColor="White" CornerRadius="5" Clicked="OnCertificatesClicked"/>
+                <Button Grid.Row="1" Grid.Column="2" Text="Reports" BackgroundColor="#2A3A59" TextColor="White" CornerRadius="5" Clicked="OnReportsClicked"/>
+            </Grid>
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>
