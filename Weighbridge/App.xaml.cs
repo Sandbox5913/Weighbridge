@@ -9,7 +9,7 @@ namespace Weighbridge
             InitializeComponent();
 
             // Initialize the database when the app starts
-            Task.Run(async () => await dbService.InitializeAsync());
+            dbService.InitializeAsync().Wait();
 
             MainPage = new AppShell();
         }
