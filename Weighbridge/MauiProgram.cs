@@ -21,19 +21,16 @@ namespace Weighbridge
 #if DEBUG
             //builder.Logging.AddDebug();
 #endif
-            // Register services
+            // Register services - DatabaseService should be singleton to maintain state
+            builder.Services.AddSingleton<DatabaseService>();
             builder.Services.AddSingleton<WeighbridgeService>();
 
-            // Register pages
+            // Register pages - all should be transient
             builder.Services.AddTransient<MainPage>();
             builder.Services.AddTransient<SettingsPage>();
-            builder.Services.AddSingleton<DatabaseService>();
-
-            // Also register any page that will use the service
             builder.Services.AddTransient<DataManagementPage>();
-            return builder.Build();
 
-           
+            return builder.Build();
         }
     }
 }

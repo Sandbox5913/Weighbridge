@@ -1,4 +1,3 @@
-
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -65,47 +64,76 @@ namespace Weighbridge
             BindingContext = this;
             _weighbridgeService = weighbridgeService;
             _databaseService = databaseService;
-            _weighbridgeService.DataReceived += OnDataReceived;
+
+            if (_weighbridgeService != null)
+            {
+                _weighbridgeService.DataReceived += OnDataReceived;
+            }
 
             // Initialize with some default values for demonstration
             EntranceWeight = "0 KG";
             ExitWeight = "0 KG";
             NetWeight = "0 KG";
 
-            Task.Run(async () => await LoadDataAsync());
+            // Initialize database and load data
+            _ = InitializeAsync();
+        }
+
+        private async Task InitializeAsync()
+        {
+            try
+            {
+                // Initialize database
+                await _databaseService.InitializeAsync();
+
+                // Load data after database is initialized
+                await LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Initialization error: {ex.Message}");
+                await DisplayAlert("Error", $"Failed to initialize: {ex.Message}", "OK");
+            }
         }
 
         private async Task LoadDataAsync()
         {
-            var vehicles = await _databaseService.GetItemsAsync<Vehicle>();
-            var sites = await _databaseService.GetItemsAsync<Site>();
-            var items = await _databaseService.GetItemsAsync<Item>();
-            var customers = await _databaseService.GetItemsAsync<Customer>();
-            var transports = await _databaseService.GetItemsAsync<Transport>();
-            var drivers = await _databaseService.GetItemsAsync<Driver>();
-
-            MainThread.BeginInvokeOnMainThread(() =>
+            try
             {
-                Vehicles.Clear();
-                foreach (var vehicle in vehicles) Vehicles.Add(vehicle);
+                var vehicles = await _databaseService.GetItemsAsync<Vehicle>();
+                var sites = await _databaseService.GetItemsAsync<Site>();
+                var items = await _databaseService.GetItemsAsync<Item>();
+                var customers = await _databaseService.GetItemsAsync<Customer>();
+                var transports = await _databaseService.GetItemsAsync<Transport>();
+                var drivers = await _databaseService.GetItemsAsync<Driver>();
 
-                Sites.Clear();
-                foreach (var site in sites) Sites.Add(site);
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    Vehicles.Clear();
+                    foreach (var vehicle in vehicles) Vehicles.Add(vehicle);
 
-                Items.Clear();
-                foreach (var item in items) Items.Add(item);
+                    Sites.Clear();
+                    foreach (var site in sites) Sites.Add(site);
 
-                Customers.Clear();
-                foreach (var customer in customers) Customers.Add(customer);
+                    Items.Clear();
+                    foreach (var item in items) Items.Add(item);
 
-                Transports.Clear();
-                foreach (var transport in transports) Transports.Add(transport);
+                    Customers.Clear();
+                    foreach (var customer in customers) Customers.Add(customer);
 
-                Drivers.Clear();
-                foreach (var driver in drivers) Drivers.Add(driver);
-            });
+                    Transports.Clear();
+                    foreach (var transport in transports) Transports.Add(transport);
+
+                    Drivers.Clear();
+                    foreach (var driver in drivers) Drivers.Add(driver);
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Load data error: {ex.Message}");
+                await DisplayAlert("Error", $"Failed to load data: {ex.Message}", "OK");
+            }
         }
-
 
         private void OnDataReceived(object? sender, string data)
         {
@@ -121,7 +149,7 @@ namespace Weighbridge
         {
             try
             {
-                _weighbridgeService.Open();
+                _weighbridgeService?.Open();
             }
             catch (Exception ex)
             {
@@ -131,12 +159,26 @@ namespace Weighbridge
 
         private async void OnSettingsClicked(object sender, EventArgs e)
         {
-            await Shell.Current.GoToAsync(nameof(SettingsPage));
+            try
+            {
+                await Shell.Current.GoToAsync(nameof(SettingsPage));
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Navigation Error", ex.Message, "OK");
+            }
         }
-        
+
         private async void OnDatamanagementClicked(object sender, EventArgs e)
         {
-            await Shell.Current.GoToAsync(nameof(DataManagementPage));
+            try
+            {
+                await Shell.Current.GoToAsync(nameof(DataManagementPage));
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Navigation Error", ex.Message, "OK");
+            }
         }
 
         private void OnToYardClicked(object sender, EventArgs e)
@@ -168,7 +210,6 @@ namespace Weighbridge
         {
             // Logic to generate and view reports
         }
-
 
         #region INotifyPropertyChanged Implementation
         public new event PropertyChangedEventHandler? PropertyChanged;

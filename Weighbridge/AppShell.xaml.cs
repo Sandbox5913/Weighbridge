@@ -7,6 +7,11 @@ namespace Weighbridge
         public AppShell()
         {
             InitializeComponent();
+            RegisterRoutes();
+        }
+
+        private void RegisterRoutes()
+        {
             Routing.RegisterRoute(nameof(DataManagementPage), typeof(DataManagementPage));
             Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage));
         }

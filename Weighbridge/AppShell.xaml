@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:Weighbridge"
+    xmlns:pages="clr-namespace:Weighbridge.Pages"
     Title="Weighbridge">
 
     <ShellContent
@@ -11,16 +12,15 @@
         ContentTemplate="{DataTemplate local:MainPage}"
         Route="MainPage" />
 
-
     <FlyoutItem Title="Settings">
         <ShellContent
-            ContentTemplate="{DataTemplate local:Pages.SettingsPage}"
+            ContentTemplate="{DataTemplate pages:SettingsPage}"
             Route="SettingsPage" />
     </FlyoutItem>
 
     <FlyoutItem Title="Data Management">
         <ShellContent
-            ContentTemplate="{DataTemplate local:Pages.DataManagementPage}"
+            ContentTemplate="{DataTemplate pages:DataManagementPage}"
             Route="DataManagementPage" />
     </FlyoutItem>
 

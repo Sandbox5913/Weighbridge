@@ -4,100 +4,369 @@
              xmlns:local="clr-namespace:Weighbridge"
              x:Class="Weighbridge.MainPage"
              x:DataType="local:MainPage"
-             Title="Weighbridge"
-             BackgroundColor="#0D1B34">
+             Title="Weighbridge System"
+             BackgroundColor="#0E0E0E">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Settings" Clicked="OnSettingsClicked" />
+        <ToolbarItem Text="Settings" Clicked="OnSettingsClicked" IconImageSource="settings.png" />
+        <ToolbarItem Text="Data Management" Clicked="OnDatamanagementClicked" IconImageSource="database.png" />
     </ContentPage.ToolbarItems>
 
-    <Grid ColumnDefinitions="*, 1.2*" Padding="20" ColumnSpacing="20">
+    <ScrollView>
+        <Grid Padding="24" RowSpacing="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <!-- LEFT COLUMN: WEIGHING INTERFACE -->
-        <Border Grid.Column="0" Stroke="#2A3A59" StrokeThickness="2" BackgroundColor="#142444" Padding="20">
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="10" />
-            </Border.StrokeShape>
-            <VerticalStackLayout Spacing="15">
-                <!-- Top Weight Type Buttons -->
-                <Grid ColumnDefinitions="*,*,*,*">
-                    <Label Grid.Column="0" Text="2 Weights" TextColor="White" HorizontalOptions="Center" />
-                    <Label Grid.Column="1" Text="Entrance + Tare" TextColor="White" HorizontalOptions="Center" />
-                    <Label Grid.Column="2" Text="Tare + Exit" TextColor="White" HorizontalOptions="Center" />
-                    <Label Grid.Column="3" Text="Single Weight" TextColor="White" HorizontalOptions="Center" />
-                </Grid>
+            <!-- Header Section -->
+            <StackLayout Grid.Row="0" Spacing="8">
+                <Label Text="Weighbridge Control Center" 
+                       TextColor="White" 
+                       FontSize="32" 
+                       FontAttributes="Bold" />
+                <Label Text="Real-time weight monitoring and data management" 
+                       TextColor="#CCCCCC" 
+                       FontSize="16" />
+            </StackLayout>
 
-       
+            <!-- Main Dashboard Grid -->
+            <Grid Grid.Row="1" ColumnDefinitions="1.2*,*" ColumnSpacing="24">
 
-                <!-- Item Selector -->
-                <Grid ColumnDefinitions="Auto, *, Auto" HorizontalOptions="Center" WidthRequest="200">
-                    <Label Grid.Column="0" Text="&lt;" TextColor="White" FontSize="Large" VerticalOptions="Center"/>
-                    <Label Grid.Column="1" Text="shkila" TextColor="White" FontSize="Large" HorizontalOptions="Center" VerticalOptions="Center"/>
-                    <Label Grid.Column="2" Text="&gt;" TextColor="White" FontSize="Large" VerticalOptions="Center"/>
-                </Grid>
+                <!-- LEFT PANEL: Weighing Interface -->
+                <Border Grid.Column="0" 
+                        BackgroundColor="#1A1A1A" 
+                        Stroke="Transparent"
+                        StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="16" />
+                    </Border.StrokeShape>
+                    <Border.Shadow>
+                        <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
+                    </Border.Shadow>
 
-                <Button Text="Weigh" BackgroundColor="#0078D7" TextColor="White" CornerRadius="5" HeightRequest="50" Clicked="OnWeighClicked" />
+                    <Grid Padding="32" RowSpacing="24">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-                <!-- Weight Details -->
-                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
-                    <VerticalStackLayout Grid.Column="0">
-                        <Label Text="Entrance Weight" TextColor="LightGray" HorizontalOptions="Center"/>
-                        <Frame BackgroundColor="#2A3A59" Padding="10" BorderColor="#4A5A79" CornerRadius="5">
-                            <Label x:Name="WeightLabel" Text="0 kg" TextColor="White" HorizontalOptions="Center" FontSize="Large" />
-                        </Frame>
-                    </VerticalStackLayout>
-                    <VerticalStackLayout Grid.Column="1">
-                        <Label Text="Exit Weight" TextColor="LightGray" HorizontalOptions="Center"/>
-                        <Frame BackgroundColor="#2A3A59" Padding="10" BorderColor="#4A5A79" CornerRadius="5">
-                            <Label Text="" TextColor="White" HorizontalOptions="Center" />
-                        </Frame>
-                    </VerticalStackLayout>
-                    <VerticalStackLayout Grid.Column="2">
-                        <Label Text="Netto" TextColor="LightGray" HorizontalOptions="Center"/>
-                        <Frame BackgroundColor="#2A3A59" Padding="10" BorderColor="#4A5A79" CornerRadius="5">
-                            <Label Text="" TextColor="White" HorizontalOptions="Center" />
-                        </Frame>
-                    </VerticalStackLayout>
-                </Grid>
-            </VerticalStackLayout>
-        </Border>
+                        <!-- Weight Mode Selection -->
+                        <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*" ColumnSpacing="12">
+                            <Border Grid.Column="0" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <Label Text="2 Weights" TextColor="#CCCCCC" HorizontalOptions="Center" Padding="8" FontSize="12"/>
+                            </Border>
+                            <Border Grid.Column="1" BackgroundColor="#00FF7F" StrokeThickness="0">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <Label Text="Entry + Tare" TextColor="#0E0E0E" HorizontalOptions="Center" Padding="8" FontSize="12" FontAttributes="Bold"/>
+                            </Border>
+                            <Border Grid.Column="2" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <Label Text="Tare + Exit" TextColor="#CCCCCC" HorizontalOptions="Center" Padding="8" FontSize="12"/>
+                            </Border>
+                            <Border Grid.Column="3" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <Label Text="Single Weight" TextColor="#CCCCCC" HorizontalOptions="Center" Padding="8" FontSize="12"/>
+                            </Border>
+                        </Grid>
 
-        <!-- RIGHT COLUMN: DATA ENTRY FORM -->
-        <VerticalStackLayout Grid.Column="1" Spacing="12" x:DataType="local:MainPage">
-            <Label Text="License Number" TextColor="LightGray" />
-            <Picker x:Name="VehiclePicker" Title="Select Vehicle" TextColor="White" TitleColor="Gray" ItemsSource="{Binding Vehicles}" SelectedItem="{Binding SelectedVehicle}" ItemDisplayBinding="{Binding LicenseNumber}"/>
+                        <!-- Item Selector -->
+                        <Border Grid.Row="1" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+                            <Grid ColumnDefinitions="Auto, *, Auto" Padding="16,12">
+                                <Label Grid.Column="0" Text="‹" TextColor="#00FF7F" FontSize="24" VerticalOptions="Center" FontAttributes="Bold"/>
+                                <Label Grid.Column="1" Text="Construction Materials" TextColor="White" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold"/>
+                                <Label Grid.Column="2" Text="›" TextColor="#00FF7F" FontSize="24" VerticalOptions="Center" FontAttributes="Bold"/>
+                            </Grid>
+                        </Border>
 
-            <Label Text="Source Site" TextColor="LightGray" />
-            <Picker x:Name="SourceSitePicker" Title="Select Site" TextColor="White" TitleColor="Gray" ItemsSource="{Binding Sites}" SelectedItem="{Binding SelectedSourceSite}" ItemDisplayBinding="{Binding Name}"/>
+                        <!-- Weigh Button -->
+                        <Button Grid.Row="2" 
+                                Text="START WEIGHING" 
+                                BackgroundColor="#00FF7F" 
+                                TextColor="#0E0E0E" 
+                                CornerRadius="12" 
+                                HeightRequest="56" 
+                                FontSize="16"
+                                FontAttributes="Bold"
+                                Clicked="OnWeighClicked" />
 
-            <Label Text="Destination Site" TextColor="LightGray" />
-            <Picker x:Name="DestinationSitePicker" Title="Select Site" TextColor="White" TitleColor="Gray" ItemsSource="{Binding Sites}" SelectedItem="{Binding SelectedDestinationSite}" ItemDisplayBinding="{Binding Name}"/>
+                        <!-- Weight Display Cards -->
+                        <Grid Grid.Row="3" ColumnDefinitions="*,*,*" ColumnSpacing="16" VerticalOptions="CenterAndExpand">
+                            <!-- Entrance Weight -->
+                            <Border Grid.Column="0" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+                                <StackLayout Padding="20,24" Spacing="8">
+                                    <Label Text="ENTRANCE" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="12" FontAttributes="Bold"/>
+                                    <Label x:Name="WeightLabel" Text="0" TextColor="White" HorizontalOptions="Center" FontSize="32" FontAttributes="Bold" />
+                                    <Label Text="KG" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="14" />
+                                    <Ellipse Fill="#00FF7F" WidthRequest="8" HeightRequest="8" HorizontalOptions="Center" />
+                                </StackLayout>
+                            </Border>
 
-            <Label Text="Item Name" TextColor="LightGray" />
-            <Picker x:Name="ItemPicker" Title="Select item" TextColor="White" TitleColor="Gray" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" ItemDisplayBinding="{Binding Name}"/>
+                            <!-- Exit Weight -->
+                            <Border Grid.Column="1" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+                                <StackLayout Padding="20,24" Spacing="8">
+                                    <Label Text="EXIT" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="12" FontAttributes="Bold"/>
+                                    <Label Text="0" TextColor="#888" HorizontalOptions="Center" FontSize="32" FontAttributes="Bold" />
+                                    <Label Text="KG" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="14" />
+                                    <Ellipse Fill="#444" WidthRequest="8" HeightRequest="8" HorizontalOptions="Center" />
+                                </StackLayout>
+                            </Border>
 
-            <Label Text="Customer Name" TextColor="LightGray" />
-            <Picker x:Name="CustomerPicker" Title="Select Customer" TextColor="White" TitleColor="Gray" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer}" ItemDisplayBinding="{Binding Name}"/>
+                            <!-- Net Weight -->
+                            <Border Grid.Column="2" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+                                <StackLayout Padding="20,24" Spacing="8">
+                                    <Label Text="NET WEIGHT" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="12" FontAttributes="Bold"/>
+                                    <Label Text="0" TextColor="#888" HorizontalOptions="Center" FontSize="32" FontAttributes="Bold" />
+                                    <Label Text="KG" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="14" />
+                                    <Ellipse Fill="#444" WidthRequest="8" HeightRequest="8" HorizontalOptions="Center" />
+                                </StackLayout>
+                            </Border>
+                        </Grid>
 
-            <Label Text="Transport Name" TextColor="LightGray" />
-            <Picker x:Name="TransportPicker" Title="Select Transport" TextColor="White" TitleColor="Gray" ItemsSource="{Binding Transports}" SelectedItem="{Binding SelectedTransport}" ItemDisplayBinding="{Binding Name}"/>
+                        <!-- Status Bar -->
+                        <Border Grid.Row="4" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8" />
+                            </Border.StrokeShape>
+                            <Grid ColumnDefinitions="Auto,*,Auto" Padding="16,12">
+                                <StackLayout Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                    <Ellipse Fill="#00FF7F" WidthRequest="8" HeightRequest="8" VerticalOptions="Center" />
+                                    <Label Text="CONNECTED" TextColor="#00FF7F" FontSize="12" VerticalOptions="Center" FontAttributes="Bold"/>
+                                </StackLayout>
+                                <Label Grid.Column="2" Text="COM1 • 9600 bps" TextColor="#CCCCCC" FontSize="12" VerticalOptions="Center"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
 
-            <Label Text="Driver Name" TextColor="LightGray" />
-            <Picker x:Name="DriverPicker" Title="Select Driver" TextColor="White" TitleColor="Gray" ItemsSource="{Binding Drivers}" SelectedItem="{Binding SelectedDriver}" ItemDisplayBinding="{Binding Name}"/>
+                <!-- RIGHT PANEL: Data Entry -->
+                <Border Grid.Column="1" 
+                        BackgroundColor="#1A1A1A" 
+                        Stroke="Transparent"
+                        StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="16" />
+                    </Border.StrokeShape>
+                    <Border.Shadow>
+                        <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
+                    </Border.Shadow>
 
-            <Label Text="Remarks" TextColor="LightGray" />
-            <Editor AutoSize="TextChanges" TextColor="White" />
+                    <ScrollView>
+                        <StackLayout Padding="32" Spacing="24" x:DataType="local:MainPage">
 
-            <!-- Action Buttons -->
-            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10" Margin="0,10,0,0">
-                <Button Grid.Row="0" Grid.Column="0" Text="To Yard" BackgroundColor="#0078D7" TextColor="White" CornerRadius="5" Clicked="OnToYardClicked"/>
-                <Button Grid.Row="0" Grid.Column="1" Text="Save And Print" BackgroundColor="#0078D7" TextColor="White" CornerRadius="5" Clicked="OnSaveAndPrintClicked"/>
-                <Button Grid.Row="0" Grid.Column="2" Text="Yard" BackgroundColor="#0078D7" TextColor="White" CornerRadius="5" Clicked="OnYardClicked"/>
+                            <!-- Transaction Details Header -->
+                            <StackLayout Spacing="8">
+                                <Label Text="Transaction Details" TextColor="White" FontSize="20" FontAttributes="Bold" />
+                                <Label Text="Complete the weighing transaction information" TextColor="#CCCCCC" FontSize="14" />
+                            </StackLayout>
 
-                <Button Grid.Row="1" Grid.Column="0" Text="Update Tare" BackgroundColor="#2A3A59" TextColor="White" CornerRadius="5" Clicked="OnUpdateTareClicked"/>
-                <Button Grid.Row="1" Grid.Column="1" Text="Certificates" BackgroundColor="#2A3A59" TextColor="White" CornerRadius="5" Clicked="OnCertificatesClicked"/>
-                <Button Grid.Row="1" Grid.Column="2" Text="Reports" BackgroundColor="#2A3A59" TextColor="White" CornerRadius="5" Clicked="OnReportsClicked"/>
+                            <!-- Vehicle Information -->
+                            <StackLayout Spacing="12">
+                                <Label Text="VEHICLE" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
+                                    <Picker x:Name="VehiclePicker" 
+                                            Title="Select Vehicle License" 
+                                            TextColor="White" 
+                                            TitleColor="#888"
+                                            BackgroundColor="Transparent"
+                                            ItemsSource="{Binding Vehicles}" 
+                                            SelectedItem="{Binding SelectedVehicle}" 
+                                            ItemDisplayBinding="{Binding LicenseNumber}"
+                                            Margin="16,0"/>
+                                </Border>
+                            </StackLayout>
+
+                            <!-- Location Information -->
+                            <StackLayout Spacing="12">
+                                <Label Text="LOCATIONS" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
+                                    <Picker x:Name="SourceSitePicker" 
+                                            Title="Source Site" 
+                                            TextColor="White" 
+                                            TitleColor="#888"
+                                            BackgroundColor="Transparent"
+                                            ItemsSource="{Binding Sites}" 
+                                            SelectedItem="{Binding SelectedSourceSite}" 
+                                            ItemDisplayBinding="{Binding Name}"
+                                            Margin="16,0"/>
+                                </Border>
+                                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
+                                    <Picker x:Name="DestinationSitePicker" 
+                                            Title="Destination Site" 
+                                            TextColor="White" 
+                                            TitleColor="#888"
+                                            BackgroundColor="Transparent"
+                                            ItemsSource="{Binding Sites}" 
+                                            SelectedItem="{Binding SelectedDestinationSite}" 
+                                            ItemDisplayBinding="{Binding Name}"
+                                            Margin="16,0"/>
+                                </Border>
+                            </StackLayout>
+
+                            <!-- Material & Party Information -->
+                            <StackLayout Spacing="12">
+                                <Label Text="MATERIAL And PARTIES" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
+                                    <Picker x:Name="ItemPicker" 
+                                            Title="Select Material" 
+                                            TextColor="White" 
+                                            TitleColor="#888"
+                                            BackgroundColor="Transparent"
+                                            ItemsSource="{Binding Items}" 
+                                            SelectedItem="{Binding SelectedItem}" 
+                                            ItemDisplayBinding="{Binding Name}"
+                                            Margin="16,0"/>
+                                </Border>
+                                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
+                                    <Picker x:Name="CustomerPicker" 
+                                            Title="Select Customer" 
+                                            TextColor="White" 
+                                            TitleColor="#888"
+                                            BackgroundColor="Transparent"
+                                            ItemsSource="{Binding Customers}" 
+                                            SelectedItem="{Binding SelectedCustomer}" 
+                                            ItemDisplayBinding="{Binding Name}"
+                                            Margin="16,0"/>
+                                </Border>
+                                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
+                                    <Picker x:Name="TransportPicker" 
+                                            Title="Select Transport Company" 
+                                            TextColor="White" 
+                                            TitleColor="#888"
+                                            BackgroundColor="Transparent"
+                                            ItemsSource="{Binding Transports}" 
+                                            SelectedItem="{Binding SelectedTransport}" 
+                                            ItemDisplayBinding="{Binding Name}"
+                                            Margin="16,0"/>
+                                </Border>
+                                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
+                                    <Picker x:Name="DriverPicker" 
+                                            Title="Select Driver" 
+                                            TextColor="White" 
+                                            TitleColor="#888"
+                                            BackgroundColor="Transparent"
+                                            ItemsSource="{Binding Drivers}" 
+                                            SelectedItem="{Binding SelectedDriver}" 
+                                            ItemDisplayBinding="{Binding Name}"
+                                            Margin="16,0"/>
+                                </Border>
+                            </StackLayout>
+
+                            <!-- Remarks -->
+                            <StackLayout Spacing="12">
+                                <Label Text="REMARKS" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444" HeightRequest="80">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
+                                    <Editor AutoSize="TextChanges" 
+                                            TextColor="White" 
+                                            BackgroundColor="Transparent"
+                                            Placeholder="Enter any additional notes..."
+                                            PlaceholderColor="#888"
+                                            Margin="16,8"/>
+                                </Border>
+                            </StackLayout>
+
+                            <!-- Action Buttons -->
+                            <StackLayout Spacing="16">
+                                <!-- Primary Actions -->
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                                    <Button Grid.Column="0" 
+                                            Text="TO YARD" 
+                                            BackgroundColor="#FFD700" 
+                                            TextColor="#0E0E0E" 
+                                            CornerRadius="8" 
+                                            HeightRequest="48"
+                                            FontAttributes="Bold"
+                                            Clicked="OnToYardClicked"/>
+                                    <Button Grid.Column="1" 
+                                            Text="SAVE and PRINT" 
+                                            BackgroundColor="#00FF7F" 
+                                            TextColor="#0E0E0E" 
+                                            CornerRadius="8" 
+                                            HeightRequest="48"
+                                            FontAttributes="Bold"
+                                            Clicked="OnSaveAndPrintClicked"/>
+                                </Grid>
+
+                                <!-- Secondary Actions -->
+                                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                                    <Button Grid.Column="0" 
+                                            Text="UPDATE TARE" 
+                                            BackgroundColor="#2A2A2A" 
+                                            TextColor="White" 
+                                            CornerRadius="8" 
+                                            HeightRequest="40"
+                                            FontSize="12"
+                                            Clicked="OnUpdateTareClicked"/>
+                                    <Button Grid.Column="1" 
+                                            Text="CERTIFICATES" 
+                                            BackgroundColor="#2A2A2A" 
+                                            TextColor="White" 
+                                            CornerRadius="8" 
+                                            HeightRequest="40"
+                                            FontSize="12"
+                                            Clicked="OnCertificatesClicked"/>
+                                    <Button Grid.Column="2" 
+                                            Text="REPORTS" 
+                                            BackgroundColor="#2A2A2A" 
+                                            TextColor="White" 
+                                            CornerRadius="8" 
+                                            HeightRequest="40"
+                                            FontSize="12"
+                                            Clicked="OnReportsClicked"/>
+                                </Grid>
+                            </StackLayout>
+                        </StackLayout>
+                    </ScrollView>
+                </Border>
             </Grid>
-        </VerticalStackLayout>
-    </Grid>
+        </Grid>
+    </ScrollView>
 </ContentPage>
