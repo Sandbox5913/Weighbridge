@@ -28,7 +28,6 @@ namespace Weighbridge
             builder.Services.AddTransient<MainPage>();
             builder.Services.AddTransient<SettingsPage>();
             builder.Services.AddSingleton<DatabaseService>();
-                        builder.Services.AddTransient<DataManagementPage>();
 
             // Also register any page that will use the service
             builder.Services.AddTransient<DataManagementPage>();
