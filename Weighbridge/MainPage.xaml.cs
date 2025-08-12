@@ -133,6 +133,11 @@ namespace Weighbridge
         {
             await Shell.Current.GoToAsync(nameof(SettingsPage));
         }
+        
+        private async void OnDatamanagementClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync(nameof(DataManagementPage));
+        }
 
         private void OnToYardClicked(object sender, EventArgs e)
         {

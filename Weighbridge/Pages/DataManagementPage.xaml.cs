@@ -1,9 +1,10 @@
 using Weighbridge.Data;
 using Weighbridge.Models;
+using System.Linq;
 
 namespace Weighbridge.Pages;
 
-public partial class DataManagementPage : ContentPage
+public partial class DataManagementPage : TabbedPage
 {
     private readonly DatabaseService _databaseService;
     private Customer _selectedCustomer;
@@ -13,11 +14,19 @@ public partial class DataManagementPage : ContentPage
     private Transport _selectedTransport;
     private Vehicle _selectedVehicle;
 
-	public DataManagementPage()
-	{
-		InitializeComponent();
-        _databaseService = new DatabaseService();
-	}
+    // Backing lists for search functionality
+    private List<Customer> _allCustomers = new();
+    private List<Driver> _allDrivers = new();
+    private List<Item> _allItems = new();
+    private List<Site> _allSites = new();
+    private List<Transport> _allTransports = new();
+    private List<Vehicle> _allVehicles = new();
+
+    public DataManagementPage(DatabaseService databaseService)
+    {
+        InitializeComponent();
+        _databaseService = databaseService;
+    }
 
     protected override async void OnAppearing()
     {
@@ -35,18 +44,19 @@ public partial class DataManagementPage : ContentPage
         await LoadVehicles();
     }
 
-    // Customer Methods
+    #region Customers
     private async Task LoadCustomers()
     {
-        customerListView.ItemsSource = await _databaseService.GetItemsAsync<Customer>();
+        _allCustomers = await _databaseService.GetItemsAsync<Customer>();
+        customerListView.ItemsSource = _allCustomers;
     }
 
-    private void OnCustomerSelected(object sender, ItemTappedEventArgs e)
+    private void OnCustomerSelected(object sender, SelectionChangedEventArgs e)
     {
-        _selectedCustomer = e.Item as Customer;
+        _selectedCustomer = e.CurrentSelection.FirstOrDefault() as Customer;
         customerEntry.Text = _selectedCustomer?.Name;
-        addCustomerButton.IsEnabled = false;
-        updateCustomerButton.IsEnabled = true;
+        addCustomerButton.IsEnabled = _selectedCustomer == null;
+        updateCustomerButton.IsEnabled = _selectedCustomer != null;
     }
 
     private async void OnAddCustomerClicked(object sender, EventArgs e)
@@ -92,10 +102,7 @@ public partial class DataManagementPage : ContentPage
         }
     }
 
-    private void OnClearCustomerClicked(object sender, EventArgs e)
-    {
-        ClearCustomerSelection();
-    }
+    private void OnClearCustomerClicked(object sender, EventArgs e) => ClearCustomerSelection();
 
     private void ClearCustomerSelection()
     {
@@ -106,18 +113,29 @@ public partial class DataManagementPage : ContentPage
         updateCustomerButton.IsEnabled = false;
     }
 
-    // Driver Methods
+    // Note: To use this, add a SearchBar to your XAML and connect its TextChanged event.
+    private void OnCustomerSearchTextChanged(object sender, TextChangedEventArgs e)
+    {
+        var filter = e.NewTextValue?.ToLower() ?? "";
+        customerListView.ItemsSource = string.IsNullOrWhiteSpace(filter)
+            ? _allCustomers
+            : _allCustomers.Where(c => c.Name.ToLower().Contains(filter)).ToList();
+    }
+    #endregion
+
+    #region Drivers
     private async Task LoadDrivers()
     {
-        driverListView.ItemsSource = await _databaseService.GetItemsAsync<Driver>();
+        _allDrivers = await _databaseService.GetItemsAsync<Driver>();
+        driverListView.ItemsSource = _allDrivers;
     }
 
-    private void OnDriverSelected(object sender, ItemTappedEventArgs e)
+    private void OnDriverSelected(object sender, SelectionChangedEventArgs e)
     {
-        _selectedDriver = e.Item as Driver;
+        _selectedDriver = e.CurrentSelection.FirstOrDefault() as Driver;
         driverEntry.Text = _selectedDriver?.Name;
-        addDriverButton.IsEnabled = false;
-        updateDriverButton.IsEnabled = true;
+        addDriverButton.IsEnabled = _selectedDriver == null;
+        updateDriverButton.IsEnabled = _selectedDriver != null;
     }
 
     private async void OnAddDriverClicked(object sender, EventArgs e)
@@ -163,10 +181,7 @@ public partial class DataManagementPage : ContentPage
         }
     }
 
-    private void OnClearDriverClicked(object sender, EventArgs e)
-    {
-        ClearDriverSelection();
-    }
+    private void OnClearDriverClicked(object sender, EventArgs e) => ClearDriverSelection();
 
     private void ClearDriverSelection()
     {
@@ -177,18 +192,29 @@ public partial class DataManagementPage : ContentPage
         updateDriverButton.IsEnabled = false;
     }
 
-    // Item Methods
+    // Note: To use this, add a SearchBar to your XAML and connect its TextChanged event.
+    private void OnDriverSearchTextChanged(object sender, TextChangedEventArgs e)
+    {
+        var filter = e.NewTextValue?.ToLower() ?? "";
+        driverListView.ItemsSource = string.IsNullOrWhiteSpace(filter)
+            ? _allDrivers
+            : _allDrivers.Where(d => d.Name.ToLower().Contains(filter)).ToList();
+    }
+    #endregion
+
+    #region Items
     private async Task LoadItems()
     {
-        itemListView.ItemsSource = await _databaseService.GetItemsAsync<Item>();
+        _allItems = await _databaseService.GetItemsAsync<Item>();
+        itemListView.ItemsSource = _allItems;
     }
 
-    private void OnItemSelected(object sender, ItemTappedEventArgs e)
+    private void OnItemSelected(object sender, SelectionChangedEventArgs e)
     {
-        _selectedItem = e.Item as Item;
+        _selectedItem = e.CurrentSelection.FirstOrDefault() as Item;
         itemEntry.Text = _selectedItem?.Name;
-        addItemButton.IsEnabled = false;
-        updateItemButton.IsEnabled = true;
+        addItemButton.IsEnabled = _selectedItem == null;
+        updateItemButton.IsEnabled = _selectedItem != null;
     }
 
     private async void OnAddItemClicked(object sender, EventArgs e)
@@ -234,10 +260,7 @@ public partial class DataManagementPage : ContentPage
         }
     }
 
-    private void OnClearItemClicked(object sender, EventArgs e)
-    {
-        ClearItemSelection();
-    }
+    private void OnClearItemClicked(object sender, EventArgs e) => ClearItemSelection();
 
     private void ClearItemSelection()
     {
@@ -247,19 +270,21 @@ public partial class DataManagementPage : ContentPage
         addItemButton.IsEnabled = true;
         updateItemButton.IsEnabled = false;
     }
+    #endregion
 
-    // Site Methods
+    #region Sites
     private async Task LoadSites()
     {
-        siteListView.ItemsSource = await _databaseService.GetItemsAsync<Site>();
+        _allSites = await _databaseService.GetItemsAsync<Site>();
+        siteListView.ItemsSource = _allSites;
     }
 
-    private void OnSiteSelected(object sender, ItemTappedEventArgs e)
+    private void OnSiteSelected(object sender, SelectionChangedEventArgs e)
     {
-        _selectedSite = e.Item as Site;
+        _selectedSite = e.CurrentSelection.FirstOrDefault() as Site;
         siteEntry.Text = _selectedSite?.Name;
-        addSiteButton.IsEnabled = false;
-        updateSiteButton.IsEnabled = true;
+        addSiteButton.IsEnabled = _selectedSite == null;
+        updateSiteButton.IsEnabled = _selectedSite != null;
     }
 
     private async void OnAddSiteClicked(object sender, EventArgs e)
@@ -305,10 +330,7 @@ public partial class DataManagementPage : ContentPage
         }
     }
 
-    private void OnClearSiteClicked(object sender, EventArgs e)
-    {
-        ClearSiteSelection();
-    }
+    private void OnClearSiteClicked(object sender, EventArgs e) => ClearSiteSelection();
 
     private void ClearSiteSelection()
     {
@@ -318,19 +340,21 @@ public partial class DataManagementPage : ContentPage
         addSiteButton.IsEnabled = true;
         updateSiteButton.IsEnabled = false;
     }
+    #endregion
 
-    // Transport Methods
+    #region Transports
     private async Task LoadTransports()
     {
-        transportListView.ItemsSource = await _databaseService.GetItemsAsync<Transport>();
+        _allTransports = await _databaseService.GetItemsAsync<Transport>();
+        transportListView.ItemsSource = _allTransports;
     }
 
-    private void OnTransportSelected(object sender, ItemTappedEventArgs e)
+    private void OnTransportSelected(object sender, SelectionChangedEventArgs e)
     {
-        _selectedTransport = e.Item as Transport;
+        _selectedTransport = e.CurrentSelection.FirstOrDefault() as Transport;
         transportEntry.Text = _selectedTransport?.Name;
-        addTransportButton.IsEnabled = false;
-        updateTransportButton.IsEnabled = true;
+        addTransportButton.IsEnabled = _selectedTransport == null;
+        updateTransportButton.IsEnabled = _selectedTransport != null;
     }
 
     private async void OnAddTransportClicked(object sender, EventArgs e)
@@ -376,10 +400,7 @@ public partial class DataManagementPage : ContentPage
         }
     }
 
-    private void OnClearTransportClicked(object sender, EventArgs e)
-    {
-        ClearTransportSelection();
-    }
+    private void OnClearTransportClicked(object sender, EventArgs e) => ClearTransportSelection();
 
     private void ClearTransportSelection()
     {
@@ -389,19 +410,21 @@ public partial class DataManagementPage : ContentPage
         addTransportButton.IsEnabled = true;
         updateTransportButton.IsEnabled = false;
     }
+    #endregion
 
-    // Vehicle Methods
+    #region Vehicles
     private async Task LoadVehicles()
     {
-        vehicleListView.ItemsSource = await _databaseService.GetItemsAsync<Vehicle>();
+        _allVehicles = await _databaseService.GetItemsAsync<Vehicle>();
+        vehicleListView.ItemsSource = _allVehicles;
     }
 
-    private void OnVehicleSelected(object sender, ItemTappedEventArgs e)
+    private void OnVehicleSelected(object sender, SelectionChangedEventArgs e)
     {
-        _selectedVehicle = e.Item as Vehicle;
+        _selectedVehicle = e.CurrentSelection.FirstOrDefault() as Vehicle;
         vehicleEntry.Text = _selectedVehicle?.LicenseNumber;
-        addVehicleButton.IsEnabled = false;
-        updateVehicleButton.IsEnabled = true;
+        addVehicleButton.IsEnabled = _selectedVehicle == null;
+        updateVehicleButton.IsEnabled = _selectedVehicle != null;
     }
 
     private async void OnAddVehicleClicked(object sender, EventArgs e)
@@ -447,10 +470,7 @@ public partial class DataManagementPage : ContentPage
         }
     }
 
-    private void OnClearVehicleClicked(object sender, EventArgs e)
-    {
-        ClearVehicleSelection();
-    }
+    private void OnClearVehicleClicked(object sender, EventArgs e) => ClearVehicleSelection();
 
     private void ClearVehicleSelection()
     {
@@ -460,4 +480,5 @@ public partial class DataManagementPage : ContentPage
         addVehicleButton.IsEnabled = true;
         updateVehicleButton.IsEnabled = false;
     }
+    #endregion
 }

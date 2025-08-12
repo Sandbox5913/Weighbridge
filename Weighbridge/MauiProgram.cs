@@ -19,17 +19,22 @@ namespace Weighbridge
                 });
 
 #if DEBUG
-    		//builder.Logging.AddDebug();
+            //builder.Logging.AddDebug();
 #endif
-
-            builder.Services.AddSingleton<App>();
-            builder.Services.AddSingleton<AppShell>();
-            builder.Services.AddSingleton<DatabaseService>();
+            // Register services
             builder.Services.AddSingleton<WeighbridgeService>();
-            builder.Services.AddTransient<SettingsPage>();
-            builder.Services.AddTransient<MainPage>();
 
+            // Register pages
+            builder.Services.AddTransient<MainPage>();
+            builder.Services.AddTransient<SettingsPage>();
+            builder.Services.AddSingleton<DatabaseService>();
+                        builder.Services.AddTransient<DataManagementPage>();
+
+            // Also register any page that will use the service
+            builder.Services.AddTransient<DataManagementPage>();
             return builder.Build();
+
+           
         }
     }
 }

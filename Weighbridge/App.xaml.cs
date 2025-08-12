@@ -1,12 +1,19 @@
+using Weighbridge.Data; // Add this using directive
+
 namespace Weighbridge
 {
     public partial class App : Application
     {
-        public App(AppShell appShell)
+        public App(DatabaseService dbService) // The service is provided automatically
         {
             InitializeComponent();
 
-            MainPage = appShell;
+            // Initialize the database when the app starts
+            Task.Run(async () => await dbService.InitializeAsync());
+
+            MainPage = new AppShell();
         }
+
+
     }
 }

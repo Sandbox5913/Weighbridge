@@ -1,214 +1,169 @@
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Weighbridge.Pages.DataManagementPage"
-             Title="Data Management">
-    <ScrollView>
-        <VerticalStackLayout Spacing="20" Padding="20">
+<?xml version="1.0" encoding="utf-8" ?>
+<TabbedPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+            x:Class="Weighbridge.Pages.DataManagementPage"
+          >
 
-            <!-- Customer -->
-            <Frame Padding="10" CornerRadius="5">
-                <Grid RowDefinitions="Auto, *">
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Entry x:Name="customerEntry" Placeholder="Enter Customer Name" Grid.Column="0" />
-                        <Button x:Name="addCustomerButton" Text="Add" Clicked="OnAddCustomerClicked" Grid.Column="1" />
-                        <Button x:Name="updateCustomerButton" Text="Update" Clicked="OnUpdateCustomerClicked" IsEnabled="False" Grid.Column="2" />
-                        <Button x:Name="clearCustomerButton" Text="Clear" Clicked="OnClearCustomerClicked" Grid.Column="3" />
-                    </Grid>
-                    <ListView x:Name="customerListView" ItemTapped="OnCustomerSelected" Grid.Row="1">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <ViewCell>
-                                    <Grid Padding="5">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <Label Text="{Binding Name}" VerticalOptions="Center" Grid.Column="0" />
-                                        <Button Text="Delete" Clicked="OnDeleteCustomerClicked" CommandParameter="{Binding .}" Grid.Column="1" />
-                                    </Grid>
-                                </ViewCell>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </Grid>
-            </Frame>
+    <!-- Customers Tab -->
+    <ContentPage Title="Customers">
+        <VerticalStackLayout Padding="10" Spacing="10">
+            <Entry x:Name="customerEntry" Placeholder="Enter customer name" />
+            <HorizontalStackLayout Spacing="5">
+                <Button x:Name="addCustomerButton" Text="Add" Clicked="OnAddCustomerClicked" />
+                <Button x:Name="updateCustomerButton" Text="Update" Clicked="OnUpdateCustomerClicked" IsEnabled="False" />
+                <Button Text="Clear" Clicked="OnClearCustomerClicked" />
+            </HorizontalStackLayout>
 
-            <!-- Driver -->
-            <Frame Padding="10" CornerRadius="5">
-                <Grid RowDefinitions="Auto, *">
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Entry x:Name="driverEntry" Placeholder="Enter Driver Name" Grid.Column="0" />
-                        <Button x:Name="addDriverButton" Text="Add" Clicked="OnAddDriverClicked" Grid.Column="1" />
-                        <Button x:Name="updateDriverButton" Text="Update" Clicked="OnUpdateDriverClicked" IsEnabled="False" Grid.Column="2" />
-                        <Button x:Name="clearDriverButton" Text="Clear" Clicked="OnClearDriverClicked" Grid.Column="3" />
-                    </Grid>
-                    <ListView x:Name="driverListView" ItemTapped="OnDriverSelected" Grid.Row="1">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <ViewCell>
-                                    <Grid Padding="5">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <Label Text="{Binding Name}" VerticalOptions="Center" Grid.Column="0" />
-                                        <Button Text="Delete" Clicked="OnDeleteDriverClicked" CommandParameter="{Binding .}" Grid.Column="1" />
-                                    </Grid>
-                                </ViewCell>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </Grid>
-            </Frame>
-
-            <!-- Item -->
-            <Frame Padding="10" CornerRadius="5">
-                <Grid RowDefinitions="Auto, *">
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Entry x:Name="itemEntry" Placeholder="Enter Item Name" Grid.Column="0" />
-                        <Button x:Name="addItemButton" Text="Add" Clicked="OnAddItemClicked" Grid.Column="1" />
-                        <Button x:Name="updateItemButton" Text="Update" Clicked="OnUpdateItemClicked" IsEnabled="False" Grid.Column="2" />
-                        <Button x:Name="clearItemButton" Text="Clear" Clicked="OnClearItemClicked" Grid.Column="3" />
-                    </Grid>
-                    <ListView x:Name="itemListView" ItemTapped="OnItemSelected" Grid.Row="1">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <ViewCell>
-                                    <Grid Padding="5">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <Label Text="{Binding Name}" VerticalOptions="Center" Grid.Column="0" />
-                                        <Button Text="Delete" Clicked="OnDeleteItemClicked" CommandParameter="{Binding .}" Grid.Column="1" />
-                                    </Grid>
-                                </ViewCell>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </Grid>
-            </Frame>
-
-            <!-- Site -->
-            <Frame Padding="10" CornerRadius="5">
-                <Grid RowDefinitions="Auto, *">
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Entry x:Name="siteEntry" Placeholder="Enter Site Name" Grid.Column="0" />
-                        <Button x:Name="addSiteButton" Text="Add" Clicked="OnAddSiteClicked" Grid.Column="1" />
-                        <Button x:Name="updateSiteButton" Text="Update" Clicked="OnUpdateSiteClicked" IsEnabled="False" Grid.Column="2" />
-                        <Button x:Name="clearSiteButton" Text="Clear" Clicked="OnClearSiteClicked" Grid.Column="3" />
-                    </Grid>
-                    <ListView x:Name="siteListView" ItemTapped="OnSiteSelected" Grid.Row="1">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <ViewCell>
-                                    <Grid Padding="5">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <Label Text="{Binding Name}" VerticalOptions="Center" Grid.Column="0" />
-                                        <Button Text="Delete" Clicked="OnDeleteSiteClicked" CommandParameter="{Binding .}" Grid.Column="1" />
-                                    </Grid>
-                                </ViewCell>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </Grid>
-            </Frame>
-
-            <!-- Transport -->
-            <Frame Padding="10" CornerRadius="5">
-                <Grid RowDefinitions="Auto, *">
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Entry x:Name="transportEntry" Placeholder="Enter Transport Name" Grid.Column="0" />
-                        <Button x:Name="addTransportButton" Text="Add" Clicked="OnAddTransportClicked" Grid.Column="1" />
-                        <Button x:Name="updateTransportButton" Text="Update" Clicked="OnUpdateTransportClicked" IsEnabled="False" Grid.Column="2" />
-                        <Button x:Name="clearTransportButton" Text="Clear" Clicked="OnClearTransportClicked" Grid.Column="3" />
-                    </Grid>
-                    <ListView x:Name="transportListView" ItemTapped="OnTransportSelected" Grid.Row="1">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <ViewCell>
-                                    <Grid Padding="5">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <Label Text="{Binding Name}" VerticalOptions="Center" Grid.Column="0" />
-                                        <Button Text="Delete" Clicked="OnDeleteTransportClicked" CommandParameter="{Binding .}" Grid.Column="1" />
-                                    </Grid>
-                                </ViewCell>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </Grid>
-            </Frame>
-
-            <!-- Vehicle -->
-            <Frame Padding="10" CornerRadius="5">
-                <Grid RowDefinitions="Auto, *">
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Entry x:Name="vehicleEntry" Placeholder="Enter Vehicle License Number" Grid.Column="0" />
-                        <Button x:Name="addVehicleButton" Text="Add" Clicked="OnAddVehicleClicked" Grid.Column="1" />
-                        <Button x:Name="updateVehicleButton" Text="Update" Clicked="OnUpdateVehicleClicked" IsEnabled="False" Grid.Column="2" />
-                        <Button x:Name="clearVehicleButton" Text="Clear" Clicked="OnClearVehicleClicked" Grid.Column="3" />
-                    </Grid>
-                    <ListView x:Name="vehicleListView" ItemTapped="OnVehicleSelected" Grid.Row="1">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <ViewCell>
-                                    <Grid Padding="5">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <Label Text="{Binding LicenseNumber}" VerticalOptions="Center" Grid.Column="0" />
-                                        <Button Text="Delete" Clicked="OnDeleteVehicleClicked" CommandParameter="{Binding .}" Grid.Column="1" />
-                                    </Grid>
-                                </ViewCell>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </Grid>
-            </Frame>
-
+            <CollectionView x:Name="customerListView"
+                            SelectionMode="Single"
+                            SelectionChanged="OnCustomerSelected">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <HorizontalStackLayout Spacing="10" Padding="5">
+                            <Label Text="{Binding Name}" VerticalOptions="Center" />
+                            <Button Text="Delete"
+                                    CommandParameter="{Binding .}"
+                                    Clicked="OnDeleteCustomerClicked" />
+                        </HorizontalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
         </VerticalStackLayout>
-    </ScrollView>
-</ContentPage>
+    </ContentPage>
+
+    <!-- Drivers Tab -->
+    <ContentPage Title="Drivers">
+        <VerticalStackLayout Padding="10" Spacing="10">
+            <Entry x:Name="driverEntry" Placeholder="Enter driver name" />
+            <HorizontalStackLayout Spacing="5">
+                <Button x:Name="addDriverButton" Text="Add" Clicked="OnAddDriverClicked" />
+                <Button x:Name="updateDriverButton" Text="Update" Clicked="OnUpdateDriverClicked" IsEnabled="False" />
+                <Button Text="Clear" Clicked="OnClearDriverClicked" />
+            </HorizontalStackLayout>
+
+            <CollectionView x:Name="driverListView"
+                            SelectionMode="Single"
+                            SelectionChanged="OnDriverSelected">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <HorizontalStackLayout Spacing="10" Padding="5">
+                            <Label Text="{Binding Name}" VerticalOptions="Center" />
+                            <Button Text="Delete"
+                                    CommandParameter="{Binding .}"
+                                    Clicked="OnDeleteDriverClicked" />
+                        </HorizontalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ContentPage>
+
+    <!-- Items Tab -->
+    <ContentPage Title="Items">
+        <VerticalStackLayout Padding="10" Spacing="10">
+            <Entry x:Name="itemEntry" Placeholder="Enter item name" />
+            <HorizontalStackLayout Spacing="5">
+                <Button x:Name="addItemButton" Text="Add" Clicked="OnAddItemClicked" />
+                <Button x:Name="updateItemButton" Text="Update" Clicked="OnUpdateItemClicked" IsEnabled="False" />
+                <Button Text="Clear" Clicked="OnClearItemClicked" />
+            </HorizontalStackLayout>
+
+            <CollectionView x:Name="itemListView"
+                            SelectionMode="Single"
+                            SelectionChanged="OnItemSelected">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <HorizontalStackLayout Spacing="10" Padding="5">
+                            <Label Text="{Binding Name}" VerticalOptions="Center" />
+                            <Button Text="Delete"
+                                    CommandParameter="{Binding .}"
+                                    Clicked="OnDeleteItemClicked" />
+                        </HorizontalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ContentPage>
+
+    <!-- Sites Tab -->
+    <ContentPage Title="Sites">
+        <VerticalStackLayout Padding="10" Spacing="10">
+            <Entry x:Name="siteEntry" Placeholder="Enter site name" />
+            <HorizontalStackLayout Spacing="5">
+                <Button x:Name="addSiteButton" Text="Add" Clicked="OnAddSiteClicked" />
+                <Button x:Name="updateSiteButton" Text="Update" Clicked="OnUpdateSiteClicked" IsEnabled="False" />
+                <Button Text="Clear" Clicked="OnClearSiteClicked" />
+            </HorizontalStackLayout>
+
+            <CollectionView x:Name="siteListView"
+                            SelectionMode="Single"
+                            SelectionChanged="OnSiteSelected">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <HorizontalStackLayout Spacing="10" Padding="5">
+                            <Label Text="{Binding Name}" VerticalOptions="Center" />
+                            <Button Text="Delete"
+                                    CommandParameter="{Binding .}"
+                                    Clicked="OnDeleteSiteClicked" />
+                        </HorizontalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ContentPage>
+
+    <!-- Transports Tab -->
+    <ContentPage Title="Transports">
+        <VerticalStackLayout Padding="10" Spacing="10">
+            <Entry x:Name="transportEntry" Placeholder="Enter transport name" />
+            <HorizontalStackLayout Spacing="5">
+                <Button x:Name="addTransportButton" Text="Add" Clicked="OnAddTransportClicked" />
+                <Button x:Name="updateTransportButton" Text="Update" Clicked="OnUpdateTransportClicked" IsEnabled="False" />
+                <Button Text="Clear" Clicked="OnClearTransportClicked" />
+            </HorizontalStackLayout>
+
+            <CollectionView x:Name="transportListView"
+                            SelectionMode="Single"
+                            SelectionChanged="OnTransportSelected">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <HorizontalStackLayout Spacing="10" Padding="5">
+                            <Label Text="{Binding Name}" VerticalOptions="Center" />
+                            <Button Text="Delete"
+                                    CommandParameter="{Binding .}"
+                                    Clicked="OnDeleteTransportClicked" />
+                        </HorizontalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ContentPage>
+
+    <!-- Vehicles Tab -->
+    <ContentPage Title="Vehicles">
+        <VerticalStackLayout Padding="10" Spacing="10">
+            <Entry x:Name="vehicleEntry" Placeholder="Enter license number" />
+            <HorizontalStackLayout Spacing="5">
+                <Button x:Name="addVehicleButton" Text="Add" Clicked="OnAddVehicleClicked" />
+                <Button x:Name="updateVehicleButton" Text="Update" Clicked="OnUpdateVehicleClicked" IsEnabled="False" />
+                <Button Text="Clear" Clicked="OnClearVehicleClicked" />
+            </HorizontalStackLayout>
+
+            <CollectionView x:Name="vehicleListView"
+                            SelectionMode="Single"
+                            SelectionChanged="OnVehicleSelected">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <HorizontalStackLayout Spacing="10" Padding="5">
+                            <Label Text="{Binding LicenseNumber}" VerticalOptions="Center" />
+                            <Button Text="Delete"
+                                    CommandParameter="{Binding .}"
+                                    Clicked="OnDeleteVehicleClicked" />
+                        </HorizontalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ContentPage>
+
+</TabbedPage>
