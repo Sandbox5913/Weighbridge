@@ -25,11 +25,14 @@ namespace Weighbridge
             builder.Services.AddSingleton<DatabaseService>();
             builder.Services.AddSingleton<WeightParserService>(); // Must be registered before WeighbridgeService
             builder.Services.AddSingleton<WeighbridgeService>();
+            builder.Services.AddSingleton<DocketService>();
 
             // Register pages
             builder.Services.AddTransient<MainPage>();
             builder.Services.AddTransient<SettingsPage>();
             builder.Services.AddTransient<DataManagementPage>();
+            builder.Services.AddTransient<PrintSettingsPage>();
+
 
             return builder.Build();
         }

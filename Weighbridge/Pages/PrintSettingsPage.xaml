@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Weighbridge.Pages.PrintSettingsPage"
+             Title="Print Settings"
+             BackgroundColor="#0E0E0E">
+    <ScrollView>
+        <VerticalStackLayout Spacing="20" Padding="30">
+            <Label 
+                Text="Docket Customization"
+                FontSize="24"
+                FontAttributes="Bold"
+                TextColor="White"
+                HorizontalOptions="Center" />
+
+            <Button Text="Select Logo" Clicked="OnSelectLogoClicked" />
+            <Image x:Name="LogoImage" HeightRequest="100" />
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label Text="Show Entrance Weight" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
+                <Switch x:Name="ShowEntranceWeightSwitch" Grid.Column="1" />
+                <Label Text="Show Exit Weight" Grid.Row="1" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
+                <Switch x:Name="ShowExitWeightSwitch" Grid.Row="1" Grid.Column="1" />
+                <Label Text="Show Net Weight" Grid.Row="2" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
+                <Switch x:Name="ShowNetWeightSwitch" Grid.Row="2" Grid.Column="1" />
+                <Label Text="Show Vehicle License" Grid.Row="3" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
+                <Switch x:Name="ShowVehicleLicenseSwitch" Grid.Row="3" Grid.Column="1" />
+                <Label Text="Show Source Site" Grid.Row="4" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
+                <Switch x:Name="ShowSourceSiteSwitch" Grid.Row="4" Grid.Column="1" />
+                <Label Text="Show Destination Site" Grid.Row="5" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
+                <Switch x:Name="ShowDestinationSiteSwitch" Grid.Row="5" Grid.Column="1" />
+                <Label Text="Show Material" Grid.Row="6" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
+                <Switch x:Name="ShowMaterialSwitch" Grid.Row="6" Grid.Column="1" />
+                <Label Text="Show Customer" Grid.Row="7" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
+                <Switch x:Name="ShowCustomerSwitch" Grid.Row="7" Grid.Column="1" />
+                <Label Text="Show Transport Company" Grid.Row="8" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
+                <Switch x:Name="ShowTransportCompanySwitch" Grid.Row="8" Grid.Column="1" />
+                <Label Text="Show Driver" Grid.Row="9" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
+                <Switch x:Name="ShowDriverSwitch" Grid.Row="9" Grid.Column="1" />
+                <Label Text="Show Remarks" Grid.Row="10" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
+                <Switch x:Name="ShowRemarksSwitch" Grid.Row="10" Grid.Column="1" />
+                <Label Text="Show Timestamp" Grid.Row="11" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
+                <Switch x:Name="ShowTimestampSwitch" Grid.Row="11" Grid.Column="1" />
+            </Grid>
+
+            <Button Text="Save Settings" Clicked="OnSaveClicked" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

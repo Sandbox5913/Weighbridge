@@ -5,6 +5,8 @@ using Weighbridge.Data;
 using Weighbridge.Models;
 using Weighbridge.Services;
 using Weighbridge.Pages;
+using System.Text.Json;
+
 
 namespace Weighbridge
 {
@@ -12,6 +14,8 @@ namespace Weighbridge
     {
         private readonly WeighbridgeService _weighbridgeService;
         private readonly DatabaseService _databaseService;
+        private readonly DocketService _docketService;
+
 
         // --- Backing fields for data binding ---
         private string? _entranceWeight;
@@ -67,12 +71,13 @@ namespace Weighbridge
         public Driver? SelectedDriver { get => _selectedDriver; set => SetProperty(ref _selectedDriver, value); }
 
 
-        public MainPage(WeighbridgeService weighbridgeService, DatabaseService databaseService)
+        public MainPage(WeighbridgeService weighbridgeService, DatabaseService databaseService, DocketService docketService)
         {
             InitializeComponent();
             BindingContext = this;
             _weighbridgeService = weighbridgeService;
             _databaseService = databaseService;
+            _docketService = docketService;
 
             // Initialize with some default values for demonstration
             EntranceWeight = "0";
@@ -80,7 +85,7 @@ namespace Weighbridge
             NetWeight = "0";
             LiveWeight = "0";
             StabilityStatus = "UNSTABLE";
-            StabilityColor = Colors.Red;
+            StabilityColor = Microsoft.Maui.Graphics.Colors.Red;
             IsWeightStable = false;
 
 
@@ -191,12 +196,12 @@ namespace Weighbridge
                 if (isStable)
                 {
                     StabilityStatus = "STABLE";
-                    StabilityColor = Colors.Green;
+                    StabilityColor = Microsoft.Maui.Graphics.Colors.Green;
                 }
                 else
                 {
                     StabilityStatus = "UNSTABLE";
-                    StabilityColor = Colors.Red;
+                    StabilityColor = Microsoft.Maui.Graphics.Colors.Red;
                 }
             });
         }
@@ -230,9 +235,34 @@ namespace Weighbridge
             // Logic to handle "To Yard" action
         }
 
-        private void OnSaveAndPrintClicked(object sender, EventArgs e)
+        private async void OnSaveAndPrintClicked(object sender, EventArgs e)
         {
-            // Logic to save the data and print a ticket
+            var docketData = new DocketData
+            {
+                EntranceWeight = this.EntranceWeight,
+                ExitWeight = this.ExitWeight,
+                NetWeight = this.NetWeight,
+                VehicleLicense = this.SelectedVehicle?.LicenseNumber,
+                SourceSite = this.SelectedSourceSite?.Name,
+                DestinationSite = this.SelectedDestinationSite?.Name,
+                Material = this.SelectedItem?.Name,
+                Customer = this.SelectedCustomer?.Name,
+                TransportCompany = this.SelectedTransport?.Name,
+                Driver = this.SelectedDriver?.Name,
+                Remarks = this.Remarks,
+                Timestamp = DateTime.Now
+            };
+
+            var templateJson = Preferences.Get("DocketTemplate", string.Empty);
+            var docketTemplate = !string.IsNullOrEmpty(templateJson)
+                ? JsonSerializer.Deserialize<DocketTemplate>(templateJson) ?? new DocketTemplate()
+                : new DocketTemplate();
+
+            var filePath = await _docketService.GeneratePdfAsync(docketData, docketTemplate);
+            await Launcher.OpenAsync(new OpenFileRequest
+            {
+                File = new ReadOnlyFile(filePath)
+            });
         }
 
         private void OnUpdateTareClicked(object sender, EventArgs e)
