@@ -19,10 +19,6 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-
-
-
-
             <Grid Grid.Row="1" ColumnDefinitions="1.2*,*" ColumnSpacing="24">
 
                 <Border Grid.Column="0" 
@@ -38,6 +34,7 @@
 
                     <Grid Padding="32" RowSpacing="24">
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
@@ -82,7 +79,18 @@
                             </Grid>
                         </Border>
 
-                        <Grid Grid.Row="2" ColumnDefinitions="*,*,*" ColumnSpacing="16" VerticalOptions="CenterAndExpand">
+                        <Border Grid.Row="2" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444" Margin="0,10,0,0">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+                            <VerticalStackLayout Padding="20,24" Spacing="8">
+                                <Label Text="LIVE WEIGHT" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="24" FontAttributes="Bold"/>
+                                <Label Text="{Binding LiveWeight}" TextColor="White" HorizontalOptions="Center" FontSize="48" FontAttributes="Bold" />
+                                <Label Text="KG" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="14" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Grid Grid.Row="3" ColumnDefinitions="*,*,*" ColumnSpacing="16" VerticalOptions="CenterAndExpand">
                             <Border Grid.Column="0" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
@@ -120,15 +128,22 @@
                             </Border>
                         </Grid>
 
-                        <Border Grid.Row="3" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                        <Border Grid.Row="4" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="8" />
                             </Border.StrokeShape>
-                            <Grid ColumnDefinitions="Auto,*,Auto" Padding="16,12">
+                            <Grid ColumnDefinitions="*,Auto,Auto" Padding="16,12">
                                 <StackLayout Grid.Column="0" Orientation="Horizontal" Spacing="8">
                                     <Ellipse Fill="#00FF7F" WidthRequest="8" HeightRequest="8" VerticalOptions="Center" />
                                     <Label Text="CONNECTED" TextColor="#00FF7F" FontSize="12" VerticalOptions="Center" FontAttributes="Bold"/>
                                 </StackLayout>
+                                <Label Text="{Binding StabilityStatus}"
+                                       TextColor="{Binding StabilityColor}"
+                                       FontSize="12"
+                                       Grid.Column="1"
+                                       VerticalOptions="Center"
+                                       HorizontalOptions="Start"
+                                       FontAttributes="Bold"/>
                                 <Label x:Name="ConnectionStatusLabel" Grid.Column="2" Text="COM1 • 9600 bps" TextColor="#CCCCCC" FontSize="12" VerticalOptions="Center"/>
                             </Grid>
                         </Border>
@@ -288,7 +303,8 @@
                                             CornerRadius="8" 
                                             HeightRequest="48"
                                             FontAttributes="Bold"
-                                            Clicked="OnToYardClicked"/>
+                                            Clicked="OnToYardClicked"
+                                            IsEnabled="{Binding IsWeightStable}"/>
                                     <Button Grid.Column="1" 
                                             Text="SAVE and PRINT" 
                                             BackgroundColor="#00FF7F" 
@@ -296,7 +312,8 @@
                                             CornerRadius="8" 
                                             HeightRequest="48"
                                             FontAttributes="Bold"
-                                            Clicked="OnSaveAndPrintClicked"/>
+                                            Clicked="OnSaveAndPrintClicked"
+                                            IsEnabled="{Binding IsWeightStable}"/>
                                 </Grid>
 
                                 <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">

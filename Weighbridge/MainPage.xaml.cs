@@ -19,6 +19,10 @@ namespace Weighbridge
         private string? _netWeight;
         private string? _licenseNumber;
         private string? _remarks;
+        private string? _liveWeight;
+        private string? _stabilityStatus;
+        private Color? _stabilityColor;
+        private bool _isWeightStable;
 
         // --- Public properties for data binding ---
         public string? EntranceWeight { get => _entranceWeight; set => SetProperty(ref _entranceWeight, value); }
@@ -26,6 +30,11 @@ namespace Weighbridge
         public string? NetWeight { get => _netWeight; set => SetProperty(ref _netWeight, value); }
         public string? LicenseNumber { get => _licenseNumber; set => SetProperty(ref _licenseNumber, value); }
         public string? Remarks { get => _remarks; set => SetProperty(ref _remarks, value); }
+        public string? LiveWeight { get => _liveWeight; set => SetProperty(ref _liveWeight, value); }
+        public string? StabilityStatus { get => _stabilityStatus; set => SetProperty(ref _stabilityStatus, value); }
+        public Color? StabilityColor { get => _stabilityColor; set => SetProperty(ref _stabilityColor, value); }
+        public bool IsWeightStable { get => _isWeightStable; set => SetProperty(ref _isWeightStable, value); }
+
 
         // --- Observable Collections for Pickers ---
         public ObservableCollection<Vehicle> Vehicles { get; set; } = new();
@@ -69,6 +78,11 @@ namespace Weighbridge
             EntranceWeight = "0";
             ExitWeight = "0";
             NetWeight = "0";
+            LiveWeight = "0";
+            StabilityStatus = "UNSTABLE";
+            StabilityColor = Colors.Red;
+            IsWeightStable = false;
+
 
             // Initialize database and load data
             _ = InitializeAsync();
@@ -80,6 +94,7 @@ namespace Weighbridge
             if (_weighbridgeService != null)
             {
                 _weighbridgeService.DataReceived += OnDataReceived;
+                _weighbridgeService.StabilityChanged += OnStabilityChanged;
             }
             try
             {
@@ -99,6 +114,7 @@ namespace Weighbridge
             if (_weighbridgeService != null)
             {
                 _weighbridgeService.DataReceived -= OnDataReceived;
+                _weighbridgeService.StabilityChanged -= OnStabilityChanged;
             }
             _weighbridgeService?.Close();
         }
@@ -163,7 +179,25 @@ namespace Weighbridge
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                EntranceWeight = weightReading.Weight.ToString();
+                LiveWeight = weightReading.Weight.ToString();
+            });
+        }
+
+        private void OnStabilityChanged(object? sender, bool isStable)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                IsWeightStable = isStable;
+                if (isStable)
+                {
+                    StabilityStatus = "STABLE";
+                    StabilityColor = Colors.Green;
+                }
+                else
+                {
+                    StabilityStatus = "UNSTABLE";
+                    StabilityColor = Colors.Red;
+                }
             });
         }
 

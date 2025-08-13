@@ -10,5 +10,8 @@ namespace Weighbridge.Models
         public int DataBits { get; set; } = 8;
         public StopBits StopBits { get; set; } = StopBits.One;
         public string? RegexString { get; set; }
+        public bool StabilityEnabled { get; set; } = true;
+        public double StableTime { get; set; } = 3.0;
+        public string? StabilityRegex { get; set; }
     }
 }

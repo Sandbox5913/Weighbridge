@@ -1,6 +1,9 @@
 using System.IO.Ports;
 using System.Text;
 using Weighbridge.Models;
+using System.Collections.Generic;
+using System;
+using System.Text.RegularExpressions;
 
 namespace Weighbridge.Services
 {
@@ -11,8 +14,16 @@ namespace Weighbridge.Services
         private readonly WeightParserService _parserService;
         private StringBuilder _serialDataBuffer = new StringBuilder();
 
+        // --- Stability Detection ---
+        private List<double> recentWeights = new List<double>();
+        private const int windowSize = 10;
+        private const double tolerance = 0.5;
+        private DateTime stabilityStart;
+        private bool stableFlag = false;
+
         public event EventHandler<WeightReading>? DataReceived;
         public event EventHandler<string>? RawDataReceived;
+        public event EventHandler<bool>? StabilityChanged;
 
         public WeighbridgeService(WeightParserService parserService)
         {
@@ -30,6 +41,16 @@ namespace Weighbridge.Services
                 _config.BaudRate = 9600; // Default value
             }
             _config.RegexString = Preferences.Get("RegexString", @"(?<sign>[+-])?(?<num>\d+(?:\.\d+)?)[ ]*(?<unit>[a-zA-Z]{1,4})");
+            _config.StabilityEnabled = Preferences.Get("StabilityEnabled", true);
+            if (double.TryParse(Preferences.Get("StableTime", "3.0"), out double stableTime))
+            {
+                _config.StableTime = stableTime;
+            }
+            else
+            {
+                _config.StableTime = 3.0; // Default value
+            }
+            _config.StabilityRegex = Preferences.Get("StabilityRegex", "");
 
             _serialPort = new SerialPort(
                 _config.PortName,
@@ -113,10 +134,59 @@ namespace Weighbridge.Services
                     {
                         // Fire the parsed data event for the main page
                         DataReceived?.Invoke(this, weightReading);
+
+                        // Check for stability
+                        bool isStable = false;
+                        if (_config.StabilityEnabled)
+                        {
+                            if (!string.IsNullOrEmpty(_config.StabilityRegex))
+                            {
+                                isStable = Regex.IsMatch(line, _config.StabilityRegex);
+                            }
+                            else
+                            {
+                                isStable = IsWeightStable((double)weightReading.Weight);
+                            }
+                        }
+                        StabilityChanged?.Invoke(this, isStable);
                     }
                 }
             }
             _serialDataBuffer = new StringBuilder(bufferString);
+        }
+
+        private bool IsWeightStable(double newWeight)
+        {
+            recentWeights.Add(newWeight);
+            if (recentWeights.Count > windowSize)
+                recentWeights.RemoveAt(0);
+
+            if (recentWeights.Count < windowSize)
+                return false; // not enough data yet
+
+            double max = double.MinValue, min = double.MaxValue;
+            foreach (var w in recentWeights)
+            {
+                if (w > max) max = w;
+                if (w < min) min = w;
+            }
+
+            bool inTolerance = (max - min) <= tolerance;
+
+            if (inTolerance)
+            {
+                if (stabilityStart == DateTime.MinValue)
+                    stabilityStart = DateTime.Now;
+
+                if ((DateTime.Now - stabilityStart).TotalSeconds >= _config.StableTime)
+                    return true;
+            }
+            else
+            {
+                stabilityStart = DateTime.MinValue; // reset timer if out of tolerance
+            }
+
+            return false;
         }
 
 
