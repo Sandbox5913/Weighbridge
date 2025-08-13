@@ -79,6 +79,25 @@ namespace Weighbridge
             _ = InitializeAsync();
         }
 
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+            try
+            {
+                _weighbridgeService?.Open();
+            }
+            catch (Exception ex)
+            {
+                DisplayAlert("Error", ex.Message, "OK");
+            }
+        }
+
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            _weighbridgeService?.Close();
+        }
+
         private async Task InitializeAsync()
         {
             try
@@ -143,20 +162,6 @@ namespace Weighbridge
             });
         }
 
-        // --- Event Handlers for Buttons ---
-
-        private void OnWeighClicked(object sender, EventArgs e)
-        {
-            try
-            {
-                _weighbridgeService?.Open();
-            }
-            catch (Exception ex)
-            {
-                DisplayAlert("Error", ex.Message, "OK");
-            }
-        }
-
         private async void OnSettingsClicked(object sender, EventArgs e)
         {
             try
@@ -189,11 +194,6 @@ namespace Weighbridge
         private void OnSaveAndPrintClicked(object sender, EventArgs e)
         {
             // Logic to save the data and print a ticket
-        }
-
-        private void OnYardClicked(object sender, EventArgs e)
-        {
-            // Logic to view vehicles in the yard
         }
 
         private void OnUpdateTareClicked(object sender, EventArgs e)

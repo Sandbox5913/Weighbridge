@@ -1,5 +1,5 @@
-
 using System.IO.Ports;
+using System.Text.RegularExpressions;
 using Weighbridge.Models;
 
 namespace Weighbridge.Services
@@ -26,6 +26,10 @@ namespace Weighbridge.Services
             _serialPort.DataBits = _config.DataBits;
             _serialPort.StopBits = _config.StopBits;
         }
+        public WeighbridgeConfig GetConfig()
+        {
+            return _config;
+        }
 
         public void Open()
         {
@@ -49,6 +53,15 @@ namespace Weighbridge.Services
         {
             SerialPort sp = (SerialPort)sender;
             string indata = sp.ReadExisting();
+
+            if (!string.IsNullOrEmpty(_config.RegexString))
+            {
+                Match match = Regex.Match(indata, _config.RegexString);
+                if (match.Success)
+                {
+                    indata = match.Value;
+                }
+            }
             DataReceived?.Invoke(this, indata);
         }
 

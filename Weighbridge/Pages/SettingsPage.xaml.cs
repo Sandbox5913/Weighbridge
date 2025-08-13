@@ -1,4 +1,3 @@
-
 using Weighbridge.Services;
 using Weighbridge.Models;
 
@@ -13,6 +12,7 @@ namespace Weighbridge.Pages
             InitializeComponent();
             _weighbridgeService = weighbridgeService;
             LoadAvailablePorts();
+            _weighbridgeService.DataReceived += OnDataReceived;
         }
 
         private void LoadAvailablePorts()
@@ -21,12 +21,21 @@ namespace Weighbridge.Pages
             PortPicker.ItemsSource = availablePorts;
         }
 
+        private void OnDataReceived(object? sender, string data)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                SerialOutputLabel.Text = data;
+            });
+        }
+
         private void OnSaveClicked(object sender, EventArgs e)
         {
             var config = new WeighbridgeConfig
             {
                 PortName = (string)PortPicker.SelectedItem,
-                BaudRate = int.Parse(BaudRateEntry.Text)
+                BaudRate = int.Parse(BaudRateEntry.Text),
+                RegexString = RegexEntry.Text
             };
 
             _weighbridgeService.Configure(config);
