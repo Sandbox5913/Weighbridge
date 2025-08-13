@@ -1,63 +1,31 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<TabbedPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-            xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-            x:Class="Weighbridge.Pages.DataManagementPage"
-            Title="Data Management"
-            BackgroundColor="#0E0E0E">
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Weighbridge.Pages.DataManagementPage"
+             Title="Data Management"
+             BackgroundColor="#0E0E0E">
+    <ScrollView>
+        <VerticalStackLayout Spacing="20" Padding="20">
 
-    <!-- Customers Tab -->
-    <ContentPage Title="Customers" BackgroundColor="#0E0E0E">
-        <Grid Padding="24" RowSpacing="24">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <!-- Header -->
-            <StackLayout Grid.Row="0" Spacing="8">
-                <Label Text="Customer Management" TextColor="White" FontSize="28" FontAttributes="Bold" />
-                <Label Text="Add, edit, and manage customer information" TextColor="#CCCCCC" FontSize="16" />
-            </StackLayout>
-
-            <!-- Input Section -->
-            <Border Grid.Row="1" BackgroundColor="#1A1A1A" StrokeThickness="0">
+            <Border BackgroundColor="#1A1A1A" StrokeThickness="0">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="16" />
                 </Border.StrokeShape>
-                <Border.Shadow>
-                    <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
-                </Border.Shadow>
                 <StackLayout Padding="24" Spacing="16">
+                    <Label Text="Customer Management" TextColor="White" FontSize="28" FontAttributes="Bold" />
+                    <Label Text="Add, edit, and manage customer information" TextColor="#CCCCCC" FontSize="16" />
                     <Label Text="CUSTOMER DETAILS" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
                     <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="8" />
                         </Border.StrokeShape>
-                        <Entry x:Name="customerEntry" 
-                               Placeholder="Enter customer name" 
-                               PlaceholderColor="#888"
-                               TextColor="White"
-                               BackgroundColor="Transparent"
-                               Margin="16,16"/>
+                        <Entry x:Name="customerEntry" Placeholder="Enter customer name" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
                     </Border>
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                         <Button Grid.Column="0" x:Name="addCustomerButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddCustomerClicked" />
                         <Button Grid.Column="1" x:Name="updateCustomerButton" Text="UPDATE" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnUpdateCustomerClicked" IsEnabled="False" />
                         <Button Grid.Column="2" Text="CLEAR" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" Clicked="OnClearCustomerClicked" />
                     </Grid>
-                </StackLayout>
-            </Border>
-
-            <!-- List Section -->
-            <Border Grid.Row="2" BackgroundColor="#1A1A1A" StrokeThickness="0">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="16" />
-                </Border.StrokeShape>
-                <Border.Shadow>
-                    <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
-                </Border.Shadow>
-                <StackLayout Padding="24" Spacing="16">
                     <Label Text="CUSTOMER LIST" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
                     <CollectionView x:Name="customerListView" SelectionMode="Single" SelectionChanged="OnCustomerSelected">
                         <CollectionView.ItemTemplate>
@@ -77,59 +45,26 @@
                     </CollectionView>
                 </StackLayout>
             </Border>
-        </Grid>
-    </ContentPage>
 
-    <!-- Drivers Tab -->
-    <ContentPage Title="Drivers" BackgroundColor="#0E0E0E">
-        <Grid Padding="24" RowSpacing="24">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <StackLayout Grid.Row="0" Spacing="8">
-                <Label Text="Driver Management" TextColor="White" FontSize="28" FontAttributes="Bold" />
-                <Label Text="Add, edit, and manage driver information" TextColor="#CCCCCC" FontSize="16" />
-            </StackLayout>
-
-            <Border Grid.Row="1" BackgroundColor="#1A1A1A" StrokeThickness="0">
+            <Border BackgroundColor="#1A1A1A" StrokeThickness="0">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="16" />
                 </Border.StrokeShape>
-                <Border.Shadow>
-                    <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
-                </Border.Shadow>
                 <StackLayout Padding="24" Spacing="16">
+                    <Label Text="Driver Management" TextColor="White" FontSize="28" FontAttributes="Bold" />
+                    <Label Text="Add, edit, and manage driver information" TextColor="#CCCCCC" FontSize="16" />
                     <Label Text="DRIVER DETAILS" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
                     <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="8" />
                         </Border.StrokeShape>
-                        <Entry x:Name="driverEntry" 
-                               Placeholder="Enter driver name" 
-                               PlaceholderColor="#888"
-                               TextColor="White"
-                               BackgroundColor="Transparent"
-                               Margin="16,16"/>
+                        <Entry x:Name="driverEntry" Placeholder="Enter driver name" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
                     </Border>
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                         <Button Grid.Column="0" x:Name="addDriverButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddDriverClicked" />
                         <Button Grid.Column="1" x:Name="updateDriverButton" Text="UPDATE" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnUpdateDriverClicked" IsEnabled="False" />
                         <Button Grid.Column="2" Text="CLEAR" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" Clicked="OnClearDriverClicked" />
                     </Grid>
-                </StackLayout>
-            </Border>
-
-            <Border Grid.Row="2" BackgroundColor="#1A1A1A" StrokeThickness="0">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="16" />
-                </Border.StrokeShape>
-                <Border.Shadow>
-                    <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
-                </Border.Shadow>
-                <StackLayout Padding="24" Spacing="16">
                     <Label Text="DRIVER LIST" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
                     <CollectionView x:Name="driverListView" SelectionMode="Single" SelectionChanged="OnDriverSelected">
                         <CollectionView.ItemTemplate>
@@ -149,59 +84,26 @@
                     </CollectionView>
                 </StackLayout>
             </Border>
-        </Grid>
-    </ContentPage>
 
-    <!-- Items Tab -->
-    <ContentPage Title="Items" BackgroundColor="#0E0E0E">
-        <Grid Padding="24" RowSpacing="24">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <StackLayout Grid.Row="0" Spacing="8">
-                <Label Text="Material Management" TextColor="White" FontSize="28" FontAttributes="Bold" />
-                <Label Text="Add, edit, and manage material types" TextColor="#CCCCCC" FontSize="16" />
-            </StackLayout>
-
-            <Border Grid.Row="1" BackgroundColor="#1A1A1A" StrokeThickness="0">
+            <Border BackgroundColor="#1A1A1A" StrokeThickness="0">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="16" />
                 </Border.StrokeShape>
-                <Border.Shadow>
-                    <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
-                </Border.Shadow>
                 <StackLayout Padding="24" Spacing="16">
+                    <Label Text="Material Management" TextColor="White" FontSize="28" FontAttributes="Bold" />
+                    <Label Text="Add, edit, and manage material types" TextColor="#CCCCCC" FontSize="16" />
                     <Label Text="MATERIAL DETAILS" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
                     <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="8" />
                         </Border.StrokeShape>
-                        <Entry x:Name="itemEntry" 
-                               Placeholder="Enter material name" 
-                               PlaceholderColor="#888"
-                               TextColor="White"
-                               BackgroundColor="Transparent"
-                               Margin="16,16"/>
+                        <Entry x:Name="itemEntry" Placeholder="Enter material name" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
                     </Border>
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                         <Button Grid.Column="0" x:Name="addItemButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddItemClicked" />
                         <Button Grid.Column="1" x:Name="updateItemButton" Text="UPDATE" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnUpdateItemClicked" IsEnabled="False" />
                         <Button Grid.Column="2" Text="CLEAR" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" Clicked="OnClearItemClicked" />
                     </Grid>
-                </StackLayout>
-            </Border>
-
-            <Border Grid.Row="2" BackgroundColor="#1A1A1A" StrokeThickness="0">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="16" />
-                </Border.StrokeShape>
-                <Border.Shadow>
-                    <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
-                </Border.Shadow>
-                <StackLayout Padding="24" Spacing="16">
                     <Label Text="MATERIAL LIST" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
                     <CollectionView x:Name="itemListView" SelectionMode="Single" SelectionChanged="OnItemSelected">
                         <CollectionView.ItemTemplate>
@@ -221,59 +123,26 @@
                     </CollectionView>
                 </StackLayout>
             </Border>
-        </Grid>
-    </ContentPage>
 
-    <!-- Sites Tab -->
-    <ContentPage Title="Sites" BackgroundColor="#0E0E0E">
-        <Grid Padding="24" RowSpacing="24">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <StackLayout Grid.Row="0" Spacing="8">
-                <Label Text="Site Management" TextColor="White" FontSize="28" FontAttributes="Bold" />
-                <Label Text="Add, edit, and manage site locations" TextColor="#CCCCCC" FontSize="16" />
-            </StackLayout>
-
-            <Border Grid.Row="1" BackgroundColor="#1A1A1A" StrokeThickness="0">
+            <Border BackgroundColor="#1A1A1A" StrokeThickness="0">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="16" />
                 </Border.StrokeShape>
-                <Border.Shadow>
-                    <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
-                </Border.Shadow>
                 <StackLayout Padding="24" Spacing="16">
+                    <Label Text="Site Management" TextColor="White" FontSize="28" FontAttributes="Bold" />
+                    <Label Text="Add, edit, and manage site locations" TextColor="#CCCCCC" FontSize="16" />
                     <Label Text="SITE DETAILS" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
                     <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="8" />
                         </Border.StrokeShape>
-                        <Entry x:Name="siteEntry" 
-                               Placeholder="Enter site name" 
-                               PlaceholderColor="#888"
-                               TextColor="White"
-                               BackgroundColor="Transparent"
-                               Margin="16,16"/>
+                        <Entry x:Name="siteEntry" Placeholder="Enter site name" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
                     </Border>
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                         <Button Grid.Column="0" x:Name="addSiteButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddSiteClicked" />
                         <Button Grid.Column="1" x:Name="updateSiteButton" Text="UPDATE" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnUpdateSiteClicked" IsEnabled="False" />
                         <Button Grid.Column="2" Text="CLEAR" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" Clicked="OnClearSiteClicked" />
                     </Grid>
-                </StackLayout>
-            </Border>
-
-            <Border Grid.Row="2" BackgroundColor="#1A1A1A" StrokeThickness="0">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="16" />
-                </Border.StrokeShape>
-                <Border.Shadow>
-                    <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
-                </Border.Shadow>
-                <StackLayout Padding="24" Spacing="16">
                     <Label Text="SITE LIST" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
                     <CollectionView x:Name="siteListView" SelectionMode="Single" SelectionChanged="OnSiteSelected">
                         <CollectionView.ItemTemplate>
@@ -293,59 +162,26 @@
                     </CollectionView>
                 </StackLayout>
             </Border>
-        </Grid>
-    </ContentPage>
 
-    <!-- Transports Tab -->
-    <ContentPage Title="Transports" BackgroundColor="#0E0E0E">
-        <Grid Padding="24" RowSpacing="24">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <StackLayout Grid.Row="0" Spacing="8">
-                <Label Text="Transport Management" TextColor="White" FontSize="28" FontAttributes="Bold" />
-                <Label Text="Add, edit, and manage transport companies" TextColor="#CCCCCC" FontSize="16" />
-            </StackLayout>
-
-            <Border Grid.Row="1" BackgroundColor="#1A1A1A" StrokeThickness="0">
+            <Border BackgroundColor="#1A1A1A" StrokeThickness="0">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="16" />
                 </Border.StrokeShape>
-                <Border.Shadow>
-                    <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
-                </Border.Shadow>
                 <StackLayout Padding="24" Spacing="16">
+                    <Label Text="Transport Management" TextColor="White" FontSize="28" FontAttributes="Bold" />
+                    <Label Text="Add, edit, and manage transport companies" TextColor="#CCCCCC" FontSize="16" />
                     <Label Text="TRANSPORT DETAILS" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
                     <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="8" />
                         </Border.StrokeShape>
-                        <Entry x:Name="transportEntry" 
-                               Placeholder="Enter transport company name" 
-                               PlaceholderColor="#888"
-                               TextColor="White"
-                               BackgroundColor="Transparent"
-                               Margin="16,16"/>
+                        <Entry x:Name="transportEntry" Placeholder="Enter transport company name" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
                     </Border>
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                         <Button Grid.Column="0" x:Name="addTransportButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddTransportClicked" />
                         <Button Grid.Column="1" x:Name="updateTransportButton" Text="UPDATE" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnUpdateTransportClicked" IsEnabled="False" />
                         <Button Grid.Column="2" Text="CLEAR" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" Clicked="OnClearTransportClicked" />
                     </Grid>
-                </StackLayout>
-            </Border>
-
-            <Border Grid.Row="2" BackgroundColor="#1A1A1A" StrokeThickness="0">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="16" />
-                </Border.StrokeShape>
-                <Border.Shadow>
-                    <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
-                </Border.Shadow>
-                <StackLayout Padding="24" Spacing="16">
                     <Label Text="TRANSPORT LIST" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
                     <CollectionView x:Name="transportListView" SelectionMode="Single" SelectionChanged="OnTransportSelected">
                         <CollectionView.ItemTemplate>
@@ -365,59 +201,26 @@
                     </CollectionView>
                 </StackLayout>
             </Border>
-        </Grid>
-    </ContentPage>
 
-    <!-- Vehicles Tab -->
-    <ContentPage Title="Vehicles" BackgroundColor="#0E0E0E">
-        <Grid Padding="24" RowSpacing="24">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <StackLayout Grid.Row="0" Spacing="8">
-                <Label Text="Vehicle Management" TextColor="White" FontSize="28" FontAttributes="Bold" />
-                <Label Text="Add, edit, and manage vehicle registrations" TextColor="#CCCCCC" FontSize="16" />
-            </StackLayout>
-
-            <Border Grid.Row="1" BackgroundColor="#1A1A1A" StrokeThickness="0">
+            <Border BackgroundColor="#1A1A1A" StrokeThickness="0">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="16" />
                 </Border.StrokeShape>
-                <Border.Shadow>
-                    <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
-                </Border.Shadow>
                 <StackLayout Padding="24" Spacing="16">
+                    <Label Text="Vehicle Management" TextColor="White" FontSize="28" FontAttributes="Bold" />
+                    <Label Text="Add, edit, and manage vehicle registrations" TextColor="#CCCCCC" FontSize="16" />
                     <Label Text="VEHICLE DETAILS" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
                     <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="8" />
                         </Border.StrokeShape>
-                        <Entry x:Name="vehicleEntry" 
-                               Placeholder="Enter license number" 
-                               PlaceholderColor="#888"
-                               TextColor="White"
-                               BackgroundColor="Transparent"
-                               Margin="16,16"/>
+                        <Entry x:Name="vehicleEntry" Placeholder="Enter license number" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
                     </Border>
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                         <Button Grid.Column="0" x:Name="addVehicleButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddVehicleClicked" />
                         <Button Grid.Column="1" x:Name="updateVehicleButton" Text="UPDATE" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnUpdateVehicleClicked" IsEnabled="False" />
                         <Button Grid.Column="2" Text="CLEAR" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" Clicked="OnClearVehicleClicked" />
                     </Grid>
-                </StackLayout>
-            </Border>
-
-            <Border Grid.Row="2" BackgroundColor="#1A1A1A" StrokeThickness="0">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="16" />
-                </Border.StrokeShape>
-                <Border.Shadow>
-                    <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
-                </Border.Shadow>
-                <StackLayout Padding="24" Spacing="16">
                     <Label Text="VEHICLE LIST" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
                     <CollectionView x:Name="vehicleListView" SelectionMode="Single" SelectionChanged="OnVehicleSelected">
                         <CollectionView.ItemTemplate>
@@ -437,7 +240,7 @@
                     </CollectionView>
                 </StackLayout>
             </Border>
-        </Grid>
-    </ContentPage>
 
-</TabbedPage>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
