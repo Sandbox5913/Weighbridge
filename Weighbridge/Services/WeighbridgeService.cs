@@ -1,5 +1,5 @@
 using System.IO.Ports;
-using System.Text.RegularExpressions;
+using System.Text;
 using Weighbridge.Models;
 
 namespace Weighbridge.Services
@@ -9,6 +9,7 @@ namespace Weighbridge.Services
         private SerialPort _serialPort;
         private WeighbridgeConfig _config;
         private readonly WeightParserService _parserService;
+        private StringBuilder _serialDataBuffer = new StringBuilder();
 
         public event EventHandler<WeightReading>? DataReceived;
         public event EventHandler<string>? RawDataReceived;
@@ -86,17 +87,38 @@ namespace Weighbridge.Services
         {
             SerialPort sp = (SerialPort)sender;
             string indata = sp.ReadExisting();
+            _serialDataBuffer.Append(indata);
 
-            // Fire the raw data event for the settings page preview
-            RawDataReceived?.Invoke(this, indata);
-
-            var weightReading = _parserService.Parse(indata, _config.RegexString);
-            if (weightReading != null)
+            string bufferString = _serialDataBuffer.ToString();
+            // Look for any newline character (\n) or carriage return (\r)
+            int newlineIndex;
+            while ((newlineIndex = bufferString.IndexOfAny(new char[] { '\r', '\n' })) >= 0)
             {
-                // Fire the parsed data event for the main page
-                DataReceived?.Invoke(this, weightReading);
+                string line = bufferString.Substring(0, newlineIndex).Trim();
+                bufferString = bufferString.Substring(newlineIndex + 1);
+                // If the next character is also a newline character, remove it as well (to handle \r\n)
+                if (bufferString.Length > 0 && (bufferString[0] == '\r' || bufferString[0] == '\n'))
+                {
+                    bufferString = bufferString.Substring(1);
+                }
+
+
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    // Fire the raw data event for the settings page preview
+                    RawDataReceived?.Invoke(this, line);
+
+                    var weightReading = _parserService.Parse(line, _config.RegexString);
+                    if (weightReading != null)
+                    {
+                        // Fire the parsed data event for the main page
+                        DataReceived?.Invoke(this, weightReading);
+                    }
+                }
             }
+            _serialDataBuffer = new StringBuilder(bufferString);
         }
+
 
         public string[] GetAvailablePorts()
         {

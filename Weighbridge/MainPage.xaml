@@ -20,15 +20,7 @@
             </Grid.RowDefinitions>
 
 
-            <StackLayout Grid.Row="0" Spacing="8">
-                <Label Text="Weighbridge Control Center" 
-                       TextColor="White" 
-                       FontSize="32" 
-                       FontAttributes="Bold" />
-                <Label Text="Real-time weight monitoring and data management" 
-                       TextColor="#CCCCCC" 
-                       FontSize="16" />
-            </StackLayout>
+
 
 
             <Grid Grid.Row="1" ColumnDefinitions="1.2*,*" ColumnSpacing="24">
@@ -176,7 +168,7 @@
                                             ItemsSource="{Binding Vehicles}" 
                                             SelectedItem="{Binding SelectedVehicle}" 
                                             ItemDisplayBinding="{Binding LicenseNumber}"
-                                            Margin="16,0"/>
+                                            Margin="16,16"/>
                                 </Border>
                             </StackLayout>
 
@@ -194,7 +186,7 @@
                                             ItemsSource="{Binding Sites}" 
                                             SelectedItem="{Binding SelectedSourceSite}" 
                                             ItemDisplayBinding="{Binding Name}"
-                                            Margin="16,0"/>
+                                            Margin="16,16"/>
                                 </Border>
                                 <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                                     <Border.StrokeShape>
@@ -208,7 +200,7 @@
                                             ItemsSource="{Binding Sites}" 
                                             SelectedItem="{Binding SelectedDestinationSite}" 
                                             ItemDisplayBinding="{Binding Name}"
-                                            Margin="16,0"/>
+                                            Margin="16,16"/>
                                 </Border>
                             </StackLayout>
 
@@ -226,7 +218,7 @@
                                             ItemsSource="{Binding Items}" 
                                             SelectedItem="{Binding SelectedItem}" 
                                             ItemDisplayBinding="{Binding Name}"
-                                            Margin="16,0"/>
+                                            Margin="16,16"/>
                                 </Border>
                                 <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                                     <Border.StrokeShape>
@@ -240,7 +232,7 @@
                                             ItemsSource="{Binding Customers}" 
                                             SelectedItem="{Binding SelectedCustomer}" 
                                             ItemDisplayBinding="{Binding Name}"
-                                            Margin="16,0"/>
+                                            Margin="16,16"/>
                                 </Border>
                                 <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                                     <Border.StrokeShape>
@@ -254,7 +246,7 @@
                                             ItemsSource="{Binding Transports}" 
                                             SelectedItem="{Binding SelectedTransport}" 
                                             ItemDisplayBinding="{Binding Name}"
-                                            Margin="16,0"/>
+                                            Margin="16,16"/>
                                 </Border>
                                 <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                                     <Border.StrokeShape>
@@ -268,7 +260,7 @@
                                             ItemsSource="{Binding Drivers}" 
                                             SelectedItem="{Binding SelectedDriver}" 
                                             ItemDisplayBinding="{Binding Name}"
-                                            Margin="16,0"/>
+                                            Margin="16,16"/>
                                 </Border>
                             </StackLayout>
 

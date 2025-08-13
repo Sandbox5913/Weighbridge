@@ -45,7 +45,7 @@
                                             TextColor="White"
                                             TitleColor="#888"
                                             BackgroundColor="Transparent"
-                                            Margin="16,0"/>
+                                            Margin="16,16"/>
                                 </Border>
                             </StackLayout>
 
@@ -61,7 +61,7 @@
                                            PlaceholderColor="#888"
                                            TextColor="White"
                                            BackgroundColor="Transparent"
-                                           Margin="16,0"/>
+                                           Margin="16,16"/>
                                 </Border>
                             </StackLayout>
 
@@ -71,7 +71,7 @@
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="8" />
                                     </Border.StrokeShape>
-                                    <Entry x:Name="RegexEntry" Placeholder="Enter Regex" TextColor="White" BackgroundColor="Transparent" Margin="16,0"/>
+                                    <Entry x:Name="RegexEntry" Placeholder="Enter Regex" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
                                 </Border>
                             </StackLayout>
                         </StackLayout>

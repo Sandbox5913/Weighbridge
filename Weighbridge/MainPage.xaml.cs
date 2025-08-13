@@ -65,11 +65,6 @@ namespace Weighbridge
             _weighbridgeService = weighbridgeService;
             _databaseService = databaseService;
 
-            if (_weighbridgeService != null)
-            {
-                _weighbridgeService.DataReceived += OnDataReceived;
-            }
-
             // Initialize with some default values for demonstration
             EntranceWeight = "0";
             ExitWeight = "0";
@@ -82,6 +77,10 @@ namespace Weighbridge
         protected override void OnAppearing()
         {
             base.OnAppearing();
+            if (_weighbridgeService != null)
+            {
+                _weighbridgeService.DataReceived += OnDataReceived;
+            }
             try
             {
                 var config = _weighbridgeService.GetConfig();
@@ -97,6 +96,10 @@ namespace Weighbridge
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
+            if (_weighbridgeService != null)
+            {
+                _weighbridgeService.DataReceived -= OnDataReceived;
+            }
             _weighbridgeService?.Close();
         }
 

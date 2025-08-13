@@ -54,9 +54,15 @@ namespace Weighbridge.Pages
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                SerialOutputLabel.Text = data;
+                // Append new data to see the stream, and keep it to a reasonable length
+                SerialOutputLabel.Text += data + Environment.NewLine;
+                if (SerialOutputLabel.Text.Length > 500)
+                {
+                    SerialOutputLabel.Text = SerialOutputLabel.Text.Substring(SerialOutputLabel.Text.Length - 500);
+                }
             });
         }
+
 
         private async void OnSaveClicked(object sender, EventArgs e)
         {

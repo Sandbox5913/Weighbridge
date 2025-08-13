@@ -39,7 +39,7 @@
                                PlaceholderColor="#888"
                                TextColor="White"
                                BackgroundColor="Transparent"
-                               Margin="16,0"/>
+                               Margin="16,16"/>
                     </Border>
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                         <Button Grid.Column="0" x:Name="addCustomerButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddCustomerClicked" />
@@ -112,7 +112,7 @@
                                PlaceholderColor="#888"
                                TextColor="White"
                                BackgroundColor="Transparent"
-                               Margin="16,0"/>
+                               Margin="16,16"/>
                     </Border>
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                         <Button Grid.Column="0" x:Name="addDriverButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddDriverClicked" />
@@ -184,7 +184,7 @@
                                PlaceholderColor="#888"
                                TextColor="White"
                                BackgroundColor="Transparent"
-                               Margin="16,0"/>
+                               Margin="16,16"/>
                     </Border>
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                         <Button Grid.Column="0" x:Name="addItemButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddItemClicked" />
@@ -256,7 +256,7 @@
                                PlaceholderColor="#888"
                                TextColor="White"
                                BackgroundColor="Transparent"
-                               Margin="16,0"/>
+                               Margin="16,16"/>
                     </Border>
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                         <Button Grid.Column="0" x:Name="addSiteButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddSiteClicked" />
@@ -328,7 +328,7 @@
                                PlaceholderColor="#888"
                                TextColor="White"
                                BackgroundColor="Transparent"
-                               Margin="16,0"/>
+                               Margin="16,16"/>
                     </Border>
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                         <Button Grid.Column="0" x:Name="addTransportButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddTransportClicked" />
@@ -400,7 +400,7 @@
                                PlaceholderColor="#888"
                                TextColor="White"
                                BackgroundColor="Transparent"
-                               Margin="16,0"/>
+                               Margin="16,16"/>
                     </Border>
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                         <Button Grid.Column="0" x:Name="addVehicleButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddVehicleClicked" />
