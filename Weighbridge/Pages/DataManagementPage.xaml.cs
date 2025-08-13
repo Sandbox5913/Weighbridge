@@ -34,19 +34,6 @@ public partial class DataManagementPage : TabbedPage
         }
     }
 
-    private async void OnTestDatabaseClicked(object sender, EventArgs e)
-    {
-        try
-        {
-            var customers = await _databaseService.GetItemsAsync<Customer>();
-            await DisplayAlert("Database Test", $"Database connected successfully! Found {customers.Count} customers.", "OK");
-        }
-        catch (Exception ex)
-        {
-            await DisplayAlert("Database Error", $"Error: {ex.Message}", "OK");
-        }
-    }
-
     protected override async void OnAppearing()
     {
         base.OnAppearing();
@@ -66,14 +53,21 @@ public partial class DataManagementPage : TabbedPage
     #region Customers
     private async Task LoadCustomers()
     {
-        _allCustomers = await _databaseService.GetItemsAsync<Customer>();
-        customerListView.ItemsSource = _allCustomers;
+        try
+        {
+            _allCustomers = await _databaseService.GetItemsAsync<Customer>();
+            customerListView.ItemsSource = _allCustomers;
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to load customers: {ex.Message}", "OK");
+        }
     }
 
     private void OnCustomerSelected(object sender, SelectionChangedEventArgs e)
     {
         _selectedCustomer = e.CurrentSelection.FirstOrDefault() as Customer;
-        customerEntry.Text = _selectedCustomer?.Name;
+        customerEntry.Text = _selectedCustomer?.Name ?? string.Empty;
         addCustomerButton.IsEnabled = _selectedCustomer == null;
         updateCustomerButton.IsEnabled = _selectedCustomer != null;
     }
@@ -86,7 +80,7 @@ public partial class DataManagementPage : TabbedPage
             return;
         }
 
-        var customer = new Customer { Name = customerEntry.Text };
+        var customer = new Customer { Name = customerEntry.Text.Trim() };
         try
         {
             await _databaseService.SaveItemAsync(customer);
@@ -105,7 +99,7 @@ public partial class DataManagementPage : TabbedPage
     {
         if (_selectedCustomer != null && !string.IsNullOrWhiteSpace(customerEntry.Text))
         {
-            _selectedCustomer.Name = customerEntry.Text;
+            _selectedCustomer.Name = customerEntry.Text.Trim();
             try
             {
                 await _databaseService.SaveItemAsync(_selectedCustomer);
@@ -119,13 +113,17 @@ public partial class DataManagementPage : TabbedPage
                 await DisplayAlert("Error", $"Failed to update customer: {ex.Message}", "OK");
             }
         }
+        else
+        {
+            await DisplayAlert("Error", "Please enter a customer name.", "OK");
+        }
     }
 
     private async void OnDeleteCustomerClicked(object sender, EventArgs e)
     {
         if (sender is Button button && button.CommandParameter is Customer customer)
         {
-            bool answer = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete {customer.Name}?", "Yes", "No");
+            bool answer = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete '{customer.Name}'?", "Yes", "No");
             if (answer)
             {
                 try
@@ -157,14 +155,21 @@ public partial class DataManagementPage : TabbedPage
     #region Drivers
     private async Task LoadDrivers()
     {
-        _allDrivers = await _databaseService.GetItemsAsync<Driver>();
-        driverListView.ItemsSource = _allDrivers;
+        try
+        {
+            _allDrivers = await _databaseService.GetItemsAsync<Driver>();
+            driverListView.ItemsSource = _allDrivers;
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to load drivers: {ex.Message}", "OK");
+        }
     }
 
     private void OnDriverSelected(object sender, SelectionChangedEventArgs e)
     {
         _selectedDriver = e.CurrentSelection.FirstOrDefault() as Driver;
-        driverEntry.Text = _selectedDriver?.Name;
+        driverEntry.Text = _selectedDriver?.Name ?? string.Empty;
         addDriverButton.IsEnabled = _selectedDriver == null;
         updateDriverButton.IsEnabled = _selectedDriver != null;
     }
@@ -177,7 +182,7 @@ public partial class DataManagementPage : TabbedPage
             return;
         }
 
-        var driver = new Driver { Name = driverEntry.Text };
+        var driver = new Driver { Name = driverEntry.Text.Trim() };
         try
         {
             await _databaseService.SaveItemAsync(driver);
@@ -196,7 +201,7 @@ public partial class DataManagementPage : TabbedPage
     {
         if (_selectedDriver != null && !string.IsNullOrWhiteSpace(driverEntry.Text))
         {
-            _selectedDriver.Name = driverEntry.Text;
+            _selectedDriver.Name = driverEntry.Text.Trim();
             try
             {
                 await _databaseService.SaveItemAsync(_selectedDriver);
@@ -210,13 +215,17 @@ public partial class DataManagementPage : TabbedPage
                 await DisplayAlert("Error", $"Failed to update driver: {ex.Message}", "OK");
             }
         }
+        else
+        {
+            await DisplayAlert("Error", "Please enter a driver name.", "OK");
+        }
     }
 
     private async void OnDeleteDriverClicked(object sender, EventArgs e)
     {
         if (sender is Button button && button.CommandParameter is Driver driver)
         {
-            bool answer = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete {driver.Name}?", "Yes", "No");
+            bool answer = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete '{driver.Name}'?", "Yes", "No");
             if (answer)
             {
                 try
@@ -248,14 +257,21 @@ public partial class DataManagementPage : TabbedPage
     #region Items
     private async Task LoadItems()
     {
-        _allItems = await _databaseService.GetItemsAsync<Item>();
-        itemListView.ItemsSource = _allItems;
+        try
+        {
+            _allItems = await _databaseService.GetItemsAsync<Item>();
+            itemListView.ItemsSource = _allItems;
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to load items: {ex.Message}", "OK");
+        }
     }
 
     private void OnItemSelected(object sender, SelectionChangedEventArgs e)
     {
         _selectedItem = e.CurrentSelection.FirstOrDefault() as Item;
-        itemEntry.Text = _selectedItem?.Name;
+        itemEntry.Text = _selectedItem?.Name ?? string.Empty;
         addItemButton.IsEnabled = _selectedItem == null;
         updateItemButton.IsEnabled = _selectedItem != null;
     }
@@ -264,22 +280,22 @@ public partial class DataManagementPage : TabbedPage
     {
         if (string.IsNullOrWhiteSpace(itemEntry.Text))
         {
-            await DisplayAlert("Error", "Please enter an item name.", "OK");
+            await DisplayAlert("Error", "Please enter a material name.", "OK");
             return;
         }
 
-        var item = new Item { Name = itemEntry.Text };
+        var item = new Item { Name = itemEntry.Text.Trim() };
         try
         {
             await _databaseService.SaveItemAsync(item);
-            await DisplayAlert("Success", "Item added successfully.", "OK");
+            await DisplayAlert("Success", "Material added successfully.", "OK");
 
             ClearItemSelection();
             await LoadItems();
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Error", $"Failed to add item: {ex.Message}", "OK");
+            await DisplayAlert("Error", $"Failed to add material: {ex.Message}", "OK");
         }
     }
 
@@ -287,19 +303,23 @@ public partial class DataManagementPage : TabbedPage
     {
         if (_selectedItem != null && !string.IsNullOrWhiteSpace(itemEntry.Text))
         {
-            _selectedItem.Name = itemEntry.Text;
+            _selectedItem.Name = itemEntry.Text.Trim();
             try
             {
                 await _databaseService.SaveItemAsync(_selectedItem);
-                await DisplayAlert("Success", "Item updated successfully.", "OK");
+                await DisplayAlert("Success", "Material updated successfully.", "OK");
 
                 ClearItemSelection();
                 await LoadItems();
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Failed to update item: {ex.Message}", "OK");
+                await DisplayAlert("Error", $"Failed to update material: {ex.Message}", "OK");
             }
+        }
+        else
+        {
+            await DisplayAlert("Error", "Please enter a material name.", "OK");
         }
     }
 
@@ -307,7 +327,7 @@ public partial class DataManagementPage : TabbedPage
     {
         if (sender is Button button && button.CommandParameter is Item item)
         {
-            bool answer = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete {item.Name}?", "Yes", "No");
+            bool answer = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete '{item.Name}'?", "Yes", "No");
             if (answer)
             {
                 try
@@ -318,7 +338,7 @@ public partial class DataManagementPage : TabbedPage
                 }
                 catch (Exception ex)
                 {
-                    await DisplayAlert("Error", $"Failed to delete item: {ex.Message}", "OK");
+                    await DisplayAlert("Error", $"Failed to delete material: {ex.Message}", "OK");
                 }
             }
         }
@@ -339,14 +359,21 @@ public partial class DataManagementPage : TabbedPage
     #region Sites
     private async Task LoadSites()
     {
-        _allSites = await _databaseService.GetItemsAsync<Site>();
-        siteListView.ItemsSource = _allSites;
+        try
+        {
+            _allSites = await _databaseService.GetItemsAsync<Site>();
+            siteListView.ItemsSource = _allSites;
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to load sites: {ex.Message}", "OK");
+        }
     }
 
     private void OnSiteSelected(object sender, SelectionChangedEventArgs e)
     {
         _selectedSite = e.CurrentSelection.FirstOrDefault() as Site;
-        siteEntry.Text = _selectedSite?.Name;
+        siteEntry.Text = _selectedSite?.Name ?? string.Empty;
         addSiteButton.IsEnabled = _selectedSite == null;
         updateSiteButton.IsEnabled = _selectedSite != null;
     }
@@ -359,7 +386,7 @@ public partial class DataManagementPage : TabbedPage
             return;
         }
 
-        var site = new Site { Name = siteEntry.Text };
+        var site = new Site { Name = siteEntry.Text.Trim() };
         try
         {
             await _databaseService.SaveItemAsync(site);
@@ -378,7 +405,7 @@ public partial class DataManagementPage : TabbedPage
     {
         if (_selectedSite != null && !string.IsNullOrWhiteSpace(siteEntry.Text))
         {
-            _selectedSite.Name = siteEntry.Text;
+            _selectedSite.Name = siteEntry.Text.Trim();
             try
             {
                 await _databaseService.SaveItemAsync(_selectedSite);
@@ -392,13 +419,17 @@ public partial class DataManagementPage : TabbedPage
                 await DisplayAlert("Error", $"Failed to update site: {ex.Message}", "OK");
             }
         }
+        else
+        {
+            await DisplayAlert("Error", "Please enter a site name.", "OK");
+        }
     }
 
     private async void OnDeleteSiteClicked(object sender, EventArgs e)
     {
         if (sender is Button button && button.CommandParameter is Site site)
         {
-            bool answer = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete {site.Name}?", "Yes", "No");
+            bool answer = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete '{site.Name}'?", "Yes", "No");
             if (answer)
             {
                 try
@@ -430,14 +461,21 @@ public partial class DataManagementPage : TabbedPage
     #region Transports
     private async Task LoadTransports()
     {
-        _allTransports = await _databaseService.GetItemsAsync<Transport>();
-        transportListView.ItemsSource = _allTransports;
+        try
+        {
+            _allTransports = await _databaseService.GetItemsAsync<Transport>();
+            transportListView.ItemsSource = _allTransports;
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to load transports: {ex.Message}", "OK");
+        }
     }
 
     private void OnTransportSelected(object sender, SelectionChangedEventArgs e)
     {
         _selectedTransport = e.CurrentSelection.FirstOrDefault() as Transport;
-        transportEntry.Text = _selectedTransport?.Name;
+        transportEntry.Text = _selectedTransport?.Name ?? string.Empty;
         addTransportButton.IsEnabled = _selectedTransport == null;
         updateTransportButton.IsEnabled = _selectedTransport != null;
     }
@@ -446,22 +484,22 @@ public partial class DataManagementPage : TabbedPage
     {
         if (string.IsNullOrWhiteSpace(transportEntry.Text))
         {
-            await DisplayAlert("Error", "Please enter a transport name.", "OK");
+            await DisplayAlert("Error", "Please enter a transport company name.", "OK");
             return;
         }
 
-        var transport = new Transport { Name = transportEntry.Text };
+        var transport = new Transport { Name = transportEntry.Text.Trim() };
         try
         {
             await _databaseService.SaveItemAsync(transport);
-            await DisplayAlert("Success", "Transport added successfully.", "OK");
+            await DisplayAlert("Success", "Transport company added successfully.", "OK");
 
             ClearTransportSelection();
             await LoadTransports();
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Error", $"Failed to add transport: {ex.Message}", "OK");
+            await DisplayAlert("Error", $"Failed to add transport company: {ex.Message}", "OK");
         }
     }
 
@@ -469,19 +507,23 @@ public partial class DataManagementPage : TabbedPage
     {
         if (_selectedTransport != null && !string.IsNullOrWhiteSpace(transportEntry.Text))
         {
-            _selectedTransport.Name = transportEntry.Text;
+            _selectedTransport.Name = transportEntry.Text.Trim();
             try
             {
                 await _databaseService.SaveItemAsync(_selectedTransport);
-                await DisplayAlert("Success", "Transport updated successfully.", "OK");
+                await DisplayAlert("Success", "Transport company updated successfully.", "OK");
 
                 ClearTransportSelection();
                 await LoadTransports();
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Failed to update transport: {ex.Message}", "OK");
+                await DisplayAlert("Error", $"Failed to update transport company: {ex.Message}", "OK");
             }
+        }
+        else
+        {
+            await DisplayAlert("Error", "Please enter a transport company name.", "OK");
         }
     }
 
@@ -489,7 +531,7 @@ public partial class DataManagementPage : TabbedPage
     {
         if (sender is Button button && button.CommandParameter is Transport transport)
         {
-            bool answer = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete {transport.Name}?", "Yes", "No");
+            bool answer = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete '{transport.Name}'?", "Yes", "No");
             if (answer)
             {
                 try
@@ -500,7 +542,7 @@ public partial class DataManagementPage : TabbedPage
                 }
                 catch (Exception ex)
                 {
-                    await DisplayAlert("Error", $"Failed to delete transport: {ex.Message}", "OK");
+                    await DisplayAlert("Error", $"Failed to delete transport company: {ex.Message}", "OK");
                 }
             }
         }
@@ -521,14 +563,21 @@ public partial class DataManagementPage : TabbedPage
     #region Vehicles
     private async Task LoadVehicles()
     {
-        _allVehicles = await _databaseService.GetItemsAsync<Vehicle>();
-        vehicleListView.ItemsSource = _allVehicles;
+        try
+        {
+            _allVehicles = await _databaseService.GetItemsAsync<Vehicle>();
+            vehicleListView.ItemsSource = _allVehicles;
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to load vehicles: {ex.Message}", "OK");
+        }
     }
 
     private void OnVehicleSelected(object sender, SelectionChangedEventArgs e)
     {
         _selectedVehicle = e.CurrentSelection.FirstOrDefault() as Vehicle;
-        vehicleEntry.Text = _selectedVehicle?.LicenseNumber;
+        vehicleEntry.Text = _selectedVehicle?.LicenseNumber ?? string.Empty;
         addVehicleButton.IsEnabled = _selectedVehicle == null;
         updateVehicleButton.IsEnabled = _selectedVehicle != null;
     }
@@ -541,7 +590,7 @@ public partial class DataManagementPage : TabbedPage
             return;
         }
 
-        var vehicle = new Vehicle { LicenseNumber = vehicleEntry.Text };
+        var vehicle = new Vehicle { LicenseNumber = vehicleEntry.Text.Trim().ToUpper() };
         try
         {
             await _databaseService.SaveItemAsync(vehicle);
@@ -560,7 +609,7 @@ public partial class DataManagementPage : TabbedPage
     {
         if (_selectedVehicle != null && !string.IsNullOrWhiteSpace(vehicleEntry.Text))
         {
-            _selectedVehicle.LicenseNumber = vehicleEntry.Text;
+            _selectedVehicle.LicenseNumber = vehicleEntry.Text.Trim().ToUpper();
             try
             {
                 await _databaseService.SaveItemAsync(_selectedVehicle);
@@ -574,13 +623,17 @@ public partial class DataManagementPage : TabbedPage
                 await DisplayAlert("Error", $"Failed to update vehicle: {ex.Message}", "OK");
             }
         }
+        else
+        {
+            await DisplayAlert("Error", "Please enter a vehicle license number.", "OK");
+        }
     }
 
     private async void OnDeleteVehicleClicked(object sender, EventArgs e)
     {
         if (sender is Button button && button.CommandParameter is Vehicle vehicle)
         {
-            bool answer = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete {vehicle.LicenseNumber}?", "Yes", "No");
+            bool answer = await DisplayAlert("Confirm Delete", $"Are you sure you want to delete '{vehicle.LicenseNumber}'?", "Yes", "No");
             if (answer)
             {
                 try
