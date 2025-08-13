@@ -9,7 +9,24 @@ namespace Weighbridge
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new AppShell());
+            var window = new Window(new AppShell());
+
+#if WINDOWS
+            window.Created += (s, e) =>
+            {
+                var nativeWindow = window.Handler.PlatformView as Microsoft.UI.Xaml.Window;
+                if (nativeWindow != null)
+                {
+                    var appWindow = nativeWindow.AppWindow;
+                    if (appWindow != null)
+                    {
+                        appWindow.SetPresenter(Microsoft.UI.Windowing.AppWindowPresenterKind.FullScreen);
+                    }
+                }
+            };
+#endif
+
+            return window;
         }
     }
 }

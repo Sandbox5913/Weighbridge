@@ -17,6 +17,7 @@ namespace Weighbridge.Services
         {
             _data = data;
             _template = template;
+            QuestPDF.Settings.License = LicenseType.Community;
         }
 
         public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
@@ -26,8 +27,8 @@ namespace Weighbridge.Services
             container
                 .Page(page =>
                 {
-                    page.Size(PageSizes.A4);
-                    page.Margin(50);
+                    page.Size(_template.PageWidthMm, _template.PageHeightMm, Unit.Millimetre);
+                    page.Margin(25);
 
                     page.Header().Element(ComposeHeader);
                     page.Content().Element(ComposeContent);
@@ -41,22 +42,19 @@ namespace Weighbridge.Services
 
         void ComposeHeader(IContainer container)
         {
-            var titleStyle = TextStyle.Default.FontSize(20).SemiBold().FontColor(QuestPDF.Helpers.Colors.Blue.Medium);
+            var titleStyle = TextStyle.Default.FontSize(_template.HeaderFontSize).SemiBold().FontColor(QuestPDF.Helpers.Colors.Blue.Medium);
 
-            container.Row(row =>
+            container.Column(column =>
             {
                 if (!string.IsNullOrEmpty(_template.LogoPath) && File.Exists(_template.LogoPath))
                 {
                     var imageData = File.ReadAllBytes(_template.LogoPath);
-                    row.RelativeItem().Image(imageData).FitArea();
+                    column.Item().AlignCenter().Image(imageData).FitArea();
                 }
 
-                row.RelativeItem().Column(column =>
-                {
-                    column.Item().Text("Weighbridge Docket").Style(titleStyle);
-                    if (_template.ShowTimestamp)
-                        column.Item().Text(_data.Timestamp.ToString("g"));
-                });
+                column.Item().AlignCenter().Text(_template.HeaderText).Style(titleStyle);
+                if (_template.ShowTimestamp)
+                    column.Item().AlignCenter().Text(_data.Timestamp.ToString("g"));
             });
         }
 
@@ -82,8 +80,8 @@ namespace Weighbridge.Services
 
         void AddRow(RowDescriptor row, string label, string? value)
         {
-            row.RelativeItem(1).Text(label).SemiBold();
-            row.RelativeItem(2).Text(value ?? string.Empty);
+            row.RelativeItem(1).Text(label).FontSize(_template.BodyFontSize).SemiBold();
+            row.RelativeItem(2).Text(value ?? string.Empty).FontSize(_template.BodyFontSize);
         }
     }
 }

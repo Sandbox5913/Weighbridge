@@ -17,5 +17,14 @@ namespace Weighbridge.Services
 
             return filePath;
         }
+
+        public async Task<Stream> GeneratePdfToStreamAsync(DocketData data, DocketTemplate template)
+        {
+            var document = new DocketDocument(data, template);
+            var stream = new MemoryStream();
+            await Task.Run(() => document.GeneratePdf(stream));
+            stream.Position = 0;
+            return stream;
+        }
     }
 }

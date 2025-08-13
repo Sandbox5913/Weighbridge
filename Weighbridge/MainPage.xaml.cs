@@ -47,7 +47,7 @@ namespace Weighbridge
         public ObservableCollection<Customer> Customers { get; set; } = new();
         public ObservableCollection<Transport> Transports { get; set; } = new();
         public ObservableCollection<Driver> Drivers { get; set; } = new();
-
+        public bool IsStabilityDetectionEnabled { get; private set; }
         // --- Selected Item Properties for Pickers ---
         private Vehicle? _selectedVehicle;
         public Vehicle? SelectedVehicle { get => _selectedVehicle; set => SetProperty(ref _selectedVehicle, value); }
@@ -92,7 +92,7 @@ namespace Weighbridge
             // Initialize database and load data
             _ = InitializeAsync();
         }
-
+        public bool IsSaveAndPrintEnabled => !IsStabilityDetectionEnabled || IsWeightStable;
         protected override void OnAppearing()
         {
             base.OnAppearing();
@@ -103,6 +103,11 @@ namespace Weighbridge
             }
             try
             {
+                // Read the stability setting from preferences
+                IsStabilityDetectionEnabled = Preferences.Get("StabilityEnabled", true);
+                OnPropertyChanged(nameof(IsStabilityDetectionEnabled));
+                OnPropertyChanged(nameof(IsSaveAndPrintEnabled));
+
                 var config = _weighbridgeService.GetConfig();
                 ConnectionStatusLabel.Text = $"{config.PortName} • {config.BaudRate} bps";
                 _weighbridgeService?.Open();
@@ -111,6 +116,26 @@ namespace Weighbridge
             {
                 DisplayAlert("Error", ex.Message, "OK");
             }
+        }
+
+        private void OnStabilityChanged(object? sender, bool isStable)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                IsWeightStable = isStable;
+                if (isStable)
+                {
+                    StabilityStatus = "STABLE";
+                    StabilityColor = Colors.Green;
+                }
+                else
+                {
+                    StabilityStatus = "UNSTABLE";
+                    StabilityColor = Colors.Red;
+                }
+                // Notify the UI that the button's state may have changed
+                OnPropertyChanged(nameof(IsSaveAndPrintEnabled));
+            });
         }
 
         protected override void OnDisappearing()
@@ -188,23 +213,7 @@ namespace Weighbridge
             });
         }
 
-        private void OnStabilityChanged(object? sender, bool isStable)
-        {
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                IsWeightStable = isStable;
-                if (isStable)
-                {
-                    StabilityStatus = "STABLE";
-                    StabilityColor = Microsoft.Maui.Graphics.Colors.Green;
-                }
-                else
-                {
-                    StabilityStatus = "UNSTABLE";
-                    StabilityColor = Microsoft.Maui.Graphics.Colors.Red;
-                }
-            });
-        }
+   
 
         private async void OnSettingsClicked(object sender, EventArgs e)
         {
@@ -235,6 +244,8 @@ namespace Weighbridge
             // Logic to handle "To Yard" action
         }
 
+        // ... existing using statements
+
         private async void OnSaveAndPrintClicked(object sender, EventArgs e)
         {
             var docketData = new DocketData
@@ -249,10 +260,39 @@ namespace Weighbridge
                 Customer = this.SelectedCustomer?.Name,
                 TransportCompany = this.SelectedTransport?.Name,
                 Driver = this.SelectedDriver?.Name,
-                Remarks = this.Remarks,
+                Remarks = this.RemarksEditor.Text,
                 Timestamp = DateTime.Now
             };
 
+            // Save the docket to the database
+            try
+            {
+                var docket = new Docket
+                {
+                    EntranceWeight = decimal.TryParse(EntranceWeight, out var entrance) ? entrance : 0,
+                    ExitWeight = decimal.TryParse(ExitWeight, out var exit) ? exit : 0,
+                    NetWeight = decimal.TryParse(NetWeight, out var net) ? net : 0,
+                    VehicleId = SelectedVehicle?.Id,
+                    SourceSiteId = SelectedSourceSite?.Id,
+                    DestinationSiteId = SelectedDestinationSite?.Id,
+                    ItemId = SelectedItem?.Id,
+                    CustomerId = SelectedCustomer?.Id,
+                    TransportId = SelectedTransport?.Id,
+                    DriverId = SelectedDriver?.Id,
+                    Remarks = Remarks,
+                    Timestamp = docketData.Timestamp
+                };
+
+                await _databaseService.SaveItemAsync(docket);
+                await DisplayAlert("Success", "Docket has been saved successfully.", "OK");
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Database Error", $"Failed to save the docket: {ex.Message}", "OK");
+                return; // Stop execution if saving fails
+            }
+
+            // Proceed with printing
             var templateJson = Preferences.Get("DocketTemplate", string.Empty);
             var docketTemplate = !string.IsNullOrEmpty(templateJson)
                 ? JsonSerializer.Deserialize<DocketTemplate>(templateJson) ?? new DocketTemplate()

@@ -16,13 +16,21 @@
             <Button Text="Select Logo" Clicked="OnSelectLogoClicked" />
             <Image x:Name="LogoImage" HeightRequest="100" />
 
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <Label Text="Show Entrance Weight" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
-                <Switch x:Name="ShowEntranceWeightSwitch" Grid.Column="1" />
+            <Entry x:Name="HeaderTextEntry" Placeholder="Docket Header Text" TextColor="White" />
+
+            <Grid ColumnDefinitions="*,*">
+                <Entry x:Name="PageWidthEntry" Placeholder="Width (mm)" Keyboard="Numeric" TextColor="White" />
+                <Entry x:Name="PageHeightEntry" Grid.Column="1" Placeholder="Height (mm)" Keyboard="Numeric" TextColor="White" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*">
+                <Entry x:Name="HeaderFontSizeEntry" Placeholder="Header Font Size" Keyboard="Numeric" TextColor="White" />
+                <Entry x:Name="BodyFontSizeEntry" Grid.Column="1" Placeholder="Body Font Size" Keyboard="Numeric" TextColor="White" />
+            </Grid>
+
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="10">
+                <Label Text="Show Entrance Weight" Grid.Row="0" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
+                <Switch x:Name="ShowEntranceWeightSwitch" Grid.Row="0" Grid.Column="1" />
                 <Label Text="Show Exit Weight" Grid.Row="1" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
                 <Switch x:Name="ShowExitWeightSwitch" Grid.Row="1" Grid.Column="1" />
                 <Label Text="Show Net Weight" Grid.Row="2" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
@@ -46,7 +54,7 @@
                 <Label Text="Show Timestamp" Grid.Row="11" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
                 <Switch x:Name="ShowTimestampSwitch" Grid.Row="11" Grid.Column="1" />
             </Grid>
-
+            <Button Text="Show Print Preview" Clicked="OnShowPrintPreviewClicked" />
             <Button Text="Save Settings" Clicked="OnSaveClicked" />
         </VerticalStackLayout>
     </ScrollView>

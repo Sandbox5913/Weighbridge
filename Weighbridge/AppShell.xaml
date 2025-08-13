@@ -7,21 +7,23 @@
     xmlns:pages="clr-namespace:Weighbridge.Pages"
     Title="Weighbridge">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
-
-    <FlyoutItem Title="Settings">
+    <TabBar>
         <ShellContent
+            Title="Home"
+            ContentTemplate="{DataTemplate local:MainPage}"
+            Route="MainPage" />
+        <ShellContent
+            Title="Settings"
             ContentTemplate="{DataTemplate pages:SettingsPage}"
             Route="SettingsPage" />
-    </FlyoutItem>
-
-    <FlyoutItem Title="Data Management">
         <ShellContent
+            Title="Data Management"
             ContentTemplate="{DataTemplate pages:DataManagementPage}"
             Route="DataManagementPage" />
-    </FlyoutItem>
+        <ShellContent
+            Title="Print Settings"
+            ContentTemplate="{DataTemplate pages:PrintSettingsPage}"
+            Route="PrintSettingsPage" />
+    </TabBar>
 
 </Shell>

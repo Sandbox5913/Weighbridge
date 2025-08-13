@@ -1,15 +1,18 @@
 using Weighbridge.Models;
 using System.Text.Json;
+using Weighbridge.Services;
 
 namespace Weighbridge.Pages
 {
     public partial class PrintSettingsPage : ContentPage
     {
         private DocketTemplate _template = new();
+        private readonly DocketService _docketService;
 
-        public PrintSettingsPage()
+        public PrintSettingsPage(DocketService docketService)
         {
             InitializeComponent();
+            _docketService = docketService;
             LoadSettings();
         }
 
@@ -20,6 +23,12 @@ namespace Weighbridge.Pages
             {
                 _template = JsonSerializer.Deserialize<DocketTemplate>(templateJson) ?? new DocketTemplate();
             }
+
+            HeaderTextEntry.Text = _template.HeaderText;
+            PageWidthEntry.Text = _template.PageWidthMm.ToString();
+            PageHeightEntry.Text = _template.PageHeightMm.ToString();
+            HeaderFontSizeEntry.Text = _template.HeaderFontSize.ToString();
+            BodyFontSizeEntry.Text = _template.BodyFontSize.ToString();
 
             ShowEntranceWeightSwitch.IsToggled = _template.ShowEntranceWeight;
             ShowExitWeightSwitch.IsToggled = _template.ShowExitWeight;
@@ -57,6 +66,24 @@ namespace Weighbridge.Pages
 
         private void OnSaveClicked(object sender, EventArgs e)
         {
+            _template.HeaderText = HeaderTextEntry.Text;
+            if (float.TryParse(PageWidthEntry.Text, out float width))
+            {
+                _template.PageWidthMm = width;
+            }
+            if (float.TryParse(PageHeightEntry.Text, out float height))
+            {
+                _template.PageHeightMm = height;
+            }
+            if (float.TryParse(HeaderFontSizeEntry.Text, out float headerFontSize))
+            {
+                _template.HeaderFontSize = headerFontSize;
+            }
+            if (float.TryParse(BodyFontSizeEntry.Text, out float bodyFontSize))
+            {
+                _template.BodyFontSize = bodyFontSize;
+            }
+
             _template.ShowEntranceWeight = ShowEntranceWeightSwitch.IsToggled;
             _template.ShowExitWeight = ShowExitWeightSwitch.IsToggled;
             _template.ShowNetWeight = ShowNetWeightSwitch.IsToggled;
@@ -74,6 +101,53 @@ namespace Weighbridge.Pages
             Preferences.Set("DocketTemplate", templateJson);
 
             DisplayAlert("Success", "Print settings saved.", "OK");
+        }
+
+        private async void OnShowPrintPreviewClicked(object sender, EventArgs e)
+        {
+            var docketData = new DocketData
+            {
+                EntranceWeight = "12345",
+                ExitWeight = "54321",
+                NetWeight = "41976",
+                VehicleLicense = "PREVIEW123",
+                SourceSite = "Source Site Preview",
+                DestinationSite = "Destination Site Preview",
+                Material = "Material Preview",
+                Customer = "Customer Preview",
+                TransportCompany = "Transport Company Preview",
+                Driver = "Driver Preview",
+                Remarks = "This is a preview of the remarks.",
+                Timestamp = DateTime.Now
+            };
+
+            var template = new DocketTemplate
+            {
+                LogoPath = _template.LogoPath,
+                HeaderText = HeaderTextEntry.Text,
+                PageWidthMm = float.TryParse(PageWidthEntry.Text, out float width) ? width : 210,
+                PageHeightMm = float.TryParse(PageHeightEntry.Text, out float height) ? height : 297,
+                HeaderFontSize = float.TryParse(HeaderFontSizeEntry.Text, out float headerFontSize) ? headerFontSize : 20,
+                BodyFontSize = float.TryParse(BodyFontSizeEntry.Text, out float bodyFontSize) ? bodyFontSize : 12,
+                ShowEntranceWeight = ShowEntranceWeightSwitch.IsToggled,
+                ShowExitWeight = ShowExitWeightSwitch.IsToggled,
+                ShowNetWeight = ShowNetWeightSwitch.IsToggled,
+                ShowVehicleLicense = ShowVehicleLicenseSwitch.IsToggled,
+                ShowSourceSite = ShowSourceSiteSwitch.IsToggled,
+                ShowDestinationSite = ShowDestinationSiteSwitch.IsToggled,
+                ShowMaterial = ShowMaterialSwitch.IsToggled,
+                ShowCustomer = ShowCustomerSwitch.IsToggled,
+                ShowTransportCompany = ShowTransportCompanySwitch.IsToggled,
+                ShowDriver = ShowDriverSwitch.IsToggled,
+                ShowRemarks = ShowRemarksSwitch.IsToggled,
+                ShowTimestamp = ShowTimestampSwitch.IsToggled
+            };
+
+            var filePath = await _docketService.GeneratePdfAsync(docketData, template);
+            await Launcher.OpenAsync(new OpenFileRequest
+            {
+                File = new ReadOnlyFile(filePath)
+            });
         }
     }
 }

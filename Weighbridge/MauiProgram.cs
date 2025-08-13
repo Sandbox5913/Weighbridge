@@ -32,7 +32,7 @@ namespace Weighbridge
             builder.Services.AddTransient<SettingsPage>();
             builder.Services.AddTransient<DataManagementPage>();
             builder.Services.AddTransient<PrintSettingsPage>();
-
+            builder.Services.AddTransient<LoadsPage>();
 
             return builder.Build();
         }

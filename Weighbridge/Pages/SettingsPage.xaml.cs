@@ -48,9 +48,6 @@ namespace Weighbridge.Pages
             PortPicker.SelectedItem = Preferences.Get("PortName", "COM1");
             BaudRateEntry.Text = Preferences.Get("BaudRate", "9600");
             RegexEntry.Text = Preferences.Get("RegexString", @"(?<sign>[+-])?(?<num>\d+(?:\.\d+)?)[ ]*(?<unit>[a-zA-Z]{1,4})");
-            StabilitySwitch.IsToggled = Preferences.Get("StabilityEnabled", true);
-            StableTimeEntry.Text = Preferences.Get("StableTime", "3.0");
-            StabilityRegexEntry.Text = Preferences.Get("StabilityRegex", "");
         }
 
         private void OnDataReceived(object? sender, string data)
@@ -75,35 +72,26 @@ namespace Weighbridge.Pages
                 return;
             }
 
-            if (string.IsNullOrEmpty(StableTimeEntry.Text) || !double.TryParse(StableTimeEntry.Text, out _))
-            {
-                await DisplayAlert("Error", "Please enter a valid Stable Time.", "OK");
-                return;
-            }
-
             var config = new WeighbridgeConfig
             {
                 PortName = (string)PortPicker.SelectedItem,
                 BaudRate = int.Parse(BaudRateEntry.Text),
-                RegexString = RegexEntry.Text,
-                StabilityEnabled = StabilitySwitch.IsToggled,
-                StableTime = double.Parse(StableTimeEntry.Text),
-                StabilityRegex = StabilityRegexEntry.Text
+                RegexString = RegexEntry.Text
             };
 
             // Save settings to preferences
             Preferences.Set("PortName", config.PortName);
             Preferences.Set("BaudRate", config.BaudRate.ToString());
             Preferences.Set("RegexString", config.RegexString);
-            Preferences.Set("StabilityEnabled", config.StabilityEnabled);
-            Preferences.Set("StableTime", config.StableTime.ToString());
-            Preferences.Set("StabilityRegex", config.StabilityRegex);
 
             _weighbridgeService.Configure(config);
 
             await DisplayAlert("Success", "Settings have been saved.", "OK");
         }
-
+        private async void OnPrintSettingsClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync(nameof(PrintSettingsPage));
+        }
         private async void OnTestConnectionClicked(object sender, EventArgs e)
         {
             try

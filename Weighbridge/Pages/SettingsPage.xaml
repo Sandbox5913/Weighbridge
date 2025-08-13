@@ -5,6 +5,10 @@
              Title="System Settings"
              BackgroundColor="#0E0E0E">
 
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Print Settings" Clicked="OnPrintSettingsClicked" />
+    </ContentPage.ToolbarItems>
+
     <ScrollView>
         <Grid Padding="24" RowSpacing="24">
             <Grid.RowDefinitions>
