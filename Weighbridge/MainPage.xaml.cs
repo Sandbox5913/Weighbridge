@@ -71,9 +71,9 @@ namespace Weighbridge
             }
 
             // Initialize with some default values for demonstration
-            EntranceWeight = "0 KG";
-            ExitWeight = "0 KG";
-            NetWeight = "0 KG";
+            EntranceWeight = "0";
+            ExitWeight = "0";
+            NetWeight = "0";
 
             // Initialize database and load data
             _ = InitializeAsync();
@@ -84,6 +84,8 @@ namespace Weighbridge
             base.OnAppearing();
             try
             {
+                var config = _weighbridgeService.GetConfig();
+                ConnectionStatusLabel.Text = $"{config.PortName} • {config.BaudRate} bps";
                 _weighbridgeService?.Open();
             }
             catch (Exception ex)
@@ -154,11 +156,11 @@ namespace Weighbridge
             }
         }
 
-        private void OnDataReceived(object? sender, string data)
+        private void OnDataReceived(object? sender, WeightReading weightReading)
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                WeightLabel.Text = data;
+                EntranceWeight = weightReading.Weight.ToString();
             });
         }
 

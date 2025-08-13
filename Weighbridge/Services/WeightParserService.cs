@@ -5,33 +5,27 @@ namespace Weighbridge.Services
 {
     public class WeightParserService
     {
-        public WeightReading Parse(string data)
+        public WeightReading Parse(string data, string regexPattern)
         {
-            if (string.IsNullOrWhiteSpace(data))
+            if (string.IsNullOrWhiteSpace(data) || string.IsNullOrWhiteSpace(regexPattern))
             {
                 return null;
             }
 
-            // Regex to find a decimal number
-            var numberMatch = Regex.Match(data, @"\d+(\.\d+)?");
+            Match match = Regex.Match(data, regexPattern);
 
-            if (!numberMatch.Success)
+            if (!match.Success)
             {
                 return null;
             }
 
-            var weight = decimal.Parse(numberMatch.Value);
-            var unit = "KG"; // Default unit
+            decimal weight = decimal.Parse(match.Groups["num"].Value);
+            if (match.Groups["sign"].Value == "-")
+            {
+                weight *= -1;
+            }
 
-            // Check for units
-            if (data.ToUpper().Contains("LBS"))
-            {
-                unit = "LBS";
-            }
-            else if (data.ToUpper().Contains("KG"))
-            {
-                unit = "KG";
-            }
+            string unit = match.Groups["unit"].Success ? match.Groups["unit"].Value.ToUpper() : "KG";
 
             return new WeightReading { Weight = weight, Unit = unit };
         }

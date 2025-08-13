@@ -40,10 +40,10 @@
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="8" />
                                     </Border.StrokeShape>
-                                    <Picker x:Name="PortPicker" 
-                                             Title="Select Port"
-                                            TextColor="White" 
-                                             TitleColor="#888"
+                                    <Picker x:Name="PortPicker"
+                                            Title="Select Port"
+                                            TextColor="White"
+                                            TitleColor="#888"
                                             BackgroundColor="Transparent"
                                             Margin="16,0"/>
                                 </Border>
@@ -55,9 +55,9 @@
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="8" />
                                     </Border.StrokeShape>
-                                    <Entry x:Name="BaudRateEntry" 
-                                           Placeholder="9600" 
-                                            Keyboard="Numeric"
+                                    <Entry x:Name="BaudRateEntry"
+                                           Placeholder="9600"
+                                           Keyboard="Numeric"
                                            PlaceholderColor="#888"
                                            TextColor="White"
                                            BackgroundColor="Transparent"
@@ -74,36 +74,35 @@
                                     <Entry x:Name="RegexEntry" Placeholder="Enter Regex" TextColor="White" BackgroundColor="Transparent" Margin="16,0"/>
                                 </Border>
                             </StackLayout>
+                        </StackLayout>
 
-                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                        <StackLayout Spacing="8">
+                            <Label Text="SERIAL DATA PREVIEW" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                            <Border BackgroundColor="#000000" Padding="12" StrokeThickness="1" Stroke="#444">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="8" />
                                 </Border.StrokeShape>
-                                <Grid Padding="16,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                                    <Ellipse Grid.Column="0" Fill="#00FF7F" WidthRequest="8" HeightRequest="8" VerticalOptions="Center" />
-                                    <Label Grid.Column="1" Text="Connection Status: Connected" TextColor="#00FF7F" VerticalOptions="Center" FontSize="14" />
-                                    <Label Grid.Column="2" Text="COM1" TextColor="#CCCCCC" VerticalOptions="Center" FontSize="14" />
-                                </Grid>
+                                <Label x:Name="SerialOutputLabel" TextColor="#00FF7F" FontSize="14" FontFamily="Courier New" HeightRequest="50" />
                             </Border>
                         </StackLayout>
 
-                        <Label x:Name="SerialOutputLabel" TextColor="#CCCCCC" FontSize="14" />
-
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
-                            <Button Grid.Column="0" 
-                                    Text="TEST CONNECTION" 
-                                     BackgroundColor="#2A2A2A" 
-                                    TextColor="White" 
-                                     CornerRadius="8" 
+                            <Button Grid.Column="0"
+                                    x:Name="TestConnectionButton"
+                                    Text="TEST CONNECTION"
+                                    BackgroundColor="#2A2A2A"
+                                    TextColor="White"
+                                    CornerRadius="8"
                                     HeightRequest="48"
-                                    FontAttributes="Bold"/>
-                            <Button Grid.Column="1" 
-                                    Text="SAVE SETTINGS" 
-                                    BackgroundColor="#00FF7F" 
-                                     TextColor="#0E0E0E" 
-                                    CornerRadius="8" 
+                                    FontAttributes="Bold"
+                                    Clicked="OnTestConnectionClicked"/>
+                            <Button Grid.Column="1"
+                                    Text="SAVE SETTINGS"
+                                    BackgroundColor="#00FF7F"
+                                    TextColor="#0E0E0E"
+                                    CornerRadius="8"
                                     HeightRequest="48"
-                                     FontAttributes="Bold"
+                                    FontAttributes="Bold"
                                     Clicked="OnSaveClicked" />
                         </Grid>
                     </StackLayout>

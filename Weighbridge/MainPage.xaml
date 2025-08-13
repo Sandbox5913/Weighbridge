@@ -97,7 +97,7 @@
                                 </Border.StrokeShape>
                                 <StackLayout Padding="20,24" Spacing="8">
                                     <Label Text="ENTRANCE" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="12" FontAttributes="Bold"/>
-                                    <Label x:Name="WeightLabel" Text="0" TextColor="White" HorizontalOptions="Center" FontSize="32" FontAttributes="Bold" />
+                                    <Label x:Name="WeightLabel" Text="{Binding EntranceWeight}" TextColor="White" HorizontalOptions="Center" FontSize="32" FontAttributes="Bold" />
                                     <Label Text="KG" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="14" />
                                     <Ellipse Fill="#00FF7F" WidthRequest="8" HeightRequest="8" HorizontalOptions="Center" />
                                 </StackLayout>
@@ -137,7 +137,7 @@
                                     <Ellipse Fill="#00FF7F" WidthRequest="8" HeightRequest="8" VerticalOptions="Center" />
                                     <Label Text="CONNECTED" TextColor="#00FF7F" FontSize="12" VerticalOptions="Center" FontAttributes="Bold"/>
                                 </StackLayout>
-                                <Label Grid.Column="2" Text="COM1 • 9600 bps" TextColor="#CCCCCC" FontSize="12" VerticalOptions="Center"/>
+                                <Label x:Name="ConnectionStatusLabel" Grid.Column="2" Text="COM1 • 9600 bps" TextColor="#CCCCCC" FontSize="12" VerticalOptions="Center"/>
                             </Grid>
                         </Border>
                     </Grid>
