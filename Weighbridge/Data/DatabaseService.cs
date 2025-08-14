@@ -10,6 +10,14 @@ namespace Weighbridge.Data
     {
         private readonly SQLiteAsyncConnection _connection;
 
+        public DatabaseService(SQLiteAsyncConnection connection)
+        {
+            _connection = connection;
+        }
+        // This constructor is used by your application
+  
+
+ 
         public DatabaseService()
         {
             string dbPath = Path.Combine(FileSystem.AppDataDirectory, "weighbridge.db3");
@@ -93,9 +101,9 @@ namespace Weighbridge.Data
 
         public Task<Docket> GetInProgressDocketAsync(int vehicleId)
         {
-            var timeWindow = DateTime.Now.AddHours(-24);
+            
             return _connection.Table<Docket>()
-                .Where(d => d.VehicleId == vehicleId && d.Status == "OPEN" && d.Timestamp >= timeWindow)
+                .Where(d => d.VehicleId == vehicleId && d.Status == "OPEN" )
                 .OrderByDescending(d => d.Timestamp)
                 .FirstOrDefaultAsync();
         }

@@ -578,6 +578,7 @@ namespace Weighbridge.Pages
         {
             _selectedVehicle = e.CurrentSelection.FirstOrDefault() as Vehicle;
             vehicleEntry.Text = _selectedVehicle?.LicenseNumber ?? string.Empty;
+            tareWeightEntry.Text = _selectedVehicle?.TareWeight.ToString() ?? string.Empty; // Add this line
             addVehicleButton.IsEnabled = _selectedVehicle == null;
             updateVehicleButton.IsEnabled = _selectedVehicle != null;
         }
@@ -590,7 +591,12 @@ namespace Weighbridge.Pages
                 return;
             }
 
-            var vehicle = new Vehicle { LicenseNumber = vehicleEntry.Text.Trim().ToUpper() };
+            var vehicle = new Vehicle
+            {
+                LicenseNumber = vehicleEntry.Text.Trim().ToUpper(),
+                // Add the TareWeight property
+                TareWeight = decimal.TryParse(tareWeightEntry.Text, out var tare) ? tare : 0
+            };
             try
             {
                 await _databaseService.SaveItemAsync(vehicle);
@@ -610,6 +616,7 @@ namespace Weighbridge.Pages
             if (_selectedVehicle != null && !string.IsNullOrWhiteSpace(vehicleEntry.Text))
             {
                 _selectedVehicle.LicenseNumber = vehicleEntry.Text.Trim().ToUpper();
+                _selectedVehicle.TareWeight = decimal.TryParse(tareWeightEntry.Text, out var tare) ? tare : 0;
                 try
                 {
                     await _databaseService.SaveItemAsync(_selectedVehicle);
@@ -657,6 +664,7 @@ namespace Weighbridge.Pages
             _selectedVehicle = null;
             vehicleListView.SelectedItem = null;
             vehicleEntry.Text = string.Empty;
+            tareWeightEntry.Text = string.Empty; 
             addVehicleButton.IsEnabled = true;
             updateVehicleButton.IsEnabled = false;
         }

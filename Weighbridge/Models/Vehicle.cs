@@ -10,5 +10,8 @@ namespace Weighbridge.Models
 
         [MaxLength(100), Unique]
         public string? LicenseNumber { get; set; }
+
+        // Add this property to store the tare weight
+        public decimal TareWeight { get; set; }
     }
 }

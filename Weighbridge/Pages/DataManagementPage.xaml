@@ -216,6 +216,13 @@
                         </Border.StrokeShape>
                         <Entry x:Name="vehicleEntry" Placeholder="Enter license number" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
                     </Border>
+                    <Label Text="TARE WEIGHT (KG)" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                    <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8" />
+                        </Border.StrokeShape>
+                        <Entry x:Name="tareWeightEntry" Placeholder="Enter tare weight" Keyboard="Numeric" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
+                    </Border>
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                         <Button Grid.Column="0" x:Name="addVehicleButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddVehicleClicked" />
                         <Button Grid.Column="1" x:Name="updateVehicleButton" Text="UPDATE" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnUpdateVehicleClicked" IsEnabled="False" />

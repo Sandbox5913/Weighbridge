@@ -17,7 +17,7 @@ namespace Weighbridge
         private readonly WeighbridgeService _weighbridgeService;
         private readonly DatabaseService _databaseService;
         private readonly DocketService _docketService;
-
+        private readonly Task _initializationTask;
 
         // --- Backing fields for data binding ---
         private string? _entranceWeight;
@@ -107,7 +107,16 @@ namespace Weighbridge
 
 
             // Initialize database and load data
-            _ = InitializeAsync();
+            _initializationTask = InitializeAsync();
+        }
+
+        private async Task LoadDocketAfterInitialization(int docketId)
+        {
+            await _initializationTask; // Wait for the data to be ready
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await LoadDocketAsync(docketId);
+            });
         }
         public bool IsSaveAndPrintEnabled => !IsStabilityDetectionEnabled || IsWeightStable;
         protected override void OnAppearing()
@@ -126,7 +135,7 @@ namespace Weighbridge
                 OnPropertyChanged(nameof(IsSaveAndPrintEnabled));
 
                 var config = _weighbridgeService.GetConfig();
-                ConnectionStatusLabel.Text = $"{config.PortName} � {config.BaudRate} bps";
+                ConnectionStatusLabel.Text = $"{config.PortName} • {config.BaudRate} bps ";
                 _weighbridgeService?.Open();
             }
             catch (Exception ex)
@@ -185,15 +194,17 @@ namespace Weighbridge
                 _loadDocketId = value;
                 if (_loadDocketId > 0)
                 {
-                    _ = LoadDocketAsync(_loadDocketId);
+                    // Use the new method to wait for initialization
+                    _ = LoadDocketAfterInitialization(_loadDocketId);
                 }
             }
         }
 
-        
+
 
         private async Task CheckForInProgressDocket(int vehicleId)
         {
+            await _initializationTask; // Wait for initialization to complete
             var inProgressDocket = await _databaseService.GetInProgressDocketAsync(vehicleId);
             if (inProgressDocket != null)
             {
@@ -201,7 +212,7 @@ namespace Weighbridge
             }
             else
             {
-                ResetForm();
+               // ResetForm();
             }
         }
 
@@ -327,11 +338,8 @@ namespace Weighbridge
                     EntranceWeight = docket.EntranceWeight.ToString();
                     RemarksEditor.Text = docket.Remarks;
 
-                    if (SelectedVehicle == null || SelectedVehicle.Id != docket.VehicleId)
-                    {
-                        SelectedVehicle = Vehicles.FirstOrDefault(v => v.Id == docket.VehicleId);
-                    }
-                    
+                    SelectedVehicle = Vehicles.FirstOrDefault(v => v.Id == docket.VehicleId);
+
                     SelectedSourceSite = Sites.FirstOrDefault(s => s.Id == docket.SourceSiteId);
                     SelectedDestinationSite = Sites.FirstOrDefault(s => s.Id == docket.DestinationSiteId);
                     SelectedItem = Items.FirstOrDefault(i => i.Id == docket.ItemId);
@@ -369,7 +377,17 @@ namespace Weighbridge
                         docket.NetWeight = Math.Abs(docket.EntranceWeight - docket.ExitWeight);
                         docket.Timestamp = DateTime.Now;
                         docket.Status = "CLOSED";
-                        docket.Remarks = RemarksEditor.Text; 
+                        docket.Remarks = RemarksEditor.Text;
+
+                        // Add these lines to update the rest of the docket information
+                        docket.VehicleId = SelectedVehicle?.Id;
+                        docket.SourceSiteId = SelectedSourceSite?.Id;
+                        docket.DestinationSiteId = SelectedDestinationSite?.Id;
+                        docket.ItemId = SelectedItem?.Id;
+                        docket.CustomerId = SelectedCustomer?.Id;
+                        docket.TransportId = SelectedTransport?.Id;
+                        docket.DriverId = SelectedDriver?.Id;
+
                         await _databaseService.SaveItemAsync(docket);
 
                         var docketData = new DocketData
