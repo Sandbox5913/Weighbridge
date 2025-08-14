@@ -1,10 +1,9 @@
-
 using SQLite;
 
 namespace Weighbridge.Models
 {
     [Table("transports")]
-    public class Transport
+    public class Transport : IEntity
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }

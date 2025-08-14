@@ -20,9 +20,12 @@ namespace Weighbridge
                     var appWindow = nativeWindow.AppWindow;
                     if (appWindow != null)
                     {
-                        appWindow.SetPresenter(Microsoft.UI.Windowing.AppWindowPresenterKind.FullScreen);
+                        //appWindow.SetPresenter(Microsoft.UI.Windowing.AppWindowPresenterKind.FullScreen);
+                          var presenter = appWindow.Presenter as Microsoft.UI.Windowing.OverlappedPresenter;
+                            presenter?.Maximize();
+        }
                     }
-                }
+                
             };
 #endif
 

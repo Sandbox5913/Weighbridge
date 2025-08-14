@@ -62,7 +62,7 @@ namespace Weighbridge.Pages
             }
         }
 
-        private async void OnModifyClicked(object sender, EventArgs e)
+        private async void OnWeighOutClicked(object sender, EventArgs e)
         {
             if (sender is Button button && button.CommandParameter is DocketViewModel docketVM)
             {

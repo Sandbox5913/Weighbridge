@@ -1,15 +1,17 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using Weighbridge.Data;
 using Weighbridge.Models;
-using Weighbridge.Services;
 using Weighbridge.Pages;
-using System.Text.Json;
+using Weighbridge.Services;
 
 
 namespace Weighbridge
 {
+    [QueryProperty(nameof(LoadDocketId), "loadDocketId")]
     public partial class MainPage : ContentPage, INotifyPropertyChanged
     {
         private readonly WeighbridgeService _weighbridgeService;
@@ -50,7 +52,22 @@ namespace Weighbridge
         public bool IsStabilityDetectionEnabled { get; private set; }
         // --- Selected Item Properties for Pickers ---
         private Vehicle? _selectedVehicle;
-        public Vehicle? SelectedVehicle { get => _selectedVehicle; set => SetProperty(ref _selectedVehicle, value); }
+        private bool _isLoadingDocket = false;
+        public Vehicle? SelectedVehicle
+        {
+            get => _selectedVehicle;
+            set
+            {
+                if (_selectedVehicle != value)
+                {
+                    SetProperty(ref _selectedVehicle, value);
+                    if (value != null && !_isLoadingDocket)
+                    {
+                        _ = CheckForInProgressDocket(value.Id);
+                    }
+                }
+            }
+        }
 
         private Site? _selectedSourceSite;
         public Site? SelectedSourceSite { get => _selectedSourceSite; set => SetProperty(ref _selectedSourceSite, value); }
@@ -109,7 +126,7 @@ namespace Weighbridge
                 OnPropertyChanged(nameof(IsSaveAndPrintEnabled));
 
                 var config = _weighbridgeService.GetConfig();
-                ConnectionStatusLabel.Text = $"{config.PortName} • {config.BaudRate} bps";
+                ConnectionStatusLabel.Text = $"{config.PortName} ï¿½ {config.BaudRate} bps";
                 _weighbridgeService?.Open();
             }
             catch (Exception ex)
@@ -123,19 +140,30 @@ namespace Weighbridge
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 IsWeightStable = isStable;
-                if (isStable)
-                {
-                    StabilityStatus = "STABLE";
-                    StabilityColor = Colors.Green;
-                }
-                else
-                {
-                    StabilityStatus = "UNSTABLE";
-                    StabilityColor = Colors.Red;
-                }
-                // Notify the UI that the button's state may have changed
+                StabilityStatus = isStable ? "STABLE" : "UNSTABLE";
+                StabilityColor = isStable ? Colors.Green : Colors.Red;
+
                 OnPropertyChanged(nameof(IsSaveAndPrintEnabled));
             });
+        }
+
+        private void UpdateWeights()
+        {
+            if (LoadDocketId > 0)
+            {
+                // Second weighing
+                ExitWeight = LiveWeight;
+                if (decimal.TryParse(EntranceWeight, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var entrance) && 
+                    decimal.TryParse(LiveWeight?.Trim(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var exit))
+                {
+                    NetWeight = Math.Abs(entrance - exit).ToString("F2");
+                }
+            }
+            else
+            {
+                // First weighing
+                EntranceWeight = LiveWeight;
+            }
         }
 
         protected override void OnDisappearing()
@@ -148,7 +176,50 @@ namespace Weighbridge
             }
             _weighbridgeService?.Close();
         }
+        private int _loadDocketId;
+        public int LoadDocketId
+        {
+            get => _loadDocketId;
+            set
+            {
+                _loadDocketId = value;
+                if (_loadDocketId > 0)
+                {
+                    _ = LoadDocketAsync(_loadDocketId);
+                }
+            }
+        }
 
+        
+
+        private async Task CheckForInProgressDocket(int vehicleId)
+        {
+            var inProgressDocket = await _databaseService.GetInProgressDocketAsync(vehicleId);
+            if (inProgressDocket != null)
+            {
+                await LoadDocketAsync(inProgressDocket.Id);
+            }
+            else
+            {
+                ResetForm();
+            }
+        }
+
+        private void ResetForm()
+        {
+            LoadDocketId = 0;
+            EntranceWeight = "0";
+            ExitWeight = "0";
+            NetWeight = "0";
+            RemarksEditor.Text = string.Empty;
+            SelectedVehicle = null;
+            SelectedSourceSite = null;
+            SelectedDestinationSite = null;
+            SelectedItem = null;
+            SelectedCustomer = null;
+            SelectedTransport = null;
+            SelectedDriver = null;
+        }
         private async Task InitializeAsync()
         {
             try
@@ -210,10 +281,11 @@ namespace Weighbridge
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 LiveWeight = weightReading.Weight.ToString();
+                UpdateWeights();
             });
         }
 
-   
+
 
         private async void OnSettingsClicked(object sender, EventArgs e)
         {
@@ -243,67 +315,160 @@ namespace Weighbridge
         {
             // Logic to handle "To Yard" action
         }
+        private async Task LoadDocketAsync(int docketId)
+        {
+            _isLoadingDocket = true;
+            try
+            {
+                var docket = await _databaseService.GetItemAsync<Docket>(docketId);
+                if (docket != null)
+                {
+                    _loadDocketId = docket.Id;
+                    EntranceWeight = docket.EntranceWeight.ToString();
+                    RemarksEditor.Text = docket.Remarks;
 
-        // ... existing using statements
+                    if (SelectedVehicle == null || SelectedVehicle.Id != docket.VehicleId)
+                    {
+                        SelectedVehicle = Vehicles.FirstOrDefault(v => v.Id == docket.VehicleId);
+                    }
+                    
+                    SelectedSourceSite = Sites.FirstOrDefault(s => s.Id == docket.SourceSiteId);
+                    SelectedDestinationSite = Sites.FirstOrDefault(s => s.Id == docket.DestinationSiteId);
+                    SelectedItem = Items.FirstOrDefault(i => i.Id == docket.ItemId);
+                    SelectedCustomer = Customers.FirstOrDefault(c => c.Id == docket.CustomerId);
+                    SelectedTransport = Transports.FirstOrDefault(t => t.Id == docket.TransportId);
+                    SelectedDriver = Drivers.FirstOrDefault(d => d.Id == docket.DriverId);
+
+                    // Force immediate update with current live weight
+                    UpdateWeights();
+                }
+            }
+            finally
+            {
+                _isLoadingDocket = false;
+            }
+        }
 
         private async void OnSaveAndPrintClicked(object sender, EventArgs e)
         {
-            var docketData = new DocketData
+            bool confirmed = await DisplayAlert("Confirm Details", "Are all the details correct?", "Yes", "No");
+            if (!confirmed)
             {
-                EntranceWeight = this.EntranceWeight,
-                ExitWeight = this.ExitWeight,
-                NetWeight = this.NetWeight,
-                VehicleLicense = this.SelectedVehicle?.LicenseNumber,
-                SourceSite = this.SelectedSourceSite?.Name,
-                DestinationSite = this.SelectedDestinationSite?.Name,
-                Material = this.SelectedItem?.Name,
-                Customer = this.SelectedCustomer?.Name,
-                TransportCompany = this.SelectedTransport?.Name,
-                Driver = this.SelectedDriver?.Name,
-                Remarks = this.RemarksEditor.Text,
-                Timestamp = DateTime.Now
-            };
+                return;
+            }
 
-            // Save the docket to the database
             try
             {
-                var docket = new Docket
+                if (LoadDocketId > 0)
                 {
-                    EntranceWeight = decimal.TryParse(EntranceWeight, out var entrance) ? entrance : 0,
-                    ExitWeight = decimal.TryParse(ExitWeight, out var exit) ? exit : 0,
-                    NetWeight = decimal.TryParse(NetWeight, out var net) ? net : 0,
-                    VehicleId = SelectedVehicle?.Id,
-                    SourceSiteId = SelectedSourceSite?.Id,
-                    DestinationSiteId = SelectedDestinationSite?.Id,
-                    ItemId = SelectedItem?.Id,
-                    CustomerId = SelectedCustomer?.Id,
-                    TransportId = SelectedTransport?.Id,
-                    DriverId = SelectedDriver?.Id,
-                    Remarks = Remarks,
-                    Timestamp = docketData.Timestamp
-                };
+                    // This is the second weighing, update the existing docket
+                    var docket = await _databaseService.GetItemAsync<Docket>(LoadDocketId);
+                    if (docket != null)
+                    {
+                        docket.ExitWeight = decimal.TryParse(LiveWeight, out var exit) ? exit : 0;
+                        docket.NetWeight = Math.Abs(docket.EntranceWeight - docket.ExitWeight);
+                        docket.Timestamp = DateTime.Now;
+                        docket.Status = "CLOSED";
+                        docket.Remarks = RemarksEditor.Text; 
+                        await _databaseService.SaveItemAsync(docket);
 
-                await _databaseService.SaveItemAsync(docket);
-                await DisplayAlert("Success", "Docket has been saved successfully.", "OK");
+                        var docketData = new DocketData
+                        {
+                            EntranceWeight = docket.EntranceWeight.ToString(),
+                            ExitWeight = docket.ExitWeight.ToString(),
+                            NetWeight = docket.NetWeight.ToString(),
+                            VehicleLicense = SelectedVehicle?.LicenseNumber,
+                            SourceSite = SelectedSourceSite?.Name,
+                            DestinationSite = SelectedDestinationSite?.Name,
+                            Material = SelectedItem?.Name,
+                            Customer = SelectedCustomer?.Name,
+                            TransportCompany = SelectedTransport?.Name,
+                            Driver = SelectedDriver?.Name,
+                            Remarks = RemarksEditor.Text,
+                            Timestamp = docket.Timestamp
+                        };
+
+                        var templateJson = Preferences.Get("DocketTemplate", string.Empty);
+                        var docketTemplate = !string.IsNullOrEmpty(templateJson)
+                            ? JsonSerializer.Deserialize<DocketTemplate>(templateJson) ?? new DocketTemplate()
+                            : new DocketTemplate();
+
+                        var filePath = await _docketService.GeneratePdfAsync(docketData, docketTemplate);
+                        await Launcher.OpenAsync(new OpenFileRequest
+                        {
+                            File = new ReadOnlyFile(filePath)
+                        });
+                    }
+                }
+                else
+                {
+                    // This is the first weighing, create a new docket
+                    var docketData = new DocketData
+                    {
+                        EntranceWeight = this.EntranceWeight,
+                        ExitWeight = this.ExitWeight,
+                        NetWeight = this.NetWeight,
+                        VehicleLicense = this.SelectedVehicle?.LicenseNumber,
+                        SourceSite = this.SelectedSourceSite?.Name,
+                        DestinationSite = this.SelectedDestinationSite?.Name,
+                        Material = this.SelectedItem?.Name,
+                        Customer = this.SelectedCustomer?.Name,
+                        TransportCompany = this.SelectedTransport?.Name,
+                        Driver = this.SelectedDriver?.Name,
+                        Remarks = this.RemarksEditor.Text,
+                        Timestamp = DateTime.Now
+                    };
+
+                    // Save the docket to the database
+                    try
+                    {
+                        var docket = new Docket
+                        {
+                            EntranceWeight = decimal.TryParse(EntranceWeight, NumberStyles.Any, CultureInfo.InvariantCulture, out var entrance) ? entrance : 0,
+                            ExitWeight = decimal.TryParse(ExitWeight, out var exit) ? exit : 0,
+                            NetWeight = 0, // Net weight is calculated on the second weighing
+                            VehicleId = SelectedVehicle?.Id,
+                            SourceSiteId = SelectedSourceSite?.Id,
+                            DestinationSiteId = SelectedDestinationSite?.Id,
+                            ItemId = SelectedItem?.Id,
+                            CustomerId = SelectedCustomer?.Id,
+                            TransportId = SelectedTransport?.Id,
+                            DriverId = SelectedDriver?.Id,
+                            Remarks = RemarksEditor.Text,
+                            Timestamp = docketData.Timestamp,
+                            Status = "OPEN"
+                        };
+
+                        await _databaseService.SaveItemAsync(docket);
+                        await DisplayAlert("Success", "Docket has been saved successfully.", "OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlert("Database Error", $"Failed to save the docket: {ex.Message}", "OK");
+                        return; // Stop execution if saving fails
+                    }
+
+                    // Proceed with printing
+                    var templateJson = Preferences.Get("DocketTemplate", string.Empty);
+                    var docketTemplate = !string.IsNullOrEmpty(templateJson)
+                        ? JsonSerializer.Deserialize<DocketTemplate>(templateJson) ?? new DocketTemplate()
+                        : new DocketTemplate();
+
+                    var filePath = await _docketService.GeneratePdfAsync(docketData, docketTemplate);
+                    await Launcher.OpenAsync(new OpenFileRequest
+                    {
+                        File = new ReadOnlyFile(filePath)
+                    });
+                }
             }
-            catch (Exception ex)
+            finally
             {
-                await DisplayAlert("Database Error", $"Failed to save the docket: {ex.Message}", "OK");
-                return; // Stop execution if saving fails
+                ResetForm();
+                SelectedVehicle = null;
             }
-
-            // Proceed with printing
-            var templateJson = Preferences.Get("DocketTemplate", string.Empty);
-            var docketTemplate = !string.IsNullOrEmpty(templateJson)
-                ? JsonSerializer.Deserialize<DocketTemplate>(templateJson) ?? new DocketTemplate()
-                : new DocketTemplate();
-
-            var filePath = await _docketService.GeneratePdfAsync(docketData, docketTemplate);
-            await Launcher.OpenAsync(new OpenFileRequest
-            {
-                File = new ReadOnlyFile(filePath)
-            });
         }
+
+     
 
         private void OnUpdateTareClicked(object sender, EventArgs e)
         {

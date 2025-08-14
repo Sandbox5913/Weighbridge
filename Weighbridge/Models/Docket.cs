@@ -4,7 +4,7 @@ using System;
 namespace Weighbridge.Models
 {
     [Table("dockets")]
-    public class Docket
+    public class Docket : IEntity // Implement the IEntity interface
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
@@ -21,5 +21,6 @@ namespace Weighbridge.Models
         public int? DriverId { get; set; }
         public string? Remarks { get; set; }
         public DateTime Timestamp { get; set; }
+        public string? Status { get; set; }
     }
 }

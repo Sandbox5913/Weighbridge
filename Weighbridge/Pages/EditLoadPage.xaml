@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Weighbridge.Pages.EditLoadPage"
+             Title="Edit Load"
+             BackgroundColor="#0E0E0E">
+    <ScrollView>
+        <StackLayout Padding="32" Spacing="24">
+
+            <StackLayout Spacing="8">
+                <Label Text="Transaction Details" TextColor="White" FontSize="20" FontAttributes="Bold" />
+                <Label Text="Update the weighing transaction information" TextColor="#CCCCCC" FontSize="14" />
+            </StackLayout>
+
+            <StackLayout Spacing="12">
+                <Label Text="VEHICLE" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Picker x:Name="VehiclePicker" 
+                            Title="Select Vehicle License" 
+                            TextColor="White" 
+                            TitleColor="#888"
+                            BackgroundColor="Transparent"
+                            ItemsSource="{Binding Vehicles}" 
+                            SelectedItem="{Binding SelectedVehicle}" 
+                            ItemDisplayBinding="{Binding LicenseNumber}"
+                            Margin="16,16"/>
+                </Border>
+            </StackLayout>
+
+            <StackLayout Spacing="12">
+                <Label Text="LOCATIONS" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Picker x:Name="SourceSitePicker" 
+                            Title="Source Site" 
+                            TextColor="White" 
+                            TitleColor="#888"
+                            BackgroundColor="Transparent"
+                            ItemsSource="{Binding Sites}" 
+                            SelectedItem="{Binding SelectedSourceSite}" 
+                            ItemDisplayBinding="{Binding Name}"
+                            Margin="16,16"/>
+                </Border>
+                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Picker x:Name="DestinationSitePicker" 
+                            Title="Destination Site" 
+                            TextColor="White" 
+                            TitleColor="#888"
+                            BackgroundColor="Transparent"
+                            ItemsSource="{Binding Sites}" 
+                            SelectedItem="{Binding SelectedDestinationSite}" 
+                            ItemDisplayBinding="{Binding Name}"
+                            Margin="16,16"/>
+                </Border>
+            </StackLayout>
+
+            <StackLayout Spacing="12">
+                <Label Text="MATERIAL And PARTIES" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Picker x:Name="ItemPicker" 
+                            Title="Select Material" 
+                            TextColor="White" 
+                            TitleColor="#888"
+                            BackgroundColor="Transparent"
+                            ItemsSource="{Binding Items}" 
+                            SelectedItem="{Binding SelectedItem}" 
+                            ItemDisplayBinding="{Binding Name}"
+                            Margin="16,16"/>
+                </Border>
+                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Picker x:Name="CustomerPicker" 
+                            Title="Select Customer" 
+                            TextColor="White" 
+                            TitleColor="#888"
+                            BackgroundColor="Transparent"
+                            ItemsSource="{Binding Customers}" 
+                            SelectedItem="{Binding SelectedCustomer}" 
+                            ItemDisplayBinding="{Binding Name}"
+                            Margin="16,16"/>
+                </Border>
+                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Picker x:Name="TransportPicker" 
+                            Title="Select Transport Company" 
+                            TextColor="White" 
+                            TitleColor="#888"
+                            BackgroundColor="Transparent"
+                            ItemsSource="{Binding Transports}" 
+                            SelectedItem="{Binding SelectedTransport}" 
+                            ItemDisplayBinding="{Binding Name}"
+                            Margin="16,16"/>
+                </Border>
+                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Picker x:Name="DriverPicker" 
+                            Title="Select Driver" 
+                            TextColor="White" 
+                            TitleColor="#888"
+                            BackgroundColor="Transparent"
+                            ItemsSource="{Binding Drivers}" 
+                            SelectedItem="{Binding SelectedDriver}" 
+                            ItemDisplayBinding="{Binding Name}"
+                            Margin="16,16"/>
+                </Border>
+            </StackLayout>
+
+            <StackLayout Spacing="12">
+                <Label Text="REMARKS" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444" HeightRequest="80">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Editor  x:Name="RemarksEditor" 
+                                AutoSize="TextChanges" 
+                                TextColor="White" 
+                                BackgroundColor="Transparent"
+                                Placeholder="Enter any additional notes..."
+                                PlaceholderColor="#888"
+                                Margin="16,8"/>
+                </Border>
+            </StackLayout>
+
+            <Button Text="SAVE CHANGES" 
+                    BackgroundColor="#00FF7F" 
+                    TextColor="#0E0E0E" 
+                    CornerRadius="8" 
+                    HeightRequest="48"
+                    FontAttributes="Bold"
+                    Clicked="OnSaveChangesClicked"/>
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

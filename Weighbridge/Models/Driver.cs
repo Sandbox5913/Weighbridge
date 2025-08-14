@@ -1,10 +1,9 @@
-
 using SQLite;
 
 namespace Weighbridge.Models
 {
     [Table("drivers")]
-    public class Driver
+    public class Driver : IEntity
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }

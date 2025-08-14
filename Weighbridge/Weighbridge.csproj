@@ -57,6 +57,9 @@
 		<MauiXaml Update="Pages\LoadsPage.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
+		<MauiXaml Update="Pages\EditLoadPage.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
 		<MauiXaml Update="Pages\PrintSettingsPage.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
@@ -79,6 +82,9 @@
 	<ItemGroup>
 	  <Compile Update="Pages\LoadsPage.xaml.cs">
 	    <DependentUpon>LoadsPage.xaml</DependentUpon>
+	  </Compile>
+	  <Compile Update="Pages\EditLoadPage.xaml.cs">
+	    <DependentUpon>EditLoadPage.xaml</DependentUpon>
 	  </Compile>
 	  <Compile Update="Pages\PrintSettingsPage.xaml.cs">
 	    <DependentUpon>PrintSettingsPage.xaml</DependentUpon>
