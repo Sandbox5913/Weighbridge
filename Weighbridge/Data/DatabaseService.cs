@@ -6,7 +6,7 @@ using System.IO;
 
 namespace Weighbridge.Data
 {
-    public class DatabaseService
+    public class DatabaseService :  IDatabaseService
     {
         private readonly SQLiteAsyncConnection _connection;
 

@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace Weighbridge.Services
 {
-    public class WeighbridgeService
+    public class WeighbridgeService : IWeighbridgeService
     {
         private SerialPort _serialPort;
         private WeighbridgeConfig _config;

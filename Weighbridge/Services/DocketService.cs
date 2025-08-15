@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Weighbridge.Services
 {
-    public class DocketService
+    public class DocketService : IDocketService
     {
         public async Task<string> GeneratePdfAsync(DocketData data, DocketTemplate template)
         {

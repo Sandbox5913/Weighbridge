@@ -35,25 +35,37 @@
 
                         <!-- Modes -->
                         <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*" ColumnSpacing="12">
-                            <Border Grid.Column="0" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                            <Border x:Name="TwoWeightsButton" Grid.Column="0" BackgroundColor="#00FF7F" StrokeThickness="0" Stroke="#444">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnTwoWeightsClicked" />
+                                </Border.GestureRecognizers>
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="8" />
                                 </Border.StrokeShape>
-                                <Label Text="2 Weights" TextColor="#CCCCCC" HorizontalOptions="Center" Padding="8" FontSize="12"/>
+                                <Label Text="2 Weights" TextColor="#0E0E0E" HorizontalOptions="Center" Padding="8" FontSize="12" FontAttributes="Bold"/>
                             </Border>
-                            <Border Grid.Column="1" BackgroundColor="#00FF7F" StrokeThickness="0">
+                            <Border x:Name="EntryAndTareButton" Grid.Column="1" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnEntryAndTareClicked" />
+                                </Border.GestureRecognizers>
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="8" />
                                 </Border.StrokeShape>
-                                <Label Text="Entry + Tare" TextColor="#0E0E0E" HorizontalOptions="Center" Padding="8" FontSize="12" FontAttributes="Bold"/>
+                                <Label Text="Entry + Tare" TextColor="#CCCCCC" HorizontalOptions="Center" Padding="8" FontSize="12"/>
                             </Border>
-                            <Border Grid.Column="2" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                            <Border x:Name="TareAndExitButton" Grid.Column="2" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnTareAndExitClicked" />
+                                </Border.GestureRecognizers>
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="8" />
                                 </Border.StrokeShape>
                                 <Label Text="Tare + Exit" TextColor="#CCCCCC" HorizontalOptions="Center" Padding="8" FontSize="12"/>
                             </Border>
-                            <Border Grid.Column="3" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                            <Border x:Name="SingleWeightButton" Grid.Column="3" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnSingleWeightClicked" />
+                                </Border.GestureRecognizers>
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="8" />
                                 </Border.StrokeShape>
@@ -165,6 +177,8 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
@@ -181,13 +195,26 @@
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="8" />
                         </Border.StrokeShape>
-                        <Picker x:Name="VehiclePicker" Title="Select Vehicle License" TextColor="White" TitleColor="#888" BackgroundColor="Transparent"
-                                ItemsSource="{Binding Vehicles}" SelectedItem="{Binding SelectedVehicle}" ItemDisplayBinding="{Binding LicenseNumber}" Margin="10,5"/>
+                        <StackLayout>
+                            <Picker x:Name="VehiclePicker" Title="Select Vehicle License" TextColor="White" TitleColor="#888" BackgroundColor="Transparent"
+                                    ItemsSource="{Binding Vehicles}" SelectedItem="{Binding SelectedVehicle}" ItemDisplayBinding="{Binding LicenseNumber}" Margin="10,5"/>
+                            <Label x:Name="InProgressWarningLabel" TextColor="Orange" HorizontalOptions="Center" IsVisible="false" Margin="0,0,0,5"/>
+                        </StackLayout>
+                    </Border>
+
+                    <!-- Tare Weight -->
+                    <Label Grid.Row="3" x:Name="TareWeightLabel" Text="TARE WEIGHT (KG)" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" IsVisible="false" />
+                    <Border Grid.Row="4" x:Name="TareWeightBorder" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444" IsVisible="false">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8" />
+                        </Border.StrokeShape>
+                        <Entry x:Name="TareWeightEntry" TextColor="White" BackgroundColor="Transparent"
+                                Placeholder="Enter Tare Weight" PlaceholderColor="#888" Margin="10,5" Keyboard="Numeric"/>
                     </Border>
 
                     <!-- Locations -->
-                    <Label Grid.Row="3" Text="LOCATIONS" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" />
-                    <Grid Grid.Row="4" ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <Label Grid.Row="5" Text="LOCATIONS" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" />
+                    <Grid Grid.Row="6" ColumnDefinitions="*,*" ColumnSpacing="10">
                         <Border Grid.Column="0" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="8" />
@@ -205,8 +232,8 @@
                     </Grid>
 
                     <!-- Material & Parties -->
-                    <Label Grid.Row="5" Text="MATERIAL &amp; PARTIES" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" />
-                    <Grid Grid.Row="6" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                    <Label Grid.Row="7" Text="MATERIAL &amp; PARTIES" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" />
+                    <Grid Grid.Row="8" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                         <Border Grid.Row="0" Grid.Column="0" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="8" />
@@ -241,8 +268,8 @@
                     </Grid>
 
                     <!-- Remarks -->
-                    <Label Grid.Row="7" Text="REMARKS" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" />
-                    <Border Grid.Row="8" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                    <Label Grid.Row="9" Text="REMARKS" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" />
+                    <Border Grid.Row="10" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="8" />
                         </Border.StrokeShape>
@@ -251,21 +278,23 @@
                     </Border>
 
                     <!-- Buttons -->
-                    <Grid Grid.Row="10" RowDefinitions="Auto,Auto" RowSpacing="10">
+                    <Grid Grid.Row="12" RowDefinitions="Auto,Auto" RowSpacing="10">
                         <Grid Grid.Row="0" ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <Button Grid.Column="0" Text="TO YARD" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" HeightRequest="40"
+                            <Button x:Name="FirstWeightButton" Grid.Column="0" Text="TO YARD" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" HeightRequest="40"
                                     FontAttributes="Bold" Clicked="OnToYardClicked" IsEnabled="{Binding IsWeightStable}"/>
-                            <Button Grid.Column="1" Text="SAVE and PRINT" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" HeightRequest="40"
+                            <Button x:Name="SecondWeightButton" Grid.Column="1" Text="SAVE and PRINT" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" HeightRequest="40"
                                     FontAttributes="Bold" Clicked="OnSaveAndPrintClicked" IsEnabled="{Binding IsWeightStable}"/>
                         </Grid>
 
-                        <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                        <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
                             <Button Grid.Column="0" Text="UPDATE TARE" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" HeightRequest="35"
                                     FontSize="10" Clicked="OnUpdateTareClicked"/>
                             <Button Grid.Column="1" Text="CERTIFICATES" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" HeightRequest="35"
                                     FontSize="10" Clicked="OnCertificatesClicked"/>
                             <Button Grid.Column="2" Text="REPORTS" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" HeightRequest="35"
                                     FontSize="10" Clicked="OnReportsClicked"/>
+                            <Button Grid.Column="3" x:Name="CancelDocketButton" Text="CANCEL DOCKET" BackgroundColor="#FF4500" TextColor="White" CornerRadius="8" HeightRequest="35"
+                                    FontSize="10" Clicked="OnCancelDocketClicked" IsEnabled="{Binding IsDocketLoaded}"/>
                         </Grid>
                     </Grid>
                 </Grid>

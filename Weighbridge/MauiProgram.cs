@@ -22,10 +22,10 @@ namespace Weighbridge
             //builder.Logging.AddDebug();
 #endif
             // Register services
-            builder.Services.AddSingleton<DatabaseService>();
+            builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
             builder.Services.AddSingleton<WeightParserService>(); // Must be registered before WeighbridgeService
-            builder.Services.AddSingleton<WeighbridgeService>();
-            builder.Services.AddSingleton<DocketService>();
+            builder.Services.AddSingleton<IWeighbridgeService, WeighbridgeService>();
+            builder.Services.AddSingleton<IDocketService, DocketService>();
 
             // Register pages
             builder.Services.AddTransient<MainPage>();

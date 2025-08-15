@@ -22,7 +22,9 @@ namespace Weighbridge.Pages
         private List<Transport> _allTransports = new();
         private List<Vehicle> _allVehicles = new();
 
-        public DataManagementPage(DatabaseService databaseService)
+        private readonly IDatabaseService _databaseService;
+
+        public DataManagementPage(IDatabaseService databaseService)
         {
             InitializeComponent();
             _databaseService = databaseService;

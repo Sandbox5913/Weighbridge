@@ -63,8 +63,39 @@ namespace Weighbridge
                     SetProperty(ref _selectedVehicle, value);
                     if (value != null && !_isLoadingDocket)
                     {
-                        _ = CheckForInProgressDocket(value.Id);
+                        HandleVehicleSelection(value);
                     }
+                    else
+                    {
+                        InProgressWarningLabel.IsVisible = false;
+                    }
+                }
+            }
+        }
+
+        private async void HandleVehicleSelection(Vehicle vehicle)
+        {
+            var inProgressDocket = await CheckForInProgressDocket(vehicle.Id);
+
+            if (inProgressDocket != null)
+            {
+                if (_currentMode == WeighingMode.TwoWeights)
+                {
+                    InProgressWarningLabel.IsVisible = false;
+                    await LoadDocketAsync(inProgressDocket.Id);
+                }
+                else
+                {
+                    InProgressWarningLabel.Text = "This truck has not weighed out.";
+                    InProgressWarningLabel.IsVisible = true;
+                }
+            }
+            else
+            {
+                InProgressWarningLabel.IsVisible = false;
+                if (_currentMode == WeighingMode.EntryAndTare || _currentMode == WeighingMode.TareAndExit)
+                {
+                    TareWeightEntry.Text = vehicle.TareWeight.ToString(CultureInfo.InvariantCulture);
                 }
             }
         }
@@ -88,7 +119,7 @@ namespace Weighbridge
         public Driver? SelectedDriver { get => _selectedDriver; set => SetProperty(ref _selectedDriver, value); }
 
 
-        public MainPage(WeighbridgeService weighbridgeService, DatabaseService databaseService, DocketService docketService)
+        public MainPage(IWeighbridgeService weighbridgeService, IDatabaseService databaseService, IDocketService docketService)
         {
             InitializeComponent();
             BindingContext = this;
@@ -108,6 +139,7 @@ namespace Weighbridge
 
             // Initialize database and load data
             _initializationTask = InitializeAsync();
+            UpdateUiForMode();
         }
 
         private async Task LoadDocketAfterInitialization(int docketId)
@@ -191,29 +223,26 @@ namespace Weighbridge
             get => _loadDocketId;
             set
             {
-                _loadDocketId = value;
-                if (_loadDocketId > 0)
+                if (_loadDocketId != value)
                 {
-                    // Use the new method to wait for initialization
-                    _ = LoadDocketAfterInitialization(_loadDocketId);
+                    _loadDocketId = value;
+                    OnPropertyChanged(nameof(IsDocketLoaded));
+                    if (_loadDocketId > 0)
+                    {
+                        _ = LoadDocketAfterInitialization(_loadDocketId);
+                    }
                 }
             }
         }
 
+        public bool IsDocketLoaded => LoadDocketId > 0;
 
 
-        private async Task CheckForInProgressDocket(int vehicleId)
+
+        private async Task<Docket> CheckForInProgressDocket(int vehicleId)
         {
             await _initializationTask; // Wait for initialization to complete
-            var inProgressDocket = await _databaseService.GetInProgressDocketAsync(vehicleId);
-            if (inProgressDocket != null)
-            {
-                await LoadDocketAsync(inProgressDocket.Id);
-            }
-            else
-            {
-               // ResetForm();
-            }
+            return await _databaseService.GetInProgressDocketAsync(vehicleId);
         }
 
         private void ResetForm()
@@ -292,7 +321,6 @@ namespace Weighbridge
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 LiveWeight = weightReading.Weight.ToString();
-                UpdateWeights();
             });
         }
 
@@ -322,9 +350,139 @@ namespace Weighbridge
             }
         }
 
-        private void OnToYardClicked(object sender, EventArgs e)
+        private async void OnToYardClicked(object sender, EventArgs e)
         {
-            // Logic to handle "To Yard" action
+            switch (_currentMode)
+            {
+                case WeighingMode.TwoWeights:
+                    // First Weight Logic for TwoWeights mode
+                    EntranceWeight = LiveWeight;
+
+                    try
+                    {
+                        var docket = new Docket
+                        {
+                            EntranceWeight = decimal.TryParse(EntranceWeight, NumberStyles.Any, CultureInfo.InvariantCulture, out var entrance) ? entrance : 0,
+                            ExitWeight = 0,
+                            NetWeight = 0,
+                            VehicleId = SelectedVehicle?.Id,
+                            SourceSiteId = SelectedSourceSite?.Id,
+                            DestinationSiteId = SelectedDestinationSite?.Id,
+                            ItemId = SelectedItem?.Id,
+                            CustomerId = SelectedCustomer?.Id,
+                            TransportId = SelectedTransport?.Id,
+                            DriverId = SelectedDriver?.Id,
+                            Remarks = RemarksEditor.Text,
+                            Timestamp = DateTime.Now,
+                            Status = "OPEN"
+                        };
+
+                        await _databaseService.SaveItemAsync(docket);
+                        LoadDocketId = docket.Id; // Set the LoadDocketId for the second weighing
+                        await DisplayAlert("Success", "First weight captured. Docket created.", "OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlert("Database Error", $"Failed to save the docket: {ex.Message}", "OK");
+                    }
+                    break;
+
+                case WeighingMode.EntryAndTare:
+                case WeighingMode.TareAndExit:
+                    try
+                    {
+                        decimal tareWeight = 0;
+                        if (SelectedVehicle != null)
+                        {
+                            tareWeight = SelectedVehicle.TareWeight;
+                        }
+                        else if (!string.IsNullOrWhiteSpace(TareWeightEntry.Text) && decimal.TryParse(TareWeightEntry.Text, out var manualTare))
+                        {
+                            tareWeight = manualTare;
+                        }
+                        else
+                        {
+                            await DisplayAlert("Error", "Please select a vehicle with a saved tare weight or enter a tare weight manually.", "OK");
+                            return;
+                        }
+
+                        var liveWeightDecimal = decimal.TryParse(LiveWeight, NumberStyles.Any, CultureInfo.InvariantCulture, out var live) ? live : 0;
+                        
+                        decimal entranceWeight;
+                        decimal exitWeight;
+
+                        if (_currentMode == WeighingMode.EntryAndTare)
+                        {
+                            entranceWeight = liveWeightDecimal;
+                            exitWeight = tareWeight;
+                        }
+                        else // TareAndExit
+                        {
+                            entranceWeight = tareWeight;
+                            exitWeight = liveWeightDecimal;
+                        }
+
+                        var netWeight = Math.Abs(entranceWeight - exitWeight);
+
+                        var docket = new Docket
+                        {
+                            EntranceWeight = entranceWeight,
+                            ExitWeight = exitWeight,
+                            NetWeight = netWeight,
+                            VehicleId = SelectedVehicle?.Id,
+                            SourceSiteId = SelectedSourceSite?.Id,
+                            DestinationSiteId = SelectedDestinationSite?.Id,
+                            ItemId = SelectedItem?.Id,
+                            CustomerId = SelectedCustomer?.Id,
+                            TransportId = SelectedTransport?.Id,
+                            DriverId = SelectedDriver?.Id,
+                            Remarks = RemarksEditor.Text,
+                            Timestamp = DateTime.Now,
+                            Status = "CLOSED"
+                        };
+
+                        await _databaseService.SaveItemAsync(docket);
+                        await DisplayAlert("Success", "Docket saved successfully.", "OK");
+                        ResetForm();
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlert("Database Error", $"Failed to save the docket: {ex.Message}", "OK");
+                    }
+                    break;
+
+                case WeighingMode.SingleWeight:
+                    try
+                    {
+                        var singleWeight = decimal.TryParse(LiveWeight, NumberStyles.Any, CultureInfo.InvariantCulture, out var live) ? live : 0;
+
+                        var docket = new Docket
+                        {
+                            EntranceWeight = singleWeight,
+                            ExitWeight = 0,
+                            NetWeight = 0,
+                            VehicleId = SelectedVehicle?.Id,
+                            SourceSiteId = SelectedSourceSite?.Id,
+                            DestinationSiteId = SelectedDestinationSite?.Id,
+                            ItemId = SelectedItem?.Id,
+                            CustomerId = SelectedCustomer?.Id,
+                            TransportId = SelectedTransport?.Id,
+                            DriverId = SelectedDriver?.Id,
+                            Remarks = RemarksEditor.Text,
+                            Timestamp = DateTime.Now,
+                            Status = "CLOSED"
+                        };
+
+                        await _databaseService.SaveItemAsync(docket);
+                        await DisplayAlert("Success", "Docket saved successfully.", "OK");
+                        ResetForm();
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlert("Database Error", $"Failed to save the docket: {ex.Message}", "OK");
+                    }
+                    break;
+            }
         }
         private async Task LoadDocketAsync(int docketId)
         {
@@ -359,6 +517,12 @@ namespace Weighbridge
 
         private async void OnSaveAndPrintClicked(object sender, EventArgs e)
         {
+            if (_currentMode != WeighingMode.TwoWeights)
+            {
+                // Handle other modes later
+                return;
+            }
+
             bool confirmed = await DisplayAlert("Confirm Details", "Are all the details correct?", "Yes", "No");
             if (!confirmed)
             {
@@ -416,68 +580,18 @@ namespace Weighbridge
                         {
                             File = new ReadOnlyFile(filePath)
                         });
+
+                        ResetForm();
                     }
                 }
                 else
                 {
-                    // This is the first weighing, create a new docket
-                    var docketData = new DocketData
-                    {
-                        EntranceWeight = this.EntranceWeight,
-                        ExitWeight = this.ExitWeight,
-                        NetWeight = this.NetWeight,
-                        VehicleLicense = this.SelectedVehicle?.LicenseNumber,
-                        SourceSite = this.SelectedSourceSite?.Name,
-                        DestinationSite = this.SelectedDestinationSite?.Name,
-                        Material = this.SelectedItem?.Name,
-                        Customer = this.SelectedCustomer?.Name,
-                        TransportCompany = this.SelectedTransport?.Name,
-                        Driver = this.SelectedDriver?.Name,
-                        Remarks = this.RemarksEditor.Text,
-                        Timestamp = DateTime.Now
-                    };
-
-                    // Save the docket to the database
-                    try
-                    {
-                        var docket = new Docket
-                        {
-                            EntranceWeight = decimal.TryParse(EntranceWeight, NumberStyles.Any, CultureInfo.InvariantCulture, out var entrance) ? entrance : 0,
-                            ExitWeight = decimal.TryParse(ExitWeight, out var exit) ? exit : 0,
-                            NetWeight = 0, // Net weight is calculated on the second weighing
-                            VehicleId = SelectedVehicle?.Id,
-                            SourceSiteId = SelectedSourceSite?.Id,
-                            DestinationSiteId = SelectedDestinationSite?.Id,
-                            ItemId = SelectedItem?.Id,
-                            CustomerId = SelectedCustomer?.Id,
-                            TransportId = SelectedTransport?.Id,
-                            DriverId = SelectedDriver?.Id,
-                            Remarks = RemarksEditor.Text,
-                            Timestamp = docketData.Timestamp,
-                            Status = "OPEN"
-                        };
-
-                        await _databaseService.SaveItemAsync(docket);
-                        await DisplayAlert("Success", "Docket has been saved successfully.", "OK");
-                    }
-                    catch (Exception ex)
-                    {
-                        await DisplayAlert("Database Error", $"Failed to save the docket: {ex.Message}", "OK");
-                        return; // Stop execution if saving fails
-                    }
-
-                    // Proceed with printing
-                    var templateJson = Preferences.Get("DocketTemplate", string.Empty);
-                    var docketTemplate = !string.IsNullOrEmpty(templateJson)
-                        ? JsonSerializer.Deserialize<DocketTemplate>(templateJson) ?? new DocketTemplate()
-                        : new DocketTemplate();
-
-                    var filePath = await _docketService.GeneratePdfAsync(docketData, docketTemplate);
-                    await Launcher.OpenAsync(new OpenFileRequest
-                    {
-                        File = new ReadOnlyFile(filePath)
-                    });
+                    await DisplayAlert("Error", "No open docket found for the first weight. Please capture the first weight first.", "OK");
                 }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
             }
             finally
             {
@@ -501,6 +615,157 @@ namespace Weighbridge
         private void OnReportsClicked(object sender, EventArgs e)
         {
             // Logic to generate and view reports
+        }
+
+        private async void OnCancelDocketClicked(object sender, EventArgs e)
+        {
+            if (LoadDocketId > 0)
+            {
+                bool confirmed = await DisplayAlert("Confirm Cancellation", "Are you sure you want to cancel this docket? This action cannot be undone.", "Yes, Cancel", "No");
+                if (confirmed)
+                {
+                    try
+                    {
+                        var docket = await _databaseService.GetItemAsync<Docket>(LoadDocketId);
+                        if (docket != null)
+                        {
+                            await _databaseService.DeleteItemAsync(docket);
+                            await DisplayAlert("Success", "The docket has been cancelled.", "OK");
+                            ResetForm();
+                        }
+                        else
+                        {
+                            await DisplayAlert("Error", "Could not find the docket to cancel.", "OK");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlert("Error", $"Failed to cancel the docket: {ex.Message}", "OK");
+                    }
+                }
+            }
+        }
+
+        private WeighingMode _currentMode = WeighingMode.TwoWeights;
+
+        private void OnTwoWeightsClicked(object sender, EventArgs e)
+        {
+            SetWeighingMode(WeighingMode.TwoWeights);
+        }
+
+        private void OnEntryAndTareClicked(object sender, EventArgs e)
+        {
+            SetWeighingMode(WeighingMode.EntryAndTare);
+        }
+
+        private void OnTareAndExitClicked(object sender, EventArgs e)
+        {
+            SetWeighingMode(WeighingMode.TareAndExit);
+        }
+
+        private void OnSingleWeightClicked(object sender, EventArgs e)
+        {
+            SetWeighingMode(WeighingMode.SingleWeight);
+        }
+
+        private void SetWeighingMode(WeighingMode mode)
+        {
+            _currentMode = mode;
+
+            if (SelectedVehicle != null)
+            {
+                HandleVehicleSelection(SelectedVehicle);
+            }
+            else
+            {
+                 TareWeightEntry.Text = string.Empty;
+            }
+
+            UpdateUiForMode();
+        }
+
+        private void UpdateUiForMode()
+        {
+            // Reset all buttons to default style
+            TwoWeightsButton.BackgroundColor = Color.FromArgb("#2A2A2A");
+            if (TwoWeightsButton.Content is Label twoWeightsLabel)
+            {
+                twoWeightsLabel.TextColor = Color.FromArgb("#CCCCCC");
+                twoWeightsLabel.FontAttributes = FontAttributes.None;
+            }
+
+            EntryAndTareButton.BackgroundColor = Color.FromArgb("#2A2A2A");
+            if (EntryAndTareButton.Content is Label entryAndTareLabel)
+            {
+                entryAndTareLabel.TextColor = Color.FromArgb("#CCCCCC");
+                entryAndTareLabel.FontAttributes = FontAttributes.None;
+            }
+
+            TareAndExitButton.BackgroundColor = Color.FromArgb("#2A2A2A");
+            if (TareAndExitButton.Content is Label tareAndExitLabel)
+            {
+                tareAndExitLabel.TextColor = Color.FromArgb("#CCCCCC");
+                tareAndExitLabel.FontAttributes = FontAttributes.None;
+            }
+
+            SingleWeightButton.BackgroundColor = Color.FromArgb("#2A2A2A");
+            if (SingleWeightButton.Content is Label singleWeightLabel)
+            {
+                singleWeightLabel.TextColor = Color.FromArgb("#CCCCCC");
+                singleWeightLabel.FontAttributes = FontAttributes.None;
+            }
+
+
+            // Highlight the selected button
+            Border selectedButton = _currentMode switch
+            {
+                WeighingMode.TwoWeights => TwoWeightsButton,
+                WeighingMode.EntryAndTare => EntryAndTareButton,
+                WeighingMode.TareAndExit => TareAndExitButton,
+                WeighingMode.SingleWeight => SingleWeightButton,
+                _ => TwoWeightsButton
+            };
+
+            selectedButton.BackgroundColor = Color.FromArgb("#00FF7F");
+            if (selectedButton.Content is Label selectedLabel)
+            {
+                selectedLabel.TextColor = Color.FromArgb("#0E0E0E");
+                selectedLabel.FontAttributes = FontAttributes.Bold;
+            }
+
+            // Update UI elements based on the selected mode
+            switch (_currentMode)
+            {
+                case WeighingMode.TwoWeights:
+                    TareWeightLabel.IsVisible = false;
+                    TareWeightBorder.IsVisible = false;
+                    FirstWeightButton.IsVisible = true;
+                    SecondWeightButton.IsVisible = true;
+                    FirstWeightButton.Text = "First Weight";
+                    SecondWeightButton.Text = "Second Weight";
+                    break;
+                case WeighingMode.EntryAndTare:
+                    TareWeightLabel.IsVisible = true;
+                    TareWeightBorder.IsVisible = true;
+                    FirstWeightButton.IsVisible = true;
+                    SecondWeightButton.IsVisible = false;
+                    FirstWeightButton.Text = "Get Weight";
+                    break;
+                case WeighingMode.TareAndExit:
+                    TareWeightLabel.IsVisible = true;
+                    TareWeightBorder.IsVisible = true;
+                    FirstWeightButton.IsVisible = true;
+                    SecondWeightButton.IsVisible = false;
+                    FirstWeightButton.Text = "Get Weight";
+                    break;
+                case WeighingMode.SingleWeight:
+                    TareWeightLabel.IsVisible = false;
+                    TareWeightBorder.IsVisible = false;
+                    FirstWeightButton.IsVisible = true;
+                    SecondWeightButton.IsVisible = false;
+                    FirstWeightButton.Text = "Get Weight";
+                    break;
+            }
         }
 
         #region INotifyPropertyChanged Implementation
