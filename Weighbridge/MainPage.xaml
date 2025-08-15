@@ -149,7 +149,7 @@
                             <Grid ColumnDefinitions="*,Auto,Auto" Padding="16,12">
                                 <StackLayout Grid.Column="0" Orientation="Horizontal" Spacing="8">
                                     <Ellipse Fill="{Binding StabilityColor, FallbackValue=Red}" WidthRequest="8" HeightRequest="8" VerticalOptions="Center" />
-                                    <Label Text="{Binding StabilityStatus, FallbackValue='UNKNOWN'}" TextColor="#00FF7F" FontSize="12" VerticalOptions="Center" FontAttributes="Bold"/>
+                                    <Label Text="{Binding StabilityStatus, FallbackValue='UNKNOWN'}" TextColor="{Binding StabilityStatusColour, FallbackValue=Red}" FontSize="12" VerticalOptions="Center" FontAttributes="Bold"/>
                                     <Label x:Name="ConnectionStatusLabel" Grid.Column="2" Text="COM1 • 9600 bps" TextColor="#CCCCCC" FontSize="12" VerticalOptions="Center"/>
                                 </StackLayout>
                             </Grid>

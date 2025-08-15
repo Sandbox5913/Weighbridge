@@ -2,15 +2,15 @@ using Weighbridge.Data;
 using Weighbridge.Models;
 using Weighbridge.Services;
 using System.Text.Json;
-
+using Weighbridge.Services; // Make sure this is included
 namespace Weighbridge.Pages
 {
     public partial class LoadsPage : ContentPage
     {
         private readonly IDatabaseService _databaseService;
-        private readonly DocketService _docketService;
+        private readonly IDocketService _docketService; // Change this to the interface
 
-        public LoadsPage(IDatabaseService databaseService, DocketService docketService)
+        public LoadsPage(IDatabaseService databaseService, IDocketService docketService) // And change this to the interface
         {
             InitializeComponent();
             _databaseService = databaseService;

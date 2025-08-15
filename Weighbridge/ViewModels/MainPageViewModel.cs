@@ -29,6 +29,7 @@ namespace Weighbridge.ViewModels
         private string? _liveWeight;
         private string? _stabilityStatus;
         private Color? _stabilityColor;
+        private Color? _stabilityStatusColour;
         private bool _isWeightStable;
         private string _tareWeight = string.Empty;
         private bool _isInProgressWarningVisible;
@@ -41,6 +42,9 @@ namespace Weighbridge.ViewModels
         public string? Remarks { get => _remarks; set => SetProperty(ref _remarks, value); }
         public string? LiveWeight { get => _liveWeight; set => SetProperty(ref _liveWeight, value); }
         public string? StabilityStatus { get => _stabilityStatus; set => SetProperty(ref _stabilityStatus, value); }
+
+        public Color? StabilityStatusColour { get => _stabilityStatusColour; set => SetProperty(ref _stabilityStatusColour, value); }
+
         public Color? StabilityColor { get => _stabilityColor; set => SetProperty(ref _stabilityColor, value); }
         public bool IsWeightStable { get => _isWeightStable; set => SetProperty(ref _isWeightStable, value); }
         public string TareWeight { get => _tareWeight; set => SetProperty(ref _tareWeight, value); }
@@ -380,6 +384,7 @@ namespace Weighbridge.ViewModels
                 IsWeightStable = isStable;
                 StabilityStatus = isStable ? "STABLE" : "UNSTABLE";
                 StabilityColor = isStable ? Colors.Green : Colors.Red;
+                StabilityStatusColour =  isStable ? Colors.Green : Colors.Red;
                 System.Diagnostics.Debug.WriteLine($"StabilityStatus updated to: {StabilityStatus}");
             });
         }

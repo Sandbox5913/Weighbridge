@@ -5,9 +5,9 @@ namespace Weighbridge.Pages
 {
     public partial class SettingsPage : ContentPage
     {
-        private readonly WeighbridgeService _weighbridgeService;
+        private readonly IWeighbridgeService _weighbridgeService; // Change to interface
 
-        public SettingsPage(WeighbridgeService weighbridgeService)
+        public SettingsPage(IWeighbridgeService weighbridgeService) // Change to interface
         {
             InitializeComponent();
             _weighbridgeService = weighbridgeService;
@@ -18,8 +18,10 @@ namespace Weighbridge.Pages
             base.OnAppearing();
             LoadAvailablePorts();
             LoadSettings();
-            _weighbridgeService.RawDataReceived += OnDataReceived;
-            // Automatically try to open the port for live preview
+            // You cannot access RawDataReceived directly from the interface.
+            // You will need to expose it in IWeighbridgeService if you need it here.
+            // _weighbridgeService.RawDataReceived += OnDataReceived; 
+
             try
             {
                 _weighbridgeService.Open();

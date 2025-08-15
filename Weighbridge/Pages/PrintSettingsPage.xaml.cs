@@ -1,22 +1,23 @@
+
 using Weighbridge.Models;
 using System.Text.Json;
-using Weighbridge.Services;
+using Weighbridge.Services; // Ensure this is using the Services namespace
 
 namespace Weighbridge.Pages
-{
-    public partial class PrintSettingsPage : ContentPage
     {
-        private DocketTemplate _template = new();
-        private readonly DocketService _docketService;
-
-        public PrintSettingsPage(DocketService docketService)
+        public partial class PrintSettingsPage : ContentPage
         {
-            InitializeComponent();
-            _docketService = docketService;
-            LoadSettings();
-        }
+                    private DocketTemplate _template = new();
 
-        private void LoadSettings()
+            private readonly IDocketService _docketService; // Change this to the interface
+
+            public PrintSettingsPage(IDocketService docketService) // Change the constructor parameter to the interface
+            {
+                InitializeComponent();
+                _docketService = docketService;
+                LoadSettings();
+            }
+            private void LoadSettings()
         {
             var templateJson = Preferences.Get("DocketTemplate", string.Empty);
             if (!string.IsNullOrEmpty(templateJson))
