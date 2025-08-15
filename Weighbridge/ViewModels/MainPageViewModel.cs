@@ -396,7 +396,7 @@ namespace Weighbridge.ViewModels
             {
                 return;
             }
-            bool confirmed = await ShowAlert?.Invoke("Confirm Details", "Are all the details correct?", "Yes", "No") ?? false;
+            bool confirmed = await ShowAlert?.Invoke("Confirm Details", "Are all the details correct?", "Yes", "No") ;
             if (!confirmed)
             {
                 return;
@@ -469,11 +469,11 @@ namespace Weighbridge.ViewModels
             if (LoadDocketId > 0)
             {
 
-                bool confirmed = await ShowAlert?.Invoke(
-    "Confirm Cancellation",
-    "Are you sure you want to cancel this docket?",
-    "Yes",
-    "No");
+                                bool confirmed = false;
+                if (ShowAlert != null)
+                {
+                    confirmed = await ShowAlert.Invoke("Confirm Cancellation", "Are you sure you want to cancel this docket?", "Yes", "No");
+                }
                 if (confirmed)
                 {
                     try

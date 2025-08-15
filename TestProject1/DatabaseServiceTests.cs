@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Weighbridge.Data;
+using Weighbridge.Services;
 using Weighbridge.Models;
 using static NUnit.Framework.Assert; // Import the static members of Assert
 

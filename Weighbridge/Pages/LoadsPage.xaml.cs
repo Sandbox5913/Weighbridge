@@ -7,10 +7,10 @@ namespace Weighbridge.Pages
 {
     public partial class LoadsPage : ContentPage
     {
-        private readonly DatabaseService _databaseService;
+        private readonly IDatabaseService _databaseService;
         private readonly DocketService _docketService;
 
-        public LoadsPage(DatabaseService databaseService, DocketService docketService)
+        public LoadsPage(IDatabaseService databaseService, DocketService docketService)
         {
             InitializeComponent();
             _databaseService = databaseService;

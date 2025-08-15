@@ -2,6 +2,7 @@ using SQLite;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Weighbridge.Models;
+using Weighbridge.Services;
 using System.IO;
 
 namespace Weighbridge.Data
@@ -13,15 +14,6 @@ namespace Weighbridge.Data
         public DatabaseService(SQLiteAsyncConnection connection)
         {
             _connection = connection;
-        }
-        // This constructor is used by your application
-  
-
- 
-        public DatabaseService()
-        {
-            string dbPath = Path.Combine(FileSystem.AppDataDirectory, "weighbridge.db3");
-            _connection = new SQLiteAsyncConnection(dbPath);
         }
 
         public async Task InitializeAsync()

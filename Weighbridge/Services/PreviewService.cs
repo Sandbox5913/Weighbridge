@@ -6,7 +6,7 @@ using Weighbridge.Services;
 
 namespace Weighbridge.Services
 {
-    public class PreviewService
+    public class PreviewService : IPreviewService
     {
         private readonly DocketService _docketService;
 

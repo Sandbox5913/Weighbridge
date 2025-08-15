@@ -1,3 +1,4 @@
+using Weighbridge.Services;
 using Weighbridge.Data;
 using Weighbridge.Models;
 using System.Linq;
@@ -6,7 +7,6 @@ namespace Weighbridge.Pages
 {
     public partial class DataManagementPage : ContentPage
     {
-        private readonly DatabaseService _databaseService;
         private Customer? _selectedCustomer;
         private Driver? _selectedDriver;
         private Item? _selectedItem;
