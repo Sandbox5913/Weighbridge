@@ -21,8 +21,16 @@ namespace Weighbridge
             _viewModel = viewModel;
             BindingContext = _viewModel;
 
-            _viewModel.ShowAlert += (title, message, accept, cancel) => DisplayAlert(title, message, accept, cancel);
-            _viewModel.ShowSimpleAlert += (title, message, cancel) => DisplayAlert(title, message, cancel);
+            // Wire up alert events with proper async handling
+            _viewModel.ShowAlert += async (title, message, accept, cancel) =>
+            {
+                return await DisplayAlert(title, message, accept, cancel);
+            };
+
+            _viewModel.ShowSimpleAlert += async (title, message, cancel) =>
+            {
+                await DisplayAlert(title, message, cancel);
+            };
 
             // Set initial style for the default mode
             UpdateModeButtonStyles(TwoWeightsButton);
@@ -31,13 +39,28 @@ namespace Weighbridge
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            await _viewModel.OnAppearing();
+            try
+            {
+                await _viewModel.OnAppearing();
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to initialize page: {ex.Message}", "OK");
+            }
         }
 
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
-            _viewModel.OnDisappearing();
+            try
+            {
+                _viewModel.OnDisappearing();
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't show alert during disappearing
+                System.Diagnostics.Debug.WriteLine($"Error during OnDisappearing: {ex.Message}");
+            }
         }
 
         private void OnTwoWeightsClicked(object sender, EventArgs e)
@@ -80,16 +103,30 @@ namespace Weighbridge
             }
         }
 
-        private void OnToYardClicked(object sender, EventArgs e)
+        private async void OnToYardClicked(object sender, EventArgs e)
         {
-            if (_viewModel.ToYardCommand.CanExecute(null))
-                _viewModel.ToYardCommand.Execute(null);
+            try
+            {
+                if (_viewModel.ToYardCommand.CanExecute(null))
+                    _viewModel.ToYardCommand.Execute(null);
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
+            }
         }
 
-        private void OnSaveAndPrintClicked(object sender, EventArgs e)
+        private async void OnSaveAndPrintClicked(object sender, EventArgs e)
         {
-            if (_viewModel.SaveAndPrintCommand.CanExecute(null))
-                _viewModel.SaveAndPrintCommand.Execute(null);
+            try
+            {
+                if (_viewModel.SaveAndPrintCommand.CanExecute(null))
+                    _viewModel.SaveAndPrintCommand.Execute(null);
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
+            }
         }
 
         private void OnUpdateTareClicked(object sender, EventArgs e)
@@ -105,6 +142,20 @@ namespace Weighbridge
         private void OnReportsClicked(object sender, EventArgs e)
         {
             // TODO: Implement report navigation
+        }
+
+        // Add this for testing - you can add a button in your XAML or call this from somewhere for testing
+        private void OnTestWeightClicked(object sender, EventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine("Test button clicked");
+            _viewModel.SimulateWeightData();
+
+            // Also directly test the UI binding by updating a label
+            if (LiveWeightLabel != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"Current LiveWeight binding: {_viewModel.LiveWeight}");
+                System.Diagnostics.Debug.WriteLine($"LiveWeightLabel.Text: {LiveWeightLabel.Text}");
+            }
         }
     }
 }
