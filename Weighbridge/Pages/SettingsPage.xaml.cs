@@ -18,9 +18,8 @@ namespace Weighbridge.Pages
             base.OnAppearing();
             LoadAvailablePorts();
             LoadSettings();
-            // You cannot access RawDataReceived directly from the interface.
-            // You will need to expose it in IWeighbridgeService if you need it here.
-            // _weighbridgeService.RawDataReceived += OnDataReceived; 
+            // This will now work because the event is in the interface
+            _weighbridgeService.RawDataReceived += OnDataReceived;
 
             try
             {
@@ -108,6 +107,29 @@ namespace Weighbridge.Pages
         private async void OnPrintSettingsClicked(object sender, EventArgs e)
         {
             await Shell.Current.GoToAsync(nameof(PrintSettingsPage));
+        }
+        private async void OnSaveLogClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                string logContent = SerialOutputLabel.Text;
+                if (string.IsNullOrWhiteSpace(logContent))
+                {
+                    await DisplayAlert("No Data", "There is no data to save.", "OK");
+                    return;
+                }
+
+                string fileName = $"serial_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+                string filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
+
+                await File.WriteAllTextAsync(filePath, logContent);
+
+                await DisplayAlert("Success", $"Serial data saved to: {filePath}", "OK");
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to save log file: {ex.Message}", "OK");
+            }
         }
         private async void OnTestConnectionClicked(object sender, EventArgs e)
         {

@@ -108,24 +108,33 @@
                             </Border>
                         </StackLayout>
 
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                        <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="16">
                             <Button Grid.Column="0"
-                                    x:Name="TestConnectionButton"
-                                    Text="TEST CONNECTION"
-                                    BackgroundColor="#2A2A2A"
-                                    TextColor="White"
-                                    CornerRadius="8"
-                                    HeightRequest="48"
-                                    FontAttributes="Bold"
-                                    Clicked="OnTestConnectionClicked"/>
+            x:Name="TestConnectionButton"
+            Text="TEST CONNECTION"
+            BackgroundColor="#2A2A2A"
+            TextColor="White"
+            CornerRadius="8"
+            HeightRequest="48"
+            FontAttributes="Bold"
+            Clicked="OnTestConnectionClicked"/>
                             <Button Grid.Column="1"
-                                    Text="SAVE SETTINGS"
-                                    BackgroundColor="#00FF7F"
-                                    TextColor="#0E0E0E"
-                                    CornerRadius="8"
-                                    HeightRequest="48"
-                                    FontAttributes="Bold"
-                                    Clicked="OnSaveClicked" />
+            x:Name="SaveLogButton" 
+            Text="SAVE LOG" 
+            BackgroundColor="#4CAF50" 
+            TextColor="White" 
+            CornerRadius="8" 
+            HeightRequest="48" 
+            FontAttributes="Bold" 
+            Clicked="OnSaveLogClicked" />
+                            <Button Grid.Column="2"
+            Text="SAVE SETTINGS"
+            BackgroundColor="#00FF7F"
+            TextColor="#0E0E0E"
+            CornerRadius="8"
+            HeightRequest="48"
+            FontAttributes="Bold"
+            Clicked="OnSaveClicked" />
                         </Grid>
                     </StackLayout>
                 </Border>

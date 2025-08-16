@@ -6,7 +6,7 @@
              Title="Weighbridge System"
              BackgroundColor="#0E0E0E">
 
-    <Grid Padding="24" RowSpacing="24">
+    <Grid Padding="0" RowSpacing="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -23,7 +23,7 @@
                     <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
                 </Border.Shadow>
                 <ScrollView>
-                    <Grid Padding="32" RowSpacing="24">
+                    <Grid Padding="0" RowSpacing="24">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -72,7 +72,7 @@
                             </Border>
                         </Grid>
 
-                        <!-- Material Type Selector -->
+                        <!-- Material Type Selector
                         <Border Grid.Row="1" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="12" />
@@ -82,7 +82,7 @@
                                 <Label Grid.Column="1" Text="Construction Materials" TextColor="White" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold"/>
                                 <Label Grid.Column="2" Text="›" TextColor="#00FF7F" FontSize="24" VerticalOptions="Center" FontAttributes="Bold"/>
                             </Grid>
-                        </Border>
+                        </Border>  -->
 
                         <!-- Live Weight -->
                         <Border Grid.Row="2" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444" Margin="0,10,0,0">
