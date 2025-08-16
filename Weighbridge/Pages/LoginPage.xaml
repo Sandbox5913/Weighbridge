@@ -5,19 +5,177 @@
              x:DataType="viewmodels:LoginViewModel"
              x:Class="Weighbridge.Pages.LoginPage"
              Title="Login"
-             BackgroundColor="#0E0E0E">
-    <VerticalStackLayout Spacing="20" Padding="20" VerticalOptions="Center">
-        <Label Text="Weighbridge Login" TextColor="White" FontSize="32" FontAttributes="Bold" HorizontalOptions="Center" />
-        <Border BackgroundColor="#1A1A1A" StrokeThickness="0">
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="16" />
-            </Border.StrokeShape>
-            <StackLayout Padding="24" Spacing="16">
-                <Entry Placeholder="Username" Text="{Binding Username}" TextColor="White" />
-                <Entry Placeholder="Password" Text="{Binding Password}" IsPassword="True" TextColor="White" />
-                <Button Text="Login" Command="{Binding LoginCommand}" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" />
-                <ActivityIndicator IsRunning="{Binding IsBusy}" Color="#00FF7F" />
-            </StackLayout>
-        </Border>
-    </VerticalStackLayout>
+             BackgroundColor="#0A0A0A">
+
+    <!-- Background gradient -->
+    <ContentPage.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#0A0A0A" Offset="0.0" />
+            <GradientStop Color="#1A1A2E" Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0" Padding="32,60,32,40" VerticalOptions="Fill">
+
+            <!-- Logo/Icon Section -->
+            <Frame BackgroundColor="#16213E" 
+                   CornerRadius="30" 
+                   WidthRequest="120" 
+                   HeightRequest="120" 
+                   HorizontalOptions="Center" 
+                   Margin="0,0,0,40"
+                   HasShadow="True">
+                <Label Text="⚖️" 
+                       FontSize="48" 
+                       HorizontalOptions="Center" 
+                       VerticalOptions="Center" />
+            </Frame>
+
+            <!-- Title Section -->
+            <Label Text="Weighbridge" 
+                   TextColor="#FFFFFF" 
+                   FontSize="36" 
+                   FontAttributes="Bold" 
+                   HorizontalOptions="Center" 
+                   Margin="0,0,0,8" />
+
+            <Label Text="Management System" 
+                   TextColor="#9CA3AF" 
+                   FontSize="16" 
+                   HorizontalOptions="Center" 
+                   Margin="0,0,0,50" />
+
+            <!-- Login Form -->
+            <Border BackgroundColor="#1F2937" 
+                    StrokeThickness="1" 
+                    Stroke="#374151"
+                    Padding="32,40"
+                    Margin="0,0,0,30">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="20" />
+                </Border.StrokeShape>
+
+                <!-- Drop shadow effect -->
+                <Border.Shadow>
+                    <Shadow Brush="#000000" 
+                            Offset="0,8" 
+                            Radius="24" 
+                            Opacity="0.3" />
+                </Border.Shadow>
+
+                <StackLayout Spacing="24">
+
+                    <!-- Username Field -->
+                    <StackLayout Spacing="8">
+                        <Label Text="Username" 
+                               TextColor="#E5E7EB" 
+                               FontSize="14" 
+                               FontAttributes="Bold" />
+                        <Border BackgroundColor="#374151" 
+                                StrokeThickness="2" 
+                                Stroke="#4B5563">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+                            <Entry Placeholder="Enter your username" 
+                                   Text="{Binding Username}" 
+                                   TextColor="#FFFFFF" 
+                                   PlaceholderColor="#9CA3AF"
+                                   BackgroundColor="Transparent"
+                                   FontSize="16"
+                                   Margin="16,12" />
+                        </Border>
+                    </StackLayout>
+
+                    <!-- Password Field -->
+                    <StackLayout Spacing="8">
+                        <Label Text="Password" 
+                               TextColor="#E5E7EB" 
+                               FontSize="14" 
+                               FontAttributes="Bold" />
+                        <Border BackgroundColor="#374151" 
+                                StrokeThickness="2" 
+                                Stroke="#4B5563">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+                            <Entry Placeholder="Enter your password" 
+                                   Text="{Binding Password}" 
+                                   IsPassword="True" 
+                                   TextColor="#FFFFFF" 
+                                   PlaceholderColor="#9CA3AF"
+                                   BackgroundColor="Transparent"
+                                   FontSize="16"
+                                   Margin="16,12" />
+                        </Border>
+                    </StackLayout>
+
+                    <!-- Login Button -->
+                    <Button Text="Sign In" 
+                            Command="{Binding LoginCommand}" 
+                            FontSize="18" 
+                            FontAttributes="Bold"
+                            HeightRequest="56"
+                            CornerRadius="12"
+                            Margin="0,16,0,0">
+                        <Button.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#3B82F6" Offset="0.0" />
+                                <GradientStop Color="#1D4ED8" Offset="1.0" />
+                            </LinearGradientBrush>
+                        </Button.Background>
+                    </Button>
+
+                    <!-- Loading Indicator -->
+                    <ActivityIndicator IsRunning="{Binding IsBusy}" 
+                                       Color="#3B82F6" 
+                                       WidthRequest="32" 
+                                       HeightRequest="32"
+                                       HorizontalOptions="Center"
+                                       IsVisible="{Binding IsBusy}" />
+
+                </StackLayout>
+            </Border>
+
+            <!-- Demo Credentials Info -->
+            <Border BackgroundColor="#0F172A" 
+                    StrokeThickness="1" 
+                    Stroke="#334155"
+                    Padding="20">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12" />
+                </Border.StrokeShape>
+
+                <StackLayout Spacing="12">
+                    <Label Text="Demo Credentials" 
+                           TextColor="#CBD5E1" 
+                           FontSize="14" 
+                           FontAttributes="Bold" 
+                           HorizontalOptions="Center" />
+
+                    <StackLayout Spacing="6">
+                        <Label HorizontalOptions="Center">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="Admin: " TextColor="#94A3B8" FontSize="12" FontAttributes="Bold" />
+                                    <Span Text="admin / admin" TextColor="#E2E8F0" FontSize="12" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+
+                        <Label HorizontalOptions="Center">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="Operator: " TextColor="#94A3B8" FontSize="12" FontAttributes="Bold" />
+                                    <Span Text="operator / operator" TextColor="#E2E8F0" FontSize="12" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                    </StackLayout>
+                </StackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

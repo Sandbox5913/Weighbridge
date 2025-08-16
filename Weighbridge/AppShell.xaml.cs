@@ -13,18 +13,9 @@ namespace Weighbridge
             InitializeComponent();
             RegisterRoutes();
             BindingContext = this;
-            CheckLogin();
         }
 
         public bool IsAdmin => _userService.CurrentUser?.Role == "Admin";
-
-        private async void CheckLogin()
-        {
-            if (_userService.CurrentUser == null)
-            {
-                await Shell.Current.GoToAsync("//LoginPage");
-            }
-        }
 
         private void RegisterRoutes()
         {
@@ -37,7 +28,7 @@ namespace Weighbridge
             Routing.RegisterRoute(nameof(VehicleManagementPage), typeof(VehicleManagementPage));
             Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage));
             Routing.RegisterRoute(nameof(PrintSettingsPage), typeof(PrintSettingsPage));
-            Routing.RegisterRoute(nameof(LoadsPage), typeof(LoadsPage)); // Add this line
+            Routing.RegisterRoute(nameof(LoadsPage), typeof(LoadsPage));
             Routing.RegisterRoute(nameof(EditLoadPage), typeof(EditLoadPage));
         }
 
@@ -45,12 +36,18 @@ namespace Weighbridge
         {
             base.OnNavigating(args);
 
+            // Check if user is trying to access management pages
             if (args.Target.Location.OriginalString.Contains("Management"))
             {
                 if (_userService.CurrentUser?.Role != "Admin")
                 {
                     args.Cancel();
-                    // Optionally show an alert
+
+                    // Optionally show an alert to inform the user
+                    MainThread.BeginInvokeOnMainThread(async () =>
+                    {
+                        await DisplayAlert("Access Denied", "You don't have permission to access this page.", "OK");
+                    });
                 }
             }
         }

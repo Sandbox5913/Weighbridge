@@ -25,6 +25,7 @@ namespace Weighbridge.Data
             await _connection.CreateTableAsync<Transport>();
             await _connection.CreateTableAsync<Driver>();
             await _connection.CreateTableAsync<Docket>();
+            await _connection.CreateTableAsync<User>(); // Ensure User table is created
         }
 
         public Task<List<T>> GetItemsAsync<T>() where T : new()
@@ -100,6 +101,10 @@ namespace Weighbridge.Data
                 .FirstOrDefaultAsync();
         }
 
+        public Task<User> GetUserByUsernameAsync(string username)
+        {
+            return _connection.Table<User>().Where(u => u.Username == username).FirstOrDefaultAsync();
+        }
 
         private async Task AddSampleUsersAsync()
         {
@@ -110,7 +115,5 @@ namespace Weighbridge.Data
                 await SaveItemAsync(new User { Username = "operator", PasswordHash = "operator", Role = "Operator" });
             }
         }
- 
-
     }
 }

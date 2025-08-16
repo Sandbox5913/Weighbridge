@@ -51,14 +51,11 @@ namespace Weighbridge.ViewModels
         private async Task Login()
         {
             IsBusy = true;
-
             var user = await _userService.LoginAsync(Username, Password);
-
             if (user != null)
             {
-                // Store user session
-                // For now, we will just navigate to the AppShell
-                Application.Current.MainPage = new AppShell();
+                // Store user session and pass userService to AppShell
+                Application.Current.MainPage = new AppShell(_userService);
             }
             else
             {
@@ -67,7 +64,6 @@ namespace Weighbridge.ViewModels
                     await ShowAlert("Login Failed", "Invalid username or password.", "OK");
                 }
             }
-
             IsBusy = false;
         }
 
