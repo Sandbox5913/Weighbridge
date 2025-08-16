@@ -95,6 +95,8 @@
 	  </Compile>
 	</ItemGroup>
 
-
+	<ItemGroup>
+		<InternalsVisibleTo Include="TestProject1" />
+	</ItemGroup>
 
 </Project>

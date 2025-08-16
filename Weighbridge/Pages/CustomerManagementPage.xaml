@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:Weighbridge.ViewModels"
+             xmlns:models="clr-namespace:Weighbridge.Models"
+             x:DataType="viewmodels:CustomerManagementViewModel"
+             x:Class="Weighbridge.Pages.CustomerManagementPage"
+             Title="Customers"
+             BackgroundColor="#0E0E0E">
+    <ScrollView>
+        <VerticalStackLayout Spacing="20" Padding="20">
+            <Border BackgroundColor="#1A1A1A" StrokeThickness="0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="16" />
+                </Border.StrokeShape>
+                <StackLayout Padding="24" Spacing="16">
+                    <Label Text="Customer Management" TextColor="White" FontSize="28" FontAttributes="Bold" />
+                    <Label Text="Add, edit, and manage customer information" TextColor="#CCCCCC" FontSize="16" />
+                    <Label Text="CUSTOMER DETAILS" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                    <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8" />
+                        </Border.StrokeShape>
+                        <Entry Placeholder="Enter customer name" Text="{Binding CustomerName}" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
+                    </Border>
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                        <Button Grid.Column="0" Text="ADD" Command="{Binding AddCustomerCommand}" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" />
+                        <Button Grid.Column="1" Text="UPDATE" Command="{Binding UpdateCustomerCommand}" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" />
+                        <Button Grid.Column="2" Text="CLEAR" Command="{Binding ClearSelectionCommand}" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" />
+                    </Grid>
+                    <Label Text="CUSTOMER LIST" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                    <CollectionView ItemsSource="{Binding Customers}" SelectionMode="Single" SelectedItem="{Binding SelectedCustomer}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:Customer">
+                                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444" Margin="0,4">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
+                                    <Grid Padding="16,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                                        <Ellipse Grid.Column="0" Fill="#00FF7F" WidthRequest="8" HeightRequest="8" VerticalOptions="Center" />
+                                        <Label Grid.Column="1" Text="{Binding Name}" TextColor="White" VerticalOptions="Center" FontSize="16" />
+                                        <Button Grid.Column="2" Text="DELETE" BackgroundColor="#FF4D4D" TextColor="White" CornerRadius="6" FontSize="12" Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CustomerManagementViewModel}}, Path=DeleteCustomerCommand}" CommandParameter="{Binding .}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </StackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

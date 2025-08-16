@@ -7,7 +7,7 @@ using System.IO;
 
 namespace Weighbridge.Data
 {
-    public class DatabaseService :  IDatabaseService
+    public class DatabaseService : IDatabaseService
     {
         private readonly SQLiteAsyncConnection _connection;
 
@@ -93,11 +93,24 @@ namespace Weighbridge.Data
 
         public Task<Docket> GetInProgressDocketAsync(int vehicleId)
         {
-            
+            var since = DateTime.Now.AddDays(-1);
             return _connection.Table<Docket>()
-                .Where(d => d.VehicleId == vehicleId && d.Status == "OPEN" )
+                .Where(d => d.VehicleId == vehicleId && d.Status == "OPEN" && d.Timestamp > since)
                 .OrderByDescending(d => d.Timestamp)
                 .FirstOrDefaultAsync();
         }
+
+
+        private async Task AddSampleUsersAsync()
+        {
+            var users = await GetItemsAsync<User>();
+            if (users.Count == 0)
+            {
+                await SaveItemAsync(new User { Username = "admin", PasswordHash = "admin", Role = "Admin" });
+                await SaveItemAsync(new User { Username = "operator", PasswordHash = "operator", Role = "Operator" });
+            }
+        }
+ 
+
     }
 }

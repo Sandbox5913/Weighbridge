@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Weighbridge.Pages.SiteManagementPage"
+             Title="Sites"
+             BackgroundColor="#0E0E0E">
+    <ScrollView>
+        <VerticalStackLayout Spacing="20" Padding="20">
+            <Border BackgroundColor="#1A1A1A" StrokeThickness="0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="16" />
+                </Border.StrokeShape>
+                <StackLayout Padding="24" Spacing="16">
+                    <Label Text="Site Management" TextColor="White" FontSize="28" FontAttributes="Bold" />
+                    <Label Text="Add, edit, and manage site locations" TextColor="#CCCCCC" FontSize="16" />
+                    <Label Text="SITE DETAILS" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                    <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8" />
+                        </Border.StrokeShape>
+                        <Entry x:Name="siteEntry" Placeholder="Enter site name" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
+                    </Border>
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                        <Button Grid.Column="0" x:Name="addSiteButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddSiteClicked" />
+                        <Button Grid.Column="1" x:Name="updateSiteButton" Text="UPDATE" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnUpdateSiteClicked" IsEnabled="False" />
+                        <Button Grid.Column="2" Text="CLEAR" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" Clicked="OnClearSiteClicked" />
+                    </Grid>
+                    <Label Text="SITE LIST" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                    <CollectionView x:Name="siteListView" SelectionMode="Single" SelectionChanged="OnSiteSelected">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444" Margin="0,4">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
+                                    <Grid Padding="16,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                                        <Ellipse Grid.Column="0" Fill="#00FF7F" WidthRequest="8" HeightRequest="8" VerticalOptions="Center" />
+                                        <Label Grid.Column="1" Text="{Binding Name}" TextColor="White" VerticalOptions="Center" FontSize="16" />
+                                        <Button Grid.Column="2" Text="DELETE" BackgroundColor="#FF4D4D" TextColor="White" CornerRadius="6" FontSize="12" CommandParameter="{Binding .}" Clicked="OnDeleteSiteClicked" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </StackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

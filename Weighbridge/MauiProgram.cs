@@ -41,17 +41,29 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IWeighbridgeService, WeighbridgeService>();
 		builder.Services.AddSingleton<IDocketService, DocketService>();
 		builder.Services.AddSingleton<IPreviewService, PreviewService>(); // This should now work after PreviewService implements IPreviewService
+		builder.Services.AddSingleton<IUserService, UserService>();
 
 		// Register ViewModels
 		builder.Services.AddSingleton<MainPageViewModel>();
+		builder.Services.AddTransient<CustomerManagementViewModel>();
+		builder.Services.AddTransient<DriverManagementViewModel>();
 
 		// Register Pages and inject ViewModels
 		builder.Services.AddSingleton<MainPage>();
 		builder.Services.AddSingleton<LoadsPage>();
-		builder.Services.AddSingleton<DataManagementPage>();
 		builder.Services.AddSingleton<SettingsPage>();
 		builder.Services.AddSingleton<PrintSettingsPage>();
 		builder.Services.AddTransient<EditLoadPage>();
+		builder.Services.AddTransient<LoginPage>();
+		builder.Services.AddSingleton<AppShell>();
+
+		// Register Data Management Pages
+		builder.Services.AddTransient<CustomerManagementPage>();
+		builder.Services.AddTransient<DriverManagementPage>();
+		builder.Services.AddTransient<MaterialManagementPage>();
+		builder.Services.AddTransient<SiteManagementPage>();
+		builder.Services.AddTransient<TransportManagementPage>();
+		builder.Services.AddTransient<VehicleManagementPage>();
 
 
 		return builder.Build();

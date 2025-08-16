@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:Weighbridge.ViewModels"
+             x:DataType="viewmodels:LoginViewModel"
+             x:Class="Weighbridge.Pages.LoginPage"
+             Title="Login"
+             BackgroundColor="#0E0E0E">
+    <VerticalStackLayout Spacing="20" Padding="20" VerticalOptions="Center">
+        <Label Text="Weighbridge Login" TextColor="White" FontSize="32" FontAttributes="Bold" HorizontalOptions="Center" />
+        <Border BackgroundColor="#1A1A1A" StrokeThickness="0">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="16" />
+            </Border.StrokeShape>
+            <StackLayout Padding="24" Spacing="16">
+                <Entry Placeholder="Username" Text="{Binding Username}" TextColor="White" />
+                <Entry Placeholder="Password" Text="{Binding Password}" IsPassword="True" TextColor="White" />
+                <Button Text="Login" Command="{Binding LoginCommand}" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" />
+                <ActivityIndicator IsRunning="{Binding IsBusy}" Color="#00FF7F" />
+            </StackLayout>
+        </Border>
+    </VerticalStackLayout>
+</ContentPage>

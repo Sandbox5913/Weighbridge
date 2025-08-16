@@ -9,7 +9,7 @@ namespace Weighbridge
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            var window = new Window(new AppShell());
+            var window = new Window(Handler.MauiContext.Services.GetService<AppShell>());
 
 #if WINDOWS
             window.Created += (s, e) =>

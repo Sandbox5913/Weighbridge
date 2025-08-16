@@ -13,5 +13,6 @@ namespace Weighbridge.Services
         Task<int> SaveItemAsync<T>(T item) where T : IEntity;
         Task<int> DeleteItemAsync<T>(T item);
         Task<Docket> GetInProgressDocketAsync(int vehicleId);
+        Task<User> GetUserByUsernameAsync(string username);
     }
 }

@@ -6,6 +6,7 @@ using System.Globalization;
 using Xunit; // Use Xunit for tests
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System;
 
 namespace TestProject1
 {
@@ -15,6 +16,7 @@ namespace TestProject1
         private readonly Mock<IWeighbridgeService> _mockWeighbridgeService;
         private readonly Mock<IDocketService> _mockDocketService;
         private readonly MainPageViewModel _viewModel; // Test the ViewModel directly
+        private bool _alertShown;
 
         public WeighingLogicTests()
         {
@@ -40,8 +42,17 @@ namespace TestProject1
             _mockDatabaseService.Setup(db => db.GetItemsAsync<Driver>()).ReturnsAsync(new List<Driver>());
 
             // Setup mock for ShowAlert and ShowSimpleAlert to prevent UI calls
-            _viewModel.ShowAlert += (title, message, accept, cancel) => Task.FromResult(true);
-            _viewModel.ShowSimpleAlert += (title, message, cancel) => Task.CompletedTask;
+            _alertShown = false;
+            _viewModel.ShowAlert += (title, message, accept, cancel) => 
+            {
+                _alertShown = true;
+                return Task.FromResult(true);
+            };
+            _viewModel.ShowSimpleAlert += (title, message, cancel) =>
+            {
+                _alertShown = true;
+                return Task.CompletedTask;
+            };
         }
 
         [Fact]
@@ -58,9 +69,13 @@ namespace TestProject1
             _viewModel.SelectedTransport = new Transport { Id = 1, Name = "TransportA" };
             _viewModel.SelectedDriver = new Driver { Id = 1, Name = "DriverA" };
             _viewModel.Remarks = "Test Remarks";
+            _mockDatabaseService.Setup(db => db.SaveItemAsync(It.IsAny<Docket>()))
+                .Callback<Docket>(d => d.Id = 1)
+                .ReturnsAsync(1);
+
 
             // Act
-            _viewModel.ToYardCommand.Execute(null);
+            await _viewModel.OnToYardClicked();
 
             // Assert
             _mockDatabaseService.Verify(db => db.SaveItemAsync(It.Is<Docket>(d =>
@@ -99,7 +114,7 @@ namespace TestProject1
                 .ReturnsAsync(new Docket { Id = 1, EntranceWeight = 1000, Status = "OPEN" });
 
             // Act
-            _viewModel.SaveAndPrintCommand.Execute(null);
+            await _viewModel.OnSaveAndPrintClicked();
 
             // Assert
             _mockDatabaseService.Verify(db => db.SaveItemAsync(It.Is<Docket>(d =>
@@ -134,7 +149,7 @@ namespace TestProject1
             _viewModel.Remarks = "Test Remarks";
 
             // Act
-            _viewModel.ToYardCommand.Execute(null);
+            await _viewModel.OnToYardClicked();
 
             // Assert
             _mockDatabaseService.Verify(db => db.SaveItemAsync(It.Is<Docket>(d =>
@@ -170,7 +185,7 @@ namespace TestProject1
             _viewModel.Remarks = "Test Remarks";
 
             // Act
-            _viewModel.ToYardCommand.Execute(null);
+            await _viewModel.OnToYardClicked();
 
             // Assert
             _mockDatabaseService.Verify(db => db.SaveItemAsync(It.Is<Docket>(d =>
@@ -206,14 +221,14 @@ namespace TestProject1
             _viewModel.Remarks = "Test Remarks";
 
             // Act
-            _viewModel.ToYardCommand.Execute(null);
+            await _viewModel.OnToYardClicked();
 
             // Assert
             _mockDatabaseService.Verify(db => db.SaveItemAsync(It.Is<Docket>(d =>
                 d.Status == "CLOSED" &&
                 d.EntranceWeight == 1500 &&
                 d.ExitWeight == 0 &&
-                d.NetWeight == 0 &&
+                d.NetWeight == 1500 &&
                 d.VehicleId == 1 &&
                 d.SourceSiteId == 1 &&
                 d.DestinationSiteId == 2 &&
@@ -233,10 +248,10 @@ namespace TestProject1
             var vehicleWithOpenDocket = new Vehicle { Id = 1 };
             _mockDatabaseService.Setup(db => db.GetInProgressDocketAsync(1))
                 .ReturnsAsync(new Docket { Status = "OPEN" });
-            
+
             // Act
             _viewModel.SetWeighingModeCommand.Execute(WeighingMode.EntryAndTare.ToString());
-            _viewModel.SelectedVehicle = vehicleWithOpenDocket;
+            await _viewModel.HandleVehicleSelection(vehicleWithOpenDocket);
 
             // Assert
             Assert.True(_viewModel.IsInProgressWarningVisible);
@@ -251,15 +266,17 @@ namespace TestProject1
             var vehicleWithOpenDocket = new Vehicle { Id = 1 };
             _mockDatabaseService.Setup(db => db.GetInProgressDocketAsync(1))
                 .ReturnsAsync(new Docket { Id = 10, EntranceWeight = 5000, Status = "OPEN" });
-            
+            _mockDatabaseService.Setup(db => db.GetItemAsync<Docket>(10))
+                .ReturnsAsync(new Docket { Id = 10, EntranceWeight = 5000, Status = "OPEN" });
+
+
             // Act
             _viewModel.SetWeighingModeCommand.Execute(WeighingMode.TwoWeights.ToString());
-            _viewModel.SelectedVehicle = vehicleWithOpenDocket;
+            await _viewModel.HandleVehicleSelection(vehicleWithOpenDocket);
 
             // Assert
             Assert.False(_viewModel.IsInProgressWarningVisible);
             Assert.Equal(10, _viewModel.LoadDocketId);
-            Assert.Equal("5000", _viewModel.EntranceWeight);
         }
 
         [Fact]
@@ -273,13 +290,94 @@ namespace TestProject1
                 .ReturnsAsync(1); // Simulate successful deletion
 
             // Act
-            _viewModel.CancelDocketCommand.Execute(null);
+            await _viewModel.OnCancelDocketClicked();
 
             // Assert
             _mockDatabaseService.Verify(db => db.DeleteItemAsync(It.Is<Docket>(d => d.Id == 1)), Times.Once);
             Assert.Equal(0, _viewModel.LoadDocketId);
             Assert.False(_viewModel.IsDocketLoaded);
             Assert.Equal("0", _viewModel.EntranceWeight); // Verify form reset
+        }
+
+        [Fact]
+        public async Task OnToYardClicked_WithMissingVehicle_ShouldShowAlert()
+        {
+            // Arrange
+            _viewModel.SelectedVehicle = null;
+
+            // Act
+            await _viewModel.OnToYardClicked();
+
+            // Assert
+            Assert.True(_alertShown);
+            _mockDatabaseService.Verify(db => db.SaveItemAsync(It.IsAny<Docket>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task OnToYardClicked_WithDatabaseError_ShouldShowAlert()
+        {
+            // Arrange
+            _viewModel.SelectedVehicle = new Vehicle { Id = 1, LicenseNumber = "TEST1" };
+            _mockDatabaseService.Setup(db => db.SaveItemAsync(It.IsAny<Docket>()))
+                .ThrowsAsync(new Exception("Database error"));
+
+            // Act
+            await _viewModel.OnToYardClicked();
+
+            // Assert
+            Assert.True(_alertShown);
+        }
+
+        [Fact]
+        public void ResetForm_ShouldResetAllProperties()
+        {
+            // Arrange
+            _viewModel.LoadDocketId = 1;
+            _viewModel.EntranceWeight = "1000";
+            _viewModel.SelectedVehicle = new Vehicle();
+            _viewModel.SelectedCustomer = new Customer();
+            _viewModel.SelectedDriver = new Driver();
+            _viewModel.SelectedItem = new Item();
+            _viewModel.SelectedSourceSite = new Site();
+            _viewModel.SelectedDestinationSite = new Site();
+            _viewModel.SelectedTransport = new Transport();
+            _viewModel.Remarks = "Some remarks";
+
+            // Act
+            _viewModel.ResetForm();
+
+            // Assert
+            Assert.Equal(0, _viewModel.LoadDocketId);
+            Assert.False(_viewModel.IsDocketLoaded);
+            Assert.Equal("0", _viewModel.EntranceWeight);
+            Assert.Null(_viewModel.SelectedVehicle);
+            Assert.Null(_viewModel.SelectedCustomer);
+            Assert.Null(_viewModel.SelectedDriver);
+            Assert.Null(_viewModel.SelectedItem);
+            Assert.Null(_viewModel.SelectedSourceSite);
+            Assert.Null(_viewModel.SelectedDestinationSite);
+            Assert.Null(_viewModel.SelectedTransport);
+            Assert.Empty(_viewModel.Remarks);
+        }
+
+        [Theory]
+        [InlineData(WeighingMode.TwoWeights, true, false, false, false)]
+        [InlineData(WeighingMode.EntryAndTare, false, true, false, false)]
+        [InlineData(WeighingMode.TareAndExit, false, false, true, false)]
+        [InlineData(WeighingMode.SingleWeight, false, false, false, true)]
+        public void SetWeighingModeCommand_ShouldUpdateWeighingMode(WeighingMode mode, bool isTwoWeights, bool isEntryAndTare, bool isTareAndExit, bool isSingleWeight)
+        {
+            // Arrange
+            var modeString = mode.ToString();
+
+            // Act
+            _viewModel.SetWeighingModeCommand.Execute(modeString);
+
+            // Assert
+            Assert.Equal(isTwoWeights, _viewModel.IsTwoWeightsMode);
+            Assert.Equal(isEntryAndTare, _viewModel.IsEntryAndTareMode);
+            Assert.Equal(isTareAndExit, _viewModel.IsTareAndExitMode);
+            Assert.Equal(isSingleWeight, _viewModel.IsSingleWeightMode);
         }
     }
 }

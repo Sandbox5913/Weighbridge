@@ -20,10 +20,34 @@
             Title="Settings"
             ContentTemplate="{DataTemplate pages:SettingsPage}"
             Route="SettingsPage" />
-        <ShellContent
-            Title="Data Management"
-            ContentTemplate="{DataTemplate pages:DataManagementPage}"
-            Route="DataManagementPage" />
+        <Tab Title="Data Management"
+             Icon="dotnet_bot.png"
+             IsVisible="{Binding IsAdmin}">
+            <ShellContent
+                Title="Customers"
+                ContentTemplate="{DataTemplate pages:CustomerManagementPage}"
+                Route="CustomerManagementPage" />
+            <ShellContent
+                Title="Drivers"
+                ContentTemplate="{DataTemplate pages:DriverManagementPage}"
+                Route="DriverManagementPage" />
+            <ShellContent
+                Title="Materials"
+                ContentTemplate="{DataTemplate pages:MaterialManagementPage}"
+                Route="MaterialManagementPage" />
+            <ShellContent
+                Title="Sites"
+                ContentTemplate="{DataTemplate pages:SiteManagementPage}"
+                Route="SiteManagementPage" />
+            <ShellContent
+                Title="Transport"
+                ContentTemplate="{DataTemplate pages:TransportManagementPage}"
+                Route="TransportManagementPage" />
+            <ShellContent
+                Title="Vehicles"
+                ContentTemplate="{DataTemplate pages:VehicleManagementPage}"
+                Route="VehicleManagementPage" />
+        </Tab>
         <ShellContent
             Title="Print Settings"
             ContentTemplate="{DataTemplate pages:PrintSettingsPage}"
