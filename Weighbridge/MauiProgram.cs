@@ -1,13 +1,14 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Weighbridge.ViewModels;
 using Weighbridge.Services;
 using Weighbridge.Data;
 using Weighbridge.Models;
 using System.IO;
 using Microsoft.Maui.Storage;
-using Microsoft.Extensions.Logging.Debug; // Added
-using Weighbridge.Pages; // Added
-using SQLite; // Added for SQLiteAsyncConnection
+using Microsoft.Extensions.Logging.Debug;
+using Weighbridge.Pages;
+using SQLite; // Still needed for some models, but not for connection directly
+using System.Data; // Added for IDbConnection
 
 namespace Weighbridge;
 
@@ -28,26 +29,23 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
-        // Register SQLiteAsyncConnection
-        builder.Services.AddSingleton<SQLiteAsyncConnection>(s =>
-        {
-            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "weighbridge.db3");
-            return new SQLiteAsyncConnection(dbPath);
-        });
+        // Register IDbConnectionFactory
+        builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
 
         // Register services
         builder.Services.AddSingleton<WeightParserService>();
-        builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
+        builder.Services.AddSingleton<IDatabaseService, DatabaseService>(); // DatabaseService now takes IDbConnectionFactory
         builder.Services.AddSingleton<IWeighbridgeService, WeighbridgeService>();
         builder.Services.AddSingleton<IDocketService, DocketService>();
-        builder.Services.AddSingleton<IPreviewService, PreviewService>(); // This should now work after PreviewService implements IPreviewService
+        builder.Services.AddSingleton<IPreviewService, PreviewService>();
         builder.Services.AddSingleton<IUserService, UserService>();
 
         // Register ViewModels
         builder.Services.AddSingleton<MainPageViewModel>();
         builder.Services.AddTransient<CustomerManagementViewModel>();
         builder.Services.AddTransient<DriverManagementViewModel>();
-        builder.Services.AddTransient<LoginViewModel>(); // THIS WAS MISSING!
+        builder.Services.AddTransient<LoginViewModel>();
+        builder.Services.AddTransient<MainFormSettingsViewModel>();
 
         // Register Pages and inject ViewModels
         builder.Services.AddSingleton<MainPage>();
@@ -57,15 +55,22 @@ public static class MauiProgram
         builder.Services.AddTransient<EditLoadPage>();
         builder.Services.AddTransient<LoginPage>();
         builder.Services.AddSingleton<AppShell>();
+        builder.Services.AddTransient<MainFormSettingsPage>();
 
         // Register Data Management Pages
         builder.Services.AddTransient<CustomerManagementPage>();
-        builder.Services.AddTransient<DriverManagementPage>();
+        builder.Services.AddTransient<DriverManagementViewModel>();
         builder.Services.AddTransient<MaterialManagementPage>();
         builder.Services.AddTransient<SiteManagementPage>();
         builder.Services.AddTransient<TransportManagementPage>();
         builder.Services.AddTransient<VehicleManagementPage>();
 
-        return builder.Build();
+        var app = builder.Build();
+
+        // Manually initialize DatabaseService after it's built
+        var databaseService = app.Services.GetRequiredService<IDatabaseService>();
+        databaseService.InitializeAsync().Wait(); // Blocking call, consider async alternative if possible
+
+        return app;
     }
 }

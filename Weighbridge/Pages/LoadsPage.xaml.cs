@@ -2,19 +2,80 @@ using Weighbridge.Data;
 using Weighbridge.Models;
 using Weighbridge.Services;
 using System.Text.Json;
-using Weighbridge.Services; // Make sure this is included
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Collections.ObjectModel;
+using System.Windows.Input;
+
 namespace Weighbridge.Pages
 {
-    public partial class LoadsPage : ContentPage
+    public partial class LoadsPage : ContentPage, INotifyPropertyChanged
     {
         private readonly IDatabaseService _databaseService;
-        private readonly IDocketService _docketService; // Change this to the interface
+        private readonly IDocketService _docketService;
 
-        public LoadsPage(IDatabaseService databaseService, IDocketService docketService) // And change this to the interface
+        // Private fields for property backing
+        private string _selectedStatusFilter = "All";
+        private DateTime _dateFromFilter = DateTime.Today.AddMonths(-1);
+        private DateTime _dateToFilter = DateTime.Today;
+        private string _vehicleRegFilter = string.Empty;
+        private bool _isRefreshing = false;
+        private ObservableCollection<DocketViewModel> _loads = new();
+
+        // Public properties with change notification
+        public string SelectedStatusFilter
+        {
+            get => _selectedStatusFilter;
+            set => SetProperty(ref _selectedStatusFilter, value);
+        }
+
+        public DateTime DateFromFilter
+        {
+            get => _dateFromFilter;
+            set => SetProperty(ref _dateFromFilter, value);
+        }
+
+        public DateTime DateToFilter
+        {
+            get => _dateToFilter;
+            set => SetProperty(ref _dateToFilter, value);
+        }
+
+        public string VehicleRegFilter
+        {
+            get => _vehicleRegFilter;
+            set => SetProperty(ref _vehicleRegFilter, value);
+        }
+
+        public bool IsRefreshing
+        {
+            get => _isRefreshing;
+            set => SetProperty(ref _isRefreshing, value);
+        }
+
+        public ObservableCollection<DocketViewModel> Loads
+        {
+            get => _loads;
+            set => SetProperty(ref _loads, value);
+        }
+
+        // Commands
+        public ICommand RefreshCommand { get; private set; }
+        public ICommand ApplyFiltersCommand { get; private set; }
+        public ICommand ClearFiltersCommand { get; private set; }
+
+        public LoadsPage(IDatabaseService databaseService, IDocketService docketService)
         {
             InitializeComponent();
             _databaseService = databaseService;
             _docketService = docketService;
+
+            // Initialize commands
+            RefreshCommand = new Command(async () => await LoadLoads());
+            ApplyFiltersCommand = new Command(async () => await LoadLoads());
+            ClearFiltersCommand = new Command(ClearFilters);
+
+            BindingContext = this;
         }
 
         protected override async void OnAppearing()
@@ -25,49 +86,272 @@ namespace Weighbridge.Pages
 
         private async Task LoadLoads()
         {
-            var loads = await _databaseService.GetDocketViewModelsAsync();
-            loadsListView.ItemsSource = loads.OrderByDescending(l => l.Timestamp);
+            try
+            {
+                IsRefreshing = true;
+
+                var loads = await _databaseService.GetDocketViewModelsAsync(
+                    SelectedStatusFilter,
+                    DateFromFilter,
+                    DateToFilter,
+                    VehicleRegFilter);
+
+                // Clear and repopulate the collection
+                Loads.Clear();
+                var sortedLoads = loads.OrderByDescending(l => l.Timestamp);
+
+                foreach (var load in sortedLoads)
+                {
+                    // Add HasRemarks property for UI binding
+                 load.HasRemarks = !string.IsNullOrWhiteSpace(load.Remarks);
+                    Loads.Add(load);
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to load transactions: {ex.Message}", "OK");
+            }
+            finally
+            {
+                IsRefreshing = false;
+            }
+        }
+
+        private void ClearFilters()
+        {
+            SelectedStatusFilter = "All";
+            DateFromFilter = DateTime.Today.AddMonths(-1);
+            DateToFilter = DateTime.Today;
+            VehicleRegFilter = string.Empty;
         }
 
         private async void OnReprintClicked(object sender, EventArgs e)
         {
-            if (sender is Button button && button.CommandParameter is DocketViewModel docketVM)
+            try
             {
-                var docketData = new DocketData
+                if (sender is Button button && button.CommandParameter is DocketViewModel docketVM)
                 {
-                    EntranceWeight = docketVM.EntranceWeight.ToString(),
-                    ExitWeight = docketVM.ExitWeight.ToString(),
-                    NetWeight = docketVM.NetWeight.ToString(),
-                    VehicleLicense = docketVM.VehicleLicense,
-                    SourceSite = docketVM.SourceSiteName,
-                    DestinationSite = docketVM.DestinationSiteName,
-                    Material = docketVM.ItemName,
-                    Customer = docketVM.CustomerName,
-                    TransportCompany = docketVM.TransportName,
-                    Driver = docketVM.DriverName,
-                    Remarks = docketVM.Remarks,
-                    Timestamp = docketVM.Timestamp
-                };
+                    // Show loading indicator
+                    button.IsEnabled = false;
+                    button.Text = "PRINTING...";
 
-                var templateJson = Preferences.Get("DocketTemplate", string.Empty);
-                var docketTemplate = !string.IsNullOrEmpty(templateJson)
-                    ? JsonSerializer.Deserialize<DocketTemplate>(templateJson) ?? new DocketTemplate()
-                    : new DocketTemplate();
+                    var docketData = new DocketData
+                    {
+                        EntranceWeight = docketVM.EntranceWeight.ToString(),
+                        ExitWeight = docketVM.ExitWeight.ToString(),
+                        NetWeight = docketVM.NetWeight.ToString(),
+                        VehicleLicense = docketVM.VehicleLicense,
+                        SourceSite = docketVM.SourceSiteName,
+                        DestinationSite = docketVM.DestinationSiteName,
+                        Material = docketVM.ItemName,
+                        Customer = docketVM.CustomerName,
+                        TransportCompany = docketVM.TransportName,
+                        Driver = docketVM.DriverName,
+                        Remarks = docketVM.Remarks,
+                        Timestamp = docketVM.Timestamp
+                    };
 
-                var filePath = await _docketService.GeneratePdfAsync(docketData, docketTemplate);
-                await Launcher.OpenAsync(new OpenFileRequest
+                    var templateJson = Preferences.Get("DocketTemplate", string.Empty);
+                    var docketTemplate = !string.IsNullOrEmpty(templateJson)
+                        ? JsonSerializer.Deserialize<DocketTemplate>(templateJson) ?? new DocketTemplate()
+                        : new DocketTemplate();
+
+                    var filePath = await _docketService.GeneratePdfAsync(docketData, docketTemplate);
+
+                    await Launcher.OpenAsync(new OpenFileRequest
+                    {
+                        File = new ReadOnlyFile(filePath)
+                    });
+
+                    // Show success message
+                    await DisplayAlert("Success", "Docket reprinted successfully", "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to reprint docket: {ex.Message}", "OK");
+            }
+            finally
+            {
+                // Reset button state
+                if (sender is Button button)
                 {
-                    File = new ReadOnlyFile(filePath)
-                });
+                    button.IsEnabled = true;
+                    button.Text = "REPRINT";
+                }
             }
         }
 
-        private async void OnWeighOutClicked(object sender, EventArgs e)
+        private async void OnEditClicked(object sender, EventArgs e)
         {
-            if (sender is Button button && button.CommandParameter is DocketViewModel docketVM)
+            try
             {
-                await Shell.Current.GoToAsync($"//MainPage?loadDocketId={docketVM.Id}");
+                if (sender is Button button && button.CommandParameter is DocketViewModel docketVM)
+                {
+                    // Show loading indicator
+                    button.IsEnabled = false;
+                    button.Text = "LOADING...";
+
+                    await Shell.Current.GoToAsync($"{nameof(EditLoadPage)}?loadDocketId={docketVM.Id}");
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to open edit page: {ex.Message}", "OK");
+            }
+            finally
+            {
+                // Reset button state when returning to this page
+                if (sender is Button button)
+                {
+                    button.IsEnabled = true;
+                    button.Text = "EDIT";
+                }
             }
         }
+
+        private async void OnApplyFiltersClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                // Disable button during loading
+                if (sender is Button button)
+                {
+                    button.IsEnabled = false;
+                    button.Text = "APPLYING...";
+                }
+
+                await LoadLoads();
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to apply filters: {ex.Message}", "OK");
+            }
+            finally
+            {
+                // Re-enable button
+                if (sender is Button button)
+                {
+                    button.IsEnabled = true;
+                    button.Text = "APPLY FILTERS";
+                }
+            }
+        }
+
+        private async void OnClearFiltersClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                ClearFilters();
+                await LoadLoads();
+                await DisplayAlert("Info", "Filters cleared", "OK");
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to clear filters: {ex.Message}", "OK");
+            }
+        }
+
+        // Method to handle device orientation changes
+        protected override void OnSizeAllocated(double width, double height)
+        {
+            base.OnSizeAllocated(width, height);
+
+            // Update visual states based on size changes
+            UpdateVisualState(width, height);
+        }
+
+        private void UpdateVisualState(double width, double height)
+        {
+            string visualState;
+
+            if (width < 600)
+            {
+                visualState = height > width ? "MobilePortrait" : "MobileLandscape";
+            }
+            else if (width < 768)
+            {
+                visualState = "MobileLandscape";
+            }
+            else if (width < 1024)
+            {
+                visualState = "Tablet";
+            }
+            else if (width < 1440)
+            {
+                visualState = "Desktop";
+            }
+            else
+            {
+                visualState = "LargeDesktop";
+            }
+
+            VisualStateManager.GoToState(this, visualState);
+        }
+
+        // Helper method for search/filter functionality
+        private bool MatchesFilter(DocketViewModel docket)
+        {
+            // Status filter
+            if (SelectedStatusFilter != "All")
+            {
+                var isOpen = docket.ExitWeight == 0;
+                if (SelectedStatusFilter == "Open" && !isOpen) return false;
+                if (SelectedStatusFilter == "Closed" && isOpen) return false;
+            }
+
+            // Date range filter
+            if (docket.Timestamp.Date < DateFromFilter.Date || docket.Timestamp.Date > DateToFilter.Date)
+                return false;
+
+            // Vehicle registration filter
+            if (!string.IsNullOrWhiteSpace(VehicleRegFilter) &&
+                !docket.VehicleLicense.Contains(VehicleRegFilter, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            return true;
+        }
+
+        // Method to export filtered results (bonus feature)
+        private async Task ExportFilteredResults()
+        {
+            try
+            {
+                var filteredLoads = Loads.Where(MatchesFilter).ToList();
+
+                if (!filteredLoads.Any())
+                {
+                    await DisplayAlert("Info", "No transactions match the current filters", "OK");
+                    return;
+                }
+
+                // Implementation for CSV export would go here
+                await DisplayAlert("Info", $"Would export {filteredLoads.Count} transactions", "OK");
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to export: {ex.Message}", "OK");
+            }
+        }
+
+        #region INotifyPropertyChanged Implementation
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string? propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(storage, value))
+            {
+                return false;
+            }
+            storage = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
+        #endregion
     }
 }

@@ -2,17 +2,48 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:Weighbridge"
+             xmlns:converters="clr-namespace:Weighbridge.Converters"
              x:Class="Weighbridge.MainPage"
              Title="Weighbridge System"
              BackgroundColor="#0E0E0E">
 
-    <Grid Padding="0" RowSpacing="24">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:BoolToStringConverter x:Key="BoolToStringConverter" />
+
+            <!-- Responsive breakpoint triggers -->
+            <DataTrigger x:Key="MobileLayoutTrigger" TargetType="Grid" Binding="{Binding Source={x:Reference MainGrid}, Path=Width}" Value="600">
+                <Setter Property="ColumnDefinitions" Value="*" />
+            </DataTrigger>
+
+            <!-- Responsive font sizes -->
+            <x:Double x:Key="HeaderFontSize">24</x:Double>
+            <x:Double x:Key="WeightFontSize">48</x:Double>
+            <x:Double x:Key="SubWeightFontSize">32</x:Double>
+            <x:Double x:Key="LabelFontSize">12</x:Double>
+            <x:Double x:Key="ButtonFontSize">12</x:Double>
+
+            <!-- Mobile font sizes -->
+            <x:Double x:Key="MobileHeaderFontSize">20</x:Double>
+            <x:Double x:Key="MobileWeightFontSize">36</x:Double>
+            <x:Double x:Key="MobileSubWeightFontSize">24</x:Double>
+            <x:Double x:Key="MobileLabelFontSize">10</x:Double>
+            <x:Double x:Key="MobileButtonFontSize">10</x:Double>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid x:Name="MainGrid" Padding="10,0,10,10" RowSpacing="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="1" ColumnDefinitions="1.2*,*" ColumnSpacing="24">
+        <!-- Main Content Grid - Responsive Layout -->
+        <Grid Grid.Row="1" x:Name="ContentGrid" ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.2*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
             <!-- LEFT PANEL -->
             <Border Grid.Column="0" BackgroundColor="#1A1A1A" Stroke="Transparent" StrokeThickness="0">
@@ -23,7 +54,7 @@
                     <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
                 </Border.Shadow>
                 <ScrollView>
-                    <Grid Padding="0" RowSpacing="24">
+                    <Grid Padding="10" RowSpacing="8" ColumnSpacing="8">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -32,8 +63,15 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <!-- Modes -->
-                        <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*" ColumnSpacing="12">
+                        <!-- Modes - Responsive Button Layout -->
+                        <Grid Grid.Row="0" x:Name="ModesGrid" ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
                             <Border x:Name="TwoWeightsButton" Grid.Column="0" BackgroundColor="#00FF7F" StrokeThickness="0" Stroke="#444">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnTwoWeightsClicked" />
@@ -41,8 +79,10 @@
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="8" />
                                 </Border.StrokeShape>
-                                <Label Text="2 Weights" TextColor="#0E0E0E" HorizontalOptions="Center" Padding="8" FontSize="12" FontAttributes="Bold"/>
+                                <Label Text="2 Weights" TextColor="#0E0E0E" HorizontalOptions="Center" Padding="6" 
+                                       FontSize="{StaticResource ButtonFontSize}" FontAttributes="Bold"/>
                             </Border>
+
                             <Border x:Name="EntryAndTareButton" Grid.Column="1" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnEntryAndTareClicked" />
@@ -50,8 +90,10 @@
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="8" />
                                 </Border.StrokeShape>
-                                <Label Text="Entry + Tare" TextColor="#CCCCCC" HorizontalOptions="Center" Padding="8" FontSize="12"/>
+                                <Label Text="Entry + Tare" TextColor="#CCCCCC" HorizontalOptions="Center" Padding="6" 
+                                       FontSize="{StaticResource ButtonFontSize}"/>
                             </Border>
+
                             <Border x:Name="TareAndExitButton" Grid.Column="2" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnTareAndExitClicked" />
@@ -59,8 +101,10 @@
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="8" />
                                 </Border.StrokeShape>
-                                <Label Text="Tare + Exit" TextColor="#CCCCCC" HorizontalOptions="Center" Padding="8" FontSize="12"/>
+                                <Label Text="Tare + Exit" TextColor="#CCCCCC" HorizontalOptions="Center" Padding="6" 
+                                       FontSize="{StaticResource ButtonFontSize}"/>
                             </Border>
+
                             <Border x:Name="SingleWeightButton" Grid.Column="3" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnSingleWeightClicked" />
@@ -68,48 +112,48 @@
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="8" />
                                 </Border.StrokeShape>
-                                <Label Text="Single Weight" TextColor="#CCCCCC" HorizontalOptions="Center" Padding="8" FontSize="12"/>
+                                <Label Text="Single Weight" TextColor="#CCCCCC" HorizontalOptions="Center" Padding="6" 
+                                       FontSize="{StaticResource ButtonFontSize}"/>
                             </Border>
                         </Grid>
 
-                        <!-- Material Type Selector
-                        <Border Grid.Row="1" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                        <!-- Live Weight - Responsive -->
+                        <Border Grid.Row="2" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444" Margin="0,8,0,0">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="12" />
                             </Border.StrokeShape>
-                            <Grid ColumnDefinitions="Auto, *, Auto" Padding="16,12">
-                                <Label Grid.Column="0" Text="‹" TextColor="#00FF7F" FontSize="24" VerticalOptions="Center" FontAttributes="Bold"/>
-                                <Label Grid.Column="1" Text="Construction Materials" TextColor="White" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold"/>
-                                <Label Grid.Column="2" Text="›" TextColor="#00FF7F" FontSize="24" VerticalOptions="Center" FontAttributes="Bold"/>
-                            </Grid>
-                        </Border>  -->
-
-                        <!-- Live Weight -->
-                        <Border Grid.Row="2" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444" Margin="0,10,0,0">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="12" />
-                            </Border.StrokeShape>
-                            <VerticalStackLayout Padding="20,24" Spacing="8">
-                                <Label Text="LIVE WEIGHT" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="24" FontAttributes="Bold"/>
-                                <Label x:Name="LiveWeightLabel" Text="{Binding LiveWeight, FallbackValue='0.00'}" TextColor="White" HorizontalOptions="Center" FontSize="48" FontAttributes="Bold" />
+                            <VerticalStackLayout Padding="16,20" Spacing="6">
+                                <Label Text="LIVE WEIGHT" TextColor="#CCCCCC" HorizontalOptions="Center" 
+                                       FontSize="{StaticResource HeaderFontSize}" FontAttributes="Bold"/>
+                                <Label x:Name="LiveWeightLabel" Text="{Binding LiveWeight, FallbackValue='0.00'}" 
+                                       TextColor="White" HorizontalOptions="Center" 
+                                       FontSize="{StaticResource WeightFontSize}" FontAttributes="Bold" />
                                 <Label Text="KG" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="14" />
-                                <!-- Test button for debugging -->
                                 <Button x:Name="TestButton" Text="TEST" BackgroundColor="Orange" TextColor="Black" 
-                                        Clicked="OnTestWeightClicked" FontSize="10" HeightRequest="30"/>
+                                        Clicked="OnTestWeightClicked" FontSize="10" HeightRequest="30" Margin="0,4,0,0"/>
                             </VerticalStackLayout>
                         </Border>
 
-                        <!-- Entrance / Exit / Net -->
-                        <Grid Grid.Row="3" ColumnDefinitions="*,*,*" ColumnSpacing="16" VerticalOptions="FillAndExpand">
+                        <!-- Entrance / Exit / Net - Responsive Grid -->
+                        <Grid Grid.Row="3" x:Name="WeightsGrid" ColumnSpacing="12" VerticalOptions="FillAndExpand">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
                             <!-- Entrance -->
                             <Border Grid.Column="0" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
-                                <StackLayout Padding="20,24" Spacing="8">
-                                    <Label Text="ENTRANCE" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="12" FontAttributes="Bold"/>
-                                    <Label x:Name="EntranceWeightLabel" Text="{Binding EntranceWeight, FallbackValue='0'}" TextColor="White" HorizontalOptions="Center" FontSize="32" FontAttributes="Bold" />
-                                    <Label Text="KG" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="14" />
+                                <StackLayout Padding="12,16" Spacing="6">
+                                    <Label Text="ENTRANCE" TextColor="#CCCCCC" HorizontalOptions="Center" 
+                                           FontSize="{StaticResource LabelFontSize}" FontAttributes="Bold"/>
+                                    <Label x:Name="EntranceWeightLabel" Text="{Binding EntranceWeight, FallbackValue='0'}" 
+                                           TextColor="White" HorizontalOptions="Center" 
+                                           FontSize="{StaticResource SubWeightFontSize}" FontAttributes="Bold" />
+                                    <Label Text="KG" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="12" />
                                     <Ellipse Fill="#00FF7F" WidthRequest="8" HeightRequest="8" HorizontalOptions="Center" />
                                 </StackLayout>
                             </Border>
@@ -119,10 +163,12 @@
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
-                                <StackLayout Padding="20,24" Spacing="8">
-                                    <Label Text="EXIT" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="12" FontAttributes="Bold"/>
-                                    <Label Text="{Binding ExitWeight, FallbackValue='0'}" TextColor="White" HorizontalOptions="Center" FontSize="32" FontAttributes="Bold" />
-                                    <Label Text="KG" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="14" />
+                                <StackLayout Padding="12,16" Spacing="6">
+                                    <Label Text="EXIT" TextColor="#CCCCCC" HorizontalOptions="Center" 
+                                           FontSize="{StaticResource LabelFontSize}" FontAttributes="Bold"/>
+                                    <Label Text="{Binding ExitWeight, FallbackValue='0'}" TextColor="White" HorizontalOptions="Center" 
+                                           FontSize="{StaticResource SubWeightFontSize}" FontAttributes="Bold" />
+                                    <Label Text="KG" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="12" />
                                     <Ellipse Fill="#444" WidthRequest="8" HeightRequest="8" HorizontalOptions="Center" />
                                 </StackLayout>
                             </Border>
@@ -132,10 +178,12 @@
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
-                                <StackLayout Padding="20,24" Spacing="8">
-                                    <Label Text="NET WEIGHT" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="12" FontAttributes="Bold"/>
-                                    <Label Text="{Binding NetWeight, FallbackValue='0'}" TextColor="White" HorizontalOptions="Center" FontSize="32" FontAttributes="Bold" />
-                                    <Label Text="KG" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="14" />
+                                <StackLayout Padding="12,16" Spacing="6">
+                                    <Label Text="NET WEIGHT" TextColor="#CCCCCC" HorizontalOptions="Center" 
+                                           FontSize="{StaticResource LabelFontSize}" FontAttributes="Bold"/>
+                                    <Label Text="{Binding NetWeight, FallbackValue='0'}" TextColor="White" HorizontalOptions="Center" 
+                                           FontSize="{StaticResource SubWeightFontSize}" FontAttributes="Bold" />
+                                    <Label Text="KG" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="12" />
                                     <Ellipse Fill="#444" WidthRequest="8" HeightRequest="8" HorizontalOptions="Center" />
                                 </StackLayout>
                             </Border>
@@ -146,12 +194,15 @@
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="8" />
                             </Border.StrokeShape>
-                            <Grid ColumnDefinitions="*,Auto,Auto" Padding="16,12">
+                            <Grid ColumnDefinitions="*,Auto" Padding="12,8">
                                 <StackLayout Grid.Column="0" Orientation="Horizontal" Spacing="8">
                                     <Ellipse Fill="{Binding StabilityColor, FallbackValue=Red}" WidthRequest="8" HeightRequest="8" VerticalOptions="Center" />
-                                    <Label Text="{Binding StabilityStatus, FallbackValue='UNKNOWN'}" TextColor="{Binding StabilityStatusColour, FallbackValue=Red}" FontSize="12" VerticalOptions="Center" FontAttributes="Bold"/>
-                                    <Label x:Name="ConnectionStatusLabel" Grid.Column="2" Text="COM1 • 9600 bps" TextColor="#CCCCCC" FontSize="12" VerticalOptions="Center"/>
+                                    <Label Text="{Binding StabilityStatus, FallbackValue='UNKNOWN'}" 
+                                           TextColor="{Binding StabilityStatusColour, FallbackValue=Red}" 
+                                           FontSize="{StaticResource LabelFontSize}" VerticalOptions="Center" FontAttributes="Bold"/>
                                 </StackLayout>
+                                <Label x:Name="ConnectionStatusLabel" Grid.Column="1" Text="COM1 • 9600 bps" 
+                                       TextColor="#CCCCCC" FontSize="10" VerticalOptions="Center"/>
                             </Grid>
                         </Border>
                     </Grid>
@@ -166,141 +217,348 @@
                 <Border.Shadow>
                     <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
                 </Border.Shadow>
-
-                <Grid Padding="20" RowSpacing="10" ColumnSpacing="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <!-- Transaction Header -->
-                    <StackLayout Grid.Row="0" Spacing="4">
-                        <Label Text="Transaction Details" TextColor="White" FontSize="18" FontAttributes="Bold" />
-                        <Label Text="Complete the weighing transaction information" TextColor="#CCCCCC" FontSize="12" />
-                        <Label Text="{Binding Vehicles.Count, StringFormat='Vehicles: {0}'}" TextColor="Yellow" FontSize="10" />
-                    </StackLayout>
-
-                    <!-- Vehicle -->
-                    <Label Grid.Row="1" Text="VEHICLE" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" />
-                    <Border Grid.Row="2" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="8" />
-                        </Border.StrokeShape>
-                        <StackLayout>
-                            <Picker x:Name="VehiclePicker" Title="Select Vehicle License" TextColor="White" TitleColor="#888" BackgroundColor="Transparent"
-                                    ItemsSource="{Binding Vehicles}" SelectedItem="{Binding SelectedVehicle}" ItemDisplayBinding="{Binding LicenseNumber}" Margin="10,5" />
-                            <Label x:Name="InProgressWarningLabel" TextColor="Orange" HorizontalOptions="Center" IsVisible="{Binding IsInProgressWarningVisible}" Text="{Binding InProgressWarningText}" Margin="0,0,0,5"/>
+                <ScrollView>
+                    <VerticalStackLayout Spacing="8" Padding="10">
+                        <!-- Transaction Header -->
+                        <StackLayout Spacing="4">
+                            <Label Text="Transaction Details" TextColor="White" FontSize="18" FontAttributes="Bold" />
+  
                         </StackLayout>
-                    </Border>
 
-                    <!-- Tare Weight -->
-                    <Label Grid.Row="3" x:Name="TareWeightLabel" Text="TARE WEIGHT (KG)" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" IsVisible="{Binding IsTareEntryVisible}" />
-                    <Border Grid.Row="4" x:Name="TareWeightBorder" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444" IsVisible="{Binding IsTareEntryVisible}">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="8" />
-                        </Border.StrokeShape>
-                        <Entry x:Name="TareWeightEntry" Text="{Binding TareWeight}" TextColor="White" BackgroundColor="Transparent"
-                                Placeholder="Enter Tare Weight" PlaceholderColor="#888" Margin="10,5" Keyboard="Numeric"/>
-                    </Border>
+                        <!-- Vehicle -->
+                        <StackLayout IsVisible="{Binding FormConfig.Vehicle.IsVisible}" Spacing="4">
+                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding FormConfig.Vehicle.Label}" />
+                                        <Span Text="{Binding FormConfig.Vehicle.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <StackLayout>
+                                    <Entry Placeholder="Enter Vehicle License" Text="{Binding VehicleRegistration}" 
+                                           TextColor="White" BackgroundColor="Transparent" Margin="8,4" FontSize="12" />
+                                    <Picker x:Name="VehiclePicker"  TextColor="White" TitleColor="#888" 
+                                            BackgroundColor="Transparent" ItemsSource="{Binding Vehicles}" SelectedItem="{Binding SelectedVehicle}" 
+                                            ItemDisplayBinding="{Binding LicenseNumber}" Margin="8,4" FontSize="12" />
+                                </StackLayout>
+                            </Border>
+                        </StackLayout>
 
-                    <!-- Locations -->
-                    <Label Grid.Row="5" Text="LOCATIONS" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" />
-                    <Grid Grid.Row="6" ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <Border Grid.Column="0" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="8" />
-                            </Border.StrokeShape>
-                            <Picker x:Name="SourceSitePicker" Title="Source Site" TextColor="White" TitleColor="#888" BackgroundColor="Transparent"
-                                    ItemsSource="{Binding Sites}" SelectedItem="{Binding SelectedSourceSite}" ItemDisplayBinding="{Binding Name}" Margin="10,5" />
-                        </Border>
-                        <Border Grid.Column="1" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="8" />
-                            </Border.StrokeShape>
-                            <Picker x:Name="DestinationSitePicker" Title="Destination Site" TextColor="White" TitleColor="#888" BackgroundColor="Transparent"
-                                    ItemsSource="{Binding Sites}" SelectedItem="{Binding SelectedDestinationSite}" ItemDisplayBinding="{Binding Name}" Margin="10,5" />
-                        </Border>
-                    </Grid>
+                        <!-- Tare Weight -->
+                        <StackLayout IsVisible="{Binding IsTareEntryVisible}" Spacing="4">
+                            <Label x:Name="TareWeightLabel" Text="TARE WEIGHT (KG)" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" />
+                            <Border x:Name="TareWeightBorder" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <Entry x:Name="TareWeightEntry" Text="{Binding TareWeight}" TextColor="White" BackgroundColor="Transparent"
+                                        Placeholder="Enter Tare Weight" PlaceholderColor="#888" Margin="8,4" Keyboard="Numeric" FontSize="12"/>
+                            </Border>
+                        </StackLayout>
 
-                    <!-- Material & Parties -->
-                    <Label Grid.Row="7" Text="MATERIAL &amp; PARTIES" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" />
-                    <Grid Grid.Row="8" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
-                        <Border Grid.Row="0" Grid.Column="0" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="8" />
-                            </Border.StrokeShape>
-                            <Picker x:Name="ItemPicker" Title="Select Material" TextColor="White" TitleColor="#888" BackgroundColor="Transparent"
-                                    ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" ItemDisplayBinding="{Binding Name}" Margin="10,5" />
-                        </Border>
+                        <!-- Source Site -->
+                        <StackLayout IsVisible="{Binding FormConfig.SourceSite.IsVisible}" Spacing="4">
+                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding FormConfig.SourceSite.Label}" />
+                                        <Span Text="{Binding FormConfig.SourceSite.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <Picker x:Name="SourceSitePicker" TextColor="White" TitleColor="#888" 
+                                        BackgroundColor="Transparent" ItemsSource="{Binding Sites}" SelectedItem="{Binding SelectedSourceSite}" 
+                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12" />
+                            </Border>
+                        </StackLayout>
 
-                        <Border Grid.Row="0" Grid.Column="1" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="8" />
-                            </Border.StrokeShape>
-                            <Picker x:Name="CustomerPicker" Title="Select Customer" TextColor="White" TitleColor="#888" BackgroundColor="Transparent"
-                                    ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer}" ItemDisplayBinding="{Binding Name}" Margin="10,5" />
-                        </Border>
+                        <!-- Destination Site -->
+                        <StackLayout IsVisible="{Binding FormConfig.DestinationSite.IsVisible}" Spacing="4">
+                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding FormConfig.DestinationSite.Label}" />
+                                        <Span Text="{Binding FormConfig.DestinationSite.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <Picker x:Name="DestinationSitePicker" TextColor="White" TitleColor="#888" 
+                                        BackgroundColor="Transparent" ItemsSource="{Binding Sites}" SelectedItem="{Binding SelectedDestinationSite}" 
+                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12" />
+                            </Border>
+                        </StackLayout>
 
-                        <Border Grid.Row="1" Grid.Column="0" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="8" />
-                            </Border.StrokeShape>
-                            <Picker x:Name="TransportPicker" Title="Select Transport Company" TextColor="White" TitleColor="#888" BackgroundColor="Transparent"
-                                    ItemsSource="{Binding Transports}" SelectedItem="{Binding SelectedTransport}" ItemDisplayBinding="{Binding Name}" Margin="10,5" />
-                        </Border>
+                        <!-- Item -->
+                        <StackLayout IsVisible="{Binding FormConfig.Item.IsVisible}" Spacing="4">
+                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding FormConfig.Item.Label}" />
+                                        <Span Text="{Binding FormConfig.Item.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <Picker x:Name="ItemPicker"  TextColor="White" TitleColor="#888" 
+                                        BackgroundColor="Transparent" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" 
+                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12" />
+                            </Border>
+                        </StackLayout>
 
-                        <Border Grid.Row="1" Grid.Column="1" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="8" />
-                            </Border.StrokeShape>
-                            <Picker x:Name="DriverPicker" Title="Select Driver" TextColor="White" TitleColor="#888" BackgroundColor="Transparent"
-                                    ItemsSource="{Binding Drivers}" SelectedItem="{Binding SelectedDriver}" ItemDisplayBinding="{Binding Name}" Margin="10,5" />
-                        </Border>
-                    </Grid>
+                        <!-- Customer -->
+                        <StackLayout IsVisible="{Binding FormConfig.Customer.IsVisible}" Spacing="4">
+                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding FormConfig.Customer.Label}" />
+                                        <Span Text="{Binding FormConfig.Customer.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <Picker x:Name="CustomerPicker"  TextColor="White" TitleColor="#888" 
+                                        BackgroundColor="Transparent" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer}" 
+                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12" />
+                            </Border>
+                        </StackLayout>
 
-                    <!-- Remarks -->
-                    <Label Grid.Row="9" Text="REMARKS" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" />
-                    <Border Grid.Row="10" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="8" />
-                        </Border.StrokeShape>
-                        <Editor x:Name="RemarksEditor" Text="{Binding Remarks}" AutoSize="TextChanges" TextColor="White" BackgroundColor="Transparent"
-                                Placeholder="Enter any additional notes..." PlaceholderColor="#888" Margin="10,5" />
-                    </Border>
+                        <!-- Transport -->
+                        <StackLayout IsVisible="{Binding FormConfig.Transport.IsVisible}" Spacing="4">
+                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding FormConfig.Transport.Label}" />
+                                        <Span Text="{Binding FormConfig.Transport.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <Picker x:Name="TransportPicker"  TextColor="White" TitleColor="#888" 
+                                        BackgroundColor="Transparent" ItemsSource="{Binding Transports}" SelectedItem="{Binding SelectedTransport}" 
+                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12" />
+                            </Border>
+                        </StackLayout>
 
-                    <!-- Buttons -->
-                    <Grid Grid.Row="12" RowDefinitions="Auto,Auto" RowSpacing="10">
-                        <Grid Grid.Row="0" ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <Button x:Name="FirstWeightButton" Grid.Column="0" Text="{Binding FirstWeightButtonText}" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" HeightRequest="40"
-                                    FontAttributes="Bold" Clicked="OnToYardClicked" IsEnabled="{Binding IsWeightStable}" />
-                            <Button x:Name="SecondWeightButton" Grid.Column="1" Text="SAVE and PRINT" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" HeightRequest="40"
-                                    FontAttributes="Bold" Clicked="OnSaveAndPrintClicked" IsVisible="{Binding IsSecondWeightButtonVisible}" IsEnabled="{Binding IsWeightStable}"/>
+                        <!-- Driver -->
+                        <StackLayout IsVisible="{Binding FormConfig.Driver.IsVisible}" Spacing="4">
+                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding FormConfig.Driver.Label}" />
+                                        <Span Text="{Binding FormConfig.Driver.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <Picker x:Name="DriverPicker"  TextColor="White" TitleColor="#888" 
+                                        BackgroundColor="Transparent" ItemsSource="{Binding Drivers}" SelectedItem="{Binding SelectedDriver}" 
+                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12" />
+                            </Border>
+                        </StackLayout>
+
+                        <!-- Remarks -->
+                        <StackLayout IsVisible="{Binding FormConfig.Remarks.IsVisible}" Spacing="4">
+                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding FormConfig.Remarks.Label}" />
+                                        <Span Text="{Binding FormConfig.Remarks.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <Editor x:Name="RemarksEditor" Text="{Binding Remarks}" AutoSize="TextChanges" 
+                                        TextColor="White" BackgroundColor="Transparent" Placeholder="Enter any additional notes..." 
+                                        PlaceholderColor="#888" Margin="8,4" FontSize="12" />
+                            </Border>
+                        </StackLayout>
+
+                        <!-- Buttons - Responsive Layout -->
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="8" Margin="0,8,0,0">
+                            <Grid Grid.Row="0" x:Name="MainButtonsGrid" ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Button x:Name="FirstWeightButton" Grid.Column="0" Text="{Binding FirstWeightButtonText}" 
+                                        BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" HeightRequest="40"
+                                        FontAttributes="Bold" Clicked="OnToYardClicked" IsEnabled="{Binding IsWeightStable}" 
+                                        FontSize="{StaticResource ButtonFontSize}" />
+                                <Button x:Name="SecondWeightButton" Grid.Column="1" Text="SAVE and PRINT" 
+                                        BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" HeightRequest="40"
+                                        FontAttributes="Bold" Clicked="OnSaveAndPrintClicked" 
+                                        IsVisible="{Binding IsSecondWeightButtonVisible}" IsEnabled="{Binding IsWeightStable}"
+                                        FontSize="{StaticResource ButtonFontSize}" />
+                            </Grid>
+
+                            <Grid Grid.Row="1" x:Name="SecondaryButtonsGrid" ColumnSpacing="6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Button Grid.Column="0" Text="UPDATE TARE" BackgroundColor="#2A2A2A" TextColor="White" 
+                                        CornerRadius="8" HeightRequest="35" FontSize="9" Clicked="OnUpdateTareClicked" />
+                                <Button Grid.Column="1" Text="CERTIFICATES" BackgroundColor="#2A2A2A" TextColor="White" 
+                                        CornerRadius="8" HeightRequest="35" FontSize="9" Clicked="OnCertificatesClicked" />
+                                <Button Grid.Column="2" Text="REPORTS" BackgroundColor="#2A2A2A" TextColor="White" 
+                                        CornerRadius="8" HeightRequest="35" FontSize="9" Clicked="OnReportsClicked" />
+                                <Button Grid.Column="3" x:Name="CancelDocketButton" Text="CANCEL DOCKET" 
+                                        BackgroundColor="#FF4500" TextColor="White" CornerRadius="8" HeightRequest="35"
+                                        FontSize="9" Command="{Binding CancelDocketCommand}" IsEnabled="{Binding IsDocketLoaded}" />
+                            </Grid>
                         </Grid>
-
-                        <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
-                            <Button Grid.Column="0" Text="UPDATE TARE" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" HeightRequest="35"
-                                    FontSize="10" Clicked="OnUpdateTareClicked" />
-                            <Button Grid.Column="1" Text="CERTIFICATES" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" HeightRequest="35"
-                                    FontSize="10" Clicked="OnCertificatesClicked" />
-                            <Button Grid.Column="2" Text="REPORTS" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" HeightRequest="35"
-                                    FontSize="10" Clicked="OnReportsClicked" />
-                            <Button Grid.Column="3" x:Name="CancelDocketButton" Text="CANCEL DOCKET" BackgroundColor="#FF4500" TextColor="White" CornerRadius="8" HeightRequest="35"
-                                    FontSize="10" Command="{Binding CancelDocketCommand}" IsEnabled="{Binding IsDocketLoaded}" />
-                        </Grid>
-                    </Grid>
-                </Grid>
+                    </VerticalStackLayout>
+                </ScrollView>
             </Border>
         </Grid>
     </Grid>
+
+    <!-- Visual State Manager for Responsive Design -->
+    <VisualStateManager.VisualStateGroups>
+        <VisualStateGroup Name="CommonStates">
+
+            <!-- Mobile Layout (Portrait) -->
+            <VisualState Name="Mobile">
+                <VisualState.StateTriggers>
+                    <AdaptiveTrigger MinWindowWidth="0" MinWindowHeight="0" />
+                </VisualState.StateTriggers>
+                <VisualState.Setters>
+                    <!-- Stack panels vertically on mobile -->
+                    <Setter TargetName="ContentGrid" Property="Grid.ColumnDefinitions" Value="*" />
+                    <Setter TargetName="ContentGrid" Property="Grid.RowDefinitions" Value="Auto,*" />
+
+                    <!-- Move right panel to second row -->
+                    <Setter TargetName="ContentGrid" Property="Grid.Column" Value="0" />
+
+                    <!-- Adjust font sizes for mobile -->
+                    <Setter TargetName="LiveWeightLabel" Property="Label.FontSize" Value="{StaticResource MobileWeightFontSize}" />
+                    <Setter TargetName="EntranceWeightLabel" Property="Label.FontSize" Value="{StaticResource MobileSubWeightFontSize}" />
+
+                    <!-- Stack mode buttons vertically on very small screens -->
+                    <Setter TargetName="ModesGrid" Property="Grid.ColumnDefinitions" Value="*,*" />
+                    <Setter TargetName="ModesGrid" Property="Grid.RowDefinitions" Value="Auto,Auto" />
+
+                    <!-- Reposition mode buttons for mobile -->
+                    <Setter TargetName="EntryAndTareButton" Property="Grid.Column" Value="1" />
+                    <Setter TargetName="EntryAndTareButton" Property="Grid.Row" Value="0" />
+                    <Setter TargetName="TareAndExitButton" Property="Grid.Column" Value="0" />
+                    <Setter TargetName="TareAndExitButton" Property="Grid.Row" Value="1" />
+                    <Setter TargetName="SingleWeightButton" Property="Grid.Column" Value="1" />
+                    <Setter TargetName="SingleWeightButton" Property="Grid.Row" Value="1" />
+
+                    <!-- Adjust button grid for mobile -->
+                    <Setter TargetName="SecondaryButtonsGrid" Property="Grid.ColumnDefinitions" Value="*,*" />
+                    <Setter TargetName="SecondaryButtonsGrid" Property="Grid.RowDefinitions" Value="Auto,Auto" />
+
+                    <!-- Reposition secondary buttons for mobile -->
+                    <Setter TargetName="SecondaryButtonsGrid" Property="Grid.Column" Value="1" />
+                    <Setter TargetName="SecondaryButtonsGrid" Property="Grid.Row" Value="0" />
+                </VisualState.Setters>
+            </VisualState>
+
+            <!-- Tablet Layout -->
+            <VisualState Name="Tablet">
+                <VisualState.StateTriggers>
+                    <AdaptiveTrigger MinWindowWidth="768" />
+                </VisualState.StateTriggers>
+                <VisualState.Setters>
+                    <!-- Keep side-by-side layout but adjust proportions -->
+                    <Setter TargetName="ContentGrid" Property="Grid.ColumnDefinitions" Value="1.5*,*" />
+
+                    <!-- Adjust spacing for tablet -->
+                    <Setter TargetName="MainGrid" Property="Grid.Padding" Value="16,0,16,16" />
+                    <Setter TargetName="ContentGrid" Property="Grid.ColumnSpacing" Value="20" />
+                </VisualState.Setters>
+            </VisualState>
+
+            <!-- Desktop Layout -->
+            <VisualState Name="Desktop">
+                <VisualState.StateTriggers>
+                    <AdaptiveTrigger MinWindowWidth="1024" />
+                </VisualState.StateTriggers>
+                <VisualState.Setters>
+                    <!-- Full desktop layout with optimal proportions -->
+                    <Setter TargetName="ContentGrid" Property="Grid.ColumnDefinitions" Value="1.2*,*" />
+                    <Setter TargetName="MainGrid" Property="Grid.Padding" Value="20,0,20,20" />
+                    <Setter TargetName="ContentGrid" Property="Grid.ColumnSpacing" Value="24" />
+                </VisualState.Setters>
+            </VisualState>
+
+            <!-- Large Desktop Layout -->
+            <VisualState Name="LargeDesktop">
+                <VisualState.StateTriggers>
+                    <AdaptiveTrigger MinWindowWidth="1440" />
+                </VisualState.StateTriggers>
+                <VisualState.Setters>
+                    <!-- Maximum spacing and size for large screens -->
+                    <Setter TargetName="MainGrid" Property="Grid.Padding" Value="24,0,24,24" />
+                    <Setter TargetName="ContentGrid" Property="Grid.ColumnSpacing" Value="32" />
+
+                    <!-- Larger fonts for large screens -->
+                    <Setter TargetName="LiveWeightLabel" Property="Label.FontSize" Value="52" />
+                </VisualState.Setters>
+            </VisualState>
+        </VisualStateGroup>
+
+        <!-- Orientation-based states -->
+        <VisualStateGroup Name="OrientationStates">
+            <VisualState Name="Portrait">
+                <VisualState.StateTriggers>
+                    <AdaptiveTrigger MinWindowWidth="0" MinWindowHeight="600" />
+                </VisualState.StateTriggers>
+                <VisualState.Setters>
+                    <!-- Force vertical stacking in portrait mode on smaller screens -->
+                    <Setter TargetName="ContentGrid" Property="Grid.ColumnDefinitions" Value="*" />
+                    <Setter TargetName="ContentGrid" Property="Grid.RowDefinitions" Value="Auto,*" />
+
+                    <!-- Adjust the right panel to be in the second row -->
+                    <Setter TargetName="ContentGrid" Property="Grid.Row" Value="1" />
+                </VisualState.Setters>
+            </VisualState>
+
+            <VisualState Name="Landscape">
+                <VisualState.StateTriggers>
+                    <AdaptiveTrigger MinWindowWidth="800" MinWindowHeight="0" />
+                </VisualState.StateTriggers>
+                <VisualState.Setters>
+                    <!-- Side-by-side layout for landscape -->
+                    <Setter TargetName="ContentGrid" Property="Grid.ColumnDefinitions" Value="1.2*,*" />
+                    <Setter TargetName="ContentGrid" Property="Grid.RowDefinitions" Value="*" />
+                </VisualState.Setters>
+            </VisualState>
+        </VisualStateGroup>
+    </VisualStateManager.VisualStateGroups>
+
 </ContentPage>

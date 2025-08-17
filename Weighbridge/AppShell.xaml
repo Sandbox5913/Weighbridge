@@ -16,10 +16,22 @@
             Title="Loads"
             ContentTemplate="{DataTemplate pages:LoadsPage}"
             Route="LoadsPage" />
-        <ShellContent
-            Title="Settings"
-            ContentTemplate="{DataTemplate pages:SettingsPage}"
-            Route="SettingsPage" />
+        <Tab Title="Settings"
+             Icon="settings_icon.png"
+             IsVisible="{Binding IsAdmin}">
+            <ShellContent
+                Title="System Settings"
+                ContentTemplate="{DataTemplate pages:SettingsPage}"
+                Route="SettingsPage" />
+            <ShellContent
+                Title="Print Settings"
+                ContentTemplate="{DataTemplate pages:PrintSettingsPage}"
+                Route="PrintSettingsPage" />
+            <ShellContent
+                Title="Main Form Settings"
+                ContentTemplate="{DataTemplate pages:MainFormSettingsPage}"
+                Route="MainFormSettingsPage" />
+        </Tab>
         <Tab Title="Data Management"
              Icon="dotnet_bot.png"
              IsVisible="{Binding IsAdmin}">
@@ -48,10 +60,6 @@
                 ContentTemplate="{DataTemplate pages:VehicleManagementPage}"
                 Route="VehicleManagementPage" />
         </Tab>
-        <ShellContent
-            Title="Print Settings"
-            ContentTemplate="{DataTemplate pages:PrintSettingsPage}"
-            Route="PrintSettingsPage" />
     </TabBar>
 
 </Shell>

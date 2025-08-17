@@ -4,39 +4,399 @@
              x:Class="Weighbridge.Pages.LoadsPage"
              Title="Saved Loads"
              BackgroundColor="#0E0E0E">
-    <Grid Padding="24" RowSpacing="24">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <!-- Responsive font sizes -->
+            <x:Double x:Key="HeaderFontSize">28</x:Double>
+            <x:Double x:Key="SubHeaderFontSize">16</x:Double>
+            <x:Double x:Key="ItemTitleFontSize">16</x:Double>
+            <x:Double x:Key="ItemDetailFontSize">14</x:Double>
+            <x:Double x:Key="ItemTimestampFontSize">12</x:Double>
+            <x:Double x:Key="ButtonFontSize">12</x:Double>
+
+            <!-- Mobile font sizes -->
+            <x:Double x:Key="MobileHeaderFontSize">22</x:Double>
+            <x:Double x:Key="MobileSubHeaderFontSize">14</x:Double>
+            <x:Double x:Key="MobileItemTitleFontSize">14</x:Double>
+            <x:Double x:Key="MobileItemDetailFontSize">12</x:Double>
+            <x:Double x:Key="MobileItemTimestampFontSize">10</x:Double>
+            <x:Double x:Key="MobileButtonFontSize">10</x:Double>
+
+            <!-- Responsive spacing -->
+            <x:Double x:Key="ContainerPadding">24</x:Double>
+            <x:Double x:Key="ContainerSpacing">24</x:Double>
+            <x:Double x:Key="ItemPadding">20</x:Double>
+            <x:Double x:Key="ItemSpacing">8</x:Double>
+
+            <!-- Mobile spacing -->
+            <x:Double x:Key="MobileContainerPadding">16</x:Double>
+            <x:Double x:Key="MobileContainerSpacing">16</x:Double>
+            <x:Double x:Key="MobileItemPadding">16</x:Double>
+            <x:Double x:Key="MobileItemSpacing">6</x:Double>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid x:Name="MainGrid" Padding="{StaticResource ContainerPadding}" RowSpacing="{StaticResource ContainerSpacing}">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!-- Header Section -->
         <StackLayout Grid.Row="0" Spacing="8">
-            <Label Text="Transaction History" TextColor="White" FontSize="28" FontAttributes="Bold" />
-            <Label Text="Review, modify, or reprint saved dockets" TextColor="#CCCCCC" FontSize="16" />
+            <Label Text="Transaction History" TextColor="White" 
+                   FontSize="{StaticResource HeaderFontSize}" FontAttributes="Bold" />
+            <Label Text="Review, modify, or reprint saved dockets" TextColor="#CCCCCC" 
+                   FontSize="{StaticResource SubHeaderFontSize}" />
         </StackLayout>
 
-        <CollectionView x:Name="loadsListView" Grid.Row="1">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Border BackgroundColor="#1A1A1A" StrokeThickness="0" Margin="0,8">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="16" />
-                        </Border.StrokeShape>
-                        <StackLayout Padding="20" Spacing="12">
-                            <Grid ColumnDefinitions="*, Auto">
-                                <Label Grid.Column="0" Text="{Binding VehicleLicense, StringFormat='Vehicle: {0}'}" TextColor="White" FontSize="16" FontAttributes="Bold"/>
-                                <Label Grid.Column="1" Text="{Binding Timestamp, StringFormat='{0:g}'}" TextColor="#CCCCCC" FontSize="12"/>
-                            </Grid>
-                            <Label Text="{Binding CustomerName, StringFormat='Customer: {0}'}" TextColor="#CCCCCC" FontSize="14"/>
-                            <Label Text="{Binding NetWeight, StringFormat='Net Weight: {0} KG'}" TextColor="White" FontSize="14"/>
-                            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,10,0,0">
-                                <Button Grid.Column="0" Text="WEIGH OUT" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" CommandParameter="{Binding .}" Clicked="OnWeighOutClicked"/>
-                                <Button Grid.Column="1" Text="REPRINT" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" CommandParameter="{Binding .}" Clicked="OnReprintClicked"/>
-                            </Grid>
-                        </StackLayout>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+        <!-- Filters Section -->
+        <StackLayout Grid.Row="1" x:Name="FiltersSection" Spacing="12" Margin="0,12,0,0">
+
+            <!-- Primary Filters Grid -->
+            <Grid x:Name="PrimaryFiltersGrid" ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Status Filter -->
+                <Border Grid.Column="0" BackgroundColor="#1A1A1A" StrokeThickness="1" Stroke="#444">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Picker Title="Status" SelectedItem="{Binding SelectedStatusFilter}" 
+                            TextColor="White" TitleColor="#888" BackgroundColor="Transparent" 
+                            Margin="8,4" FontSize="12">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>All</x:String>
+                                <x:String>Open</x:String>
+                                <x:String>Closed</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                    </Picker>
+                </Border>
+
+                <!-- Date From Filter -->
+                <Border Grid.Column="1" BackgroundColor="#1A1A1A" StrokeThickness="1" Stroke="#444">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <DatePicker Date="{Binding DateFromFilter}" Format="dd/MM/yyyy" 
+                                TextColor="White" BackgroundColor="Transparent" 
+                                Margin="8,4" FontSize="12" />
+                </Border>
+
+                <!-- Date To Filter -->
+                <Border Grid.Column="2" BackgroundColor="#1A1A1A" StrokeThickness="1" Stroke="#444">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <DatePicker Date="{Binding DateToFilter}" Format="dd/MM/yyyy" 
+                                TextColor="White" BackgroundColor="Transparent" 
+                                Margin="8,4" FontSize="12" />
+                </Border>
+            </Grid>
+
+            <!-- Vehicle Registration Filter -->
+            <Border BackgroundColor="#1A1A1A" StrokeThickness="1" Stroke="#444">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8" />
+                </Border.StrokeShape>
+                <Entry Placeholder="Filter by Vehicle Registration" Text="{Binding VehicleRegFilter}" 
+                       TextColor="White" BackgroundColor="Transparent" PlaceholderColor="#888"
+                       Margin="8,4" FontSize="12" />
+            </Border>
+
+            <!-- Filter Actions -->
+            <Grid x:Name="FilterActionsGrid" ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" Text="APPLY FILTERS" BackgroundColor="#00FF7F" 
+                        TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" 
+                        Clicked="OnApplyFiltersClicked" FontSize="{StaticResource ButtonFontSize}"
+                        HeightRequest="44" />
+                <Button Grid.Column="1" Text="CLEAR" BackgroundColor="#2A2A2A" 
+                        TextColor="White" CornerRadius="8" FontAttributes="Bold" 
+                        Clicked="OnClearFiltersClicked" FontSize="{StaticResource ButtonFontSize}"
+                        HeightRequest="44" />
+            </Grid>
+        </StackLayout>
+
+        <!-- Loads List -->
+        <RefreshView Grid.Row="2" IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+            <CollectionView x:Name="loadsCollectionView" ItemsSource="{Binding Loads}" 
+                           BackgroundColor="Transparent" SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="0,4">
+                            <Border BackgroundColor="#1A1A1A" StrokeThickness="1" Stroke="#333">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+                                <Border.Shadow>
+                                    <Shadow Brush="Black" Offset="0,2" Radius="8" Opacity="0.2" />
+                                </Border.Shadow>
+
+                                <Grid x:Name="ItemContentGrid" Padding="{StaticResource ItemPadding}" 
+                                      RowSpacing="{StaticResource ItemSpacing}">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Header with Vehicle and Timestamp -->
+                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                        <Label Grid.Column="0" Text="{Binding VehicleLicense, StringFormat='Vehicle: {0}'}" 
+                                               TextColor="White" FontSize="{StaticResource ItemTitleFontSize}" 
+                                               FontAttributes="Bold" VerticalOptions="Center" />
+                                        <Label Grid.Column="1" Text="{Binding Timestamp, StringFormat='{0:g}'}" 
+                                               TextColor="#CCCCCC" FontSize="{StaticResource ItemTimestampFontSize}"
+                                               VerticalOptions="Center" />
+                                    </Grid>
+
+                                    <!-- Weight Information Grid -->
+                                    <Grid Grid.Row="1" x:Name="WeightInfoGrid" ColumnSpacing="16" 
+                                          Margin="0,8,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackLayout Grid.Column="0" Spacing="2">
+                                            <Label Text="Entrance" TextColor="#888" 
+                                                   FontSize="10" FontAttributes="Bold" />
+                                            <Label Text="{Binding EntranceWeight, StringFormat='{0} KG'}" 
+                                                   TextColor="#CCCCCC" FontSize="{StaticResource ItemDetailFontSize}" />
+                                        </StackLayout>
+
+                                        <StackLayout Grid.Column="1" Spacing="2">
+                                            <Label Text="Exit" TextColor="#888" 
+                                                   FontSize="10" FontAttributes="Bold" />
+                                            <Label Text="{Binding ExitWeight, StringFormat='{0} KG'}" 
+                                                   TextColor="#CCCCCC" FontSize="{StaticResource ItemDetailFontSize}" />
+                                        </StackLayout>
+
+                                        <StackLayout Grid.Column="2" Spacing="2">
+                                            <Label Text="Net Weight" TextColor="#888" 
+                                                   FontSize="10" FontAttributes="Bold" />
+                                            <Label Text="{Binding NetWeight, StringFormat='{0} KG'}" 
+                                                   TextColor="#00FF7F" FontSize="{StaticResource ItemDetailFontSize}" 
+                                                   FontAttributes="Bold" />
+                                        </StackLayout>
+                                    </Grid>
+
+                                    <!-- Transaction Details Grid -->
+                                    <Grid Grid.Row="2" x:Name="TransactionDetailsGrid" ColumnSpacing="16" 
+                                          Margin="0,8,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackLayout Grid.Column="0" Spacing="4">
+                                            <Label Text="{Binding CustomerName, StringFormat='Customer: {0}'}" 
+                                                   TextColor="#CCCCCC" FontSize="{StaticResource ItemDetailFontSize}" 
+                                                   LineBreakMode="TailTruncation" />
+                                            <Label Text="{Binding ItemName, StringFormat='Material: {0}'}" 
+                                                   TextColor="#CCCCCC" FontSize="{StaticResource ItemDetailFontSize}"
+                                                   LineBreakMode="TailTruncation" />
+                                            <Label Text="{Binding TransportName, StringFormat='Transport: {0}'}" 
+                                                   TextColor="#CCCCCC" FontSize="{StaticResource ItemDetailFontSize}"
+                                                   LineBreakMode="TailTruncation" />
+                                        </StackLayout>
+
+                                        <StackLayout Grid.Column="1" Spacing="4">
+                                            <Label Text="{Binding SourceSiteName, StringFormat='From: {0}'}" 
+                                                   TextColor="#CCCCCC" FontSize="{StaticResource ItemDetailFontSize}"
+                                                   LineBreakMode="TailTruncation" />
+                                            <Label Text="{Binding DestinationSiteName, StringFormat='To: {0}'}" 
+                                                   TextColor="#CCCCCC" FontSize="{StaticResource ItemDetailFontSize}"
+                                                   LineBreakMode="TailTruncation" />
+                                            <Label Text="{Binding DriverName, StringFormat='Driver: {0}'}" 
+                                                   TextColor="#CCCCCC" FontSize="{StaticResource ItemDetailFontSize}"
+                                                   LineBreakMode="TailTruncation" />
+                                        </StackLayout>
+                                    </Grid>
+
+                                    <!-- Remarks (if available) -->
+                                    <StackLayout Grid.Row="3" IsVisible="{Binding HasRemarks}" Margin="0,4,0,0">
+                                        <Label Text="Remarks:" TextColor="#888" FontSize="10" FontAttributes="Bold" />
+                                        <Label Text="{Binding Remarks}" TextColor="#CCCCCC" 
+                                               FontSize="{StaticResource ItemDetailFontSize}" 
+                                               LineBreakMode="WordWrap" />
+                                    </StackLayout>
+
+                                    <!-- Action Buttons -->
+                                    <Grid Grid.Row="4" x:Name="ActionButtonsGrid" ColumnSpacing="12" 
+                                          Margin="0,12,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Button Grid.Column="0" Text="EDIT" BackgroundColor="#FFD700" 
+                                                TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" 
+                                                CommandParameter="{Binding .}" Clicked="OnEditClicked"
+                                                FontSize="{StaticResource ButtonFontSize}" HeightRequest="40" />
+                                        <Button Grid.Column="1" Text="REPRINT" BackgroundColor="#00FF7F" 
+                                                TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" 
+                                                CommandParameter="{Binding .}" Clicked="OnReprintClicked"
+                                                FontSize="{StaticResource ButtonFontSize}" HeightRequest="40" />
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <!-- Empty State -->
+                <CollectionView.EmptyView>
+                    <StackLayout Padding="40" Spacing="16" VerticalOptions="Center">
+                        <Label Text="📋" FontSize="48" HorizontalOptions="Center" />
+                        <Label Text="No transactions found" TextColor="White" FontSize="18" 
+                               FontAttributes="Bold" HorizontalOptions="Center" />
+                        <Label Text="Try adjusting your filters or add some transactions" 
+                               TextColor="#CCCCCC" FontSize="14" HorizontalOptions="Center" 
+                               HorizontalTextAlignment="Center" />
+                    </StackLayout>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
     </Grid>
+
+    <!-- Visual State Manager for Responsive Design -->
+    <VisualStateManager.VisualStateGroups>
+        <VisualStateGroup Name="CommonStates">
+
+            <!-- Mobile Portrait Layout -->
+            <VisualState Name="MobilePortrait">
+                <VisualState.StateTriggers>
+                    <AdaptiveTrigger MinWindowWidth="0" MinWindowHeight="600" />
+                </VisualState.StateTriggers>
+                <VisualState.Setters>
+                    <!-- Adjust container spacing for mobile -->
+                    <Setter TargetName="MainGrid" Property="Grid.Padding" Value="{StaticResource MobileContainerPadding}" />
+                    <Setter TargetName="MainGrid" Property="Grid.RowSpacing" Value="{StaticResource MobileContainerSpacing}" />
+
+                    <!-- Stack filter grid vertically -->
+                    <Setter TargetName="PrimaryFiltersGrid" Property="Grid.ColumnDefinitions" Value="*" />
+                    <Setter TargetName="PrimaryFiltersGrid" Property="Grid.RowDefinitions" Value="Auto,Auto,Auto" />
+                    <Setter TargetName="PrimaryFiltersGrid" Property="Grid.RowSpacing" Value="8" />
+
+                    <!-- Reposition filter elements -->
+                    <Setter Property="Grid.Column" Value="0" />
+                    <Setter Property="Grid.Row" Value="1" />
+
+                    <!-- Stack action buttons vertically -->
+                    <Setter TargetName="FilterActionsGrid" Property="Grid.ColumnDefinitions" Value="*" />
+                    <Setter TargetName="FilterActionsGrid" Property="Grid.RowDefinitions" Value="Auto,Auto" />
+                    <Setter TargetName="FilterActionsGrid" Property="Grid.RowSpacing" Value="8" />
+
+                    <!-- Adjust item content -->
+                    <Setter TargetName="ItemContentGrid" Property="Grid.Padding" Value="{StaticResource MobileItemPadding}" />
+                    <Setter TargetName="ItemContentGrid" Property="Grid.RowSpacing" Value="{StaticResource MobileItemSpacing}" />
+
+                    <!-- Stack weight info vertically on mobile -->
+                    <Setter TargetName="WeightInfoGrid" Property="Grid.ColumnDefinitions" Value="*" />
+                    <Setter TargetName="WeightInfoGrid" Property="Grid.RowDefinitions" Value="Auto,Auto,Auto" />
+                    <Setter TargetName="WeightInfoGrid" Property="Grid.RowSpacing" Value="8" />
+
+                    <!-- Stack transaction details vertically -->
+                    <Setter TargetName="TransactionDetailsGrid" Property="Grid.ColumnDefinitions" Value="*" />
+                    <Setter TargetName="TransactionDetailsGrid" Property="Grid.RowDefinitions" Value="Auto,Auto" />
+                    <Setter TargetName="TransactionDetailsGrid" Property="Grid.RowSpacing" Value="8" />
+
+                    <!-- Use mobile font sizes -->
+                    <Setter Property="Label.FontSize" Value="{StaticResource MobileItemDetailFontSize}" />
+                    <Setter Property="Button.FontSize" Value="{StaticResource MobileButtonFontSize}" />
+                </VisualState.Setters>
+            </VisualState>
+
+            <!-- Mobile Landscape Layout -->
+            <VisualState Name="MobileLandscape">
+                <VisualState.StateTriggers>
+                    <AdaptiveTrigger MinWindowWidth="600" MinWindowHeight="0" />
+                </VisualState.StateTriggers>
+                <VisualState.Setters>
+                    <!-- Adjust for landscape mobile -->
+                    <Setter TargetName="MainGrid" Property="Grid.Padding" Value="16,12,16,12" />
+
+                    <!-- Keep filters in a row but make them smaller -->
+                    <Setter TargetName="PrimaryFiltersGrid" Property="Grid.ColumnDefinitions" Value="*,*,*" />
+                    <Setter TargetName="FilterActionsGrid" Property="Grid.ColumnDefinitions" Value="2*,*" />
+
+                    <!-- Adjust transaction details for landscape -->
+                    <Setter TargetName="TransactionDetailsGrid" Property="Grid.ColumnDefinitions" Value="*,*" />
+                </VisualState.Setters>
+            </VisualState>
+
+            <!-- Tablet Layout -->
+            <VisualState Name="Tablet">
+                <VisualState.StateTriggers>
+                    <AdaptiveTrigger MinWindowWidth="768" />
+                </VisualState.StateTriggers>
+                <VisualState.Setters>
+                    <!-- Optimized for tablet screens -->
+                    <Setter TargetName="MainGrid" Property="Grid.Padding" Value="20" />
+                    <Setter TargetName="MainGrid" Property="Grid.RowSpacing" Value="20" />
+
+                    <!-- Keep filter grid horizontal -->
+                    <Setter TargetName="PrimaryFiltersGrid" Property="Grid.ColumnDefinitions" Value="*,*,*" />
+                    <Setter TargetName="FilterActionsGrid" Property="Grid.ColumnDefinitions" Value="2*,*" />
+
+                    <!-- Optimal layout for transaction details -->
+                    <Setter TargetName="WeightInfoGrid" Property="Grid.ColumnDefinitions" Value="*,*,*" />
+                    <Setter TargetName="TransactionDetailsGrid" Property="Grid.ColumnDefinitions" Value="*,*" />
+                </VisualState.Setters>
+            </VisualState>
+
+            <!-- Desktop Layout -->
+            <VisualState Name="Desktop">
+                <VisualState.StateTriggers>
+                    <AdaptiveTrigger MinWindowWidth="1024" />
+                </VisualState.StateTriggers>
+                <VisualState.Setters>
+                    <!-- Full desktop layout -->
+                    <Setter TargetName="MainGrid" Property="Grid.Padding" Value="24" />
+                    <Setter TargetName="MainGrid" Property="Grid.RowSpacing" Value="24" />
+
+                    <!-- Desktop optimal filter layout -->
+                    <Setter TargetName="PrimaryFiltersGrid" Property="Grid.ColumnDefinitions" Value="*,*,*" />
+                    <Setter TargetName="FilterActionsGrid" Property="Grid.ColumnDefinitions" Value="2*,*" />
+
+                    <!-- Full desktop item layout -->
+                    <Setter TargetName="WeightInfoGrid" Property="Grid.ColumnDefinitions" Value="*,*,*" />
+                    <Setter TargetName="TransactionDetailsGrid" Property="Grid.ColumnDefinitions" Value="*,*" />
+                </VisualState.Setters>
+            </VisualState>
+
+            <!-- Large Desktop Layout -->
+            <VisualState Name="LargeDesktop">
+                <VisualState.StateTriggers>
+                    <AdaptiveTrigger MinWindowWidth="1440" />
+                </VisualState.StateTriggers>
+                <VisualState.Setters>
+                    <!-- Maximum spacing for large screens -->
+                    <Setter TargetName="MainGrid" Property="Grid.Padding" Value="32" />
+                    <Setter TargetName="MainGrid" Property="Grid.RowSpacing" Value="32" />
+
+                    <!-- Larger fonts for big screens -->
+                    <Setter Property="Label.FontSize" Value="16" />
+                </VisualState.Setters>
+            </VisualState>
+        </VisualStateGroup>
+    </VisualStateManager.VisualStateGroups>
+
 </ContentPage>

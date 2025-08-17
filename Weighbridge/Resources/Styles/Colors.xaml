@@ -8,6 +8,8 @@
 
     <Color x:Key="Primary">#512BD4</Color>
     <Color x:Key="PrimaryDark">#ac99ea</Color>
+    <Color x:Key="PrimaryPressed">#4122A9</Color>
+    <Color x:Key="PrimaryDarkPressed">#8A79B8</Color>
     <Color x:Key="PrimaryDarkText">#242424</Color>
     <Color x:Key="Secondary">#DFD8F7</Color>
     <Color x:Key="SecondaryDarkText">#9880e5</Color>

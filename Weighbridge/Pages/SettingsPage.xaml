@@ -7,6 +7,7 @@
 
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="Print Settings" Clicked="OnPrintSettingsClicked" />
+        <ToolbarItem Text="Main Form Settings" Clicked="OnMainFormSettingsClicked" />
     </ContentPage.ToolbarItems>
 
     <ScrollView>

@@ -30,6 +30,7 @@ namespace Weighbridge
             Routing.RegisterRoute(nameof(PrintSettingsPage), typeof(PrintSettingsPage));
             Routing.RegisterRoute(nameof(LoadsPage), typeof(LoadsPage));
             Routing.RegisterRoute(nameof(EditLoadPage), typeof(EditLoadPage));
+            Routing.RegisterRoute(nameof(MainFormSettingsPage), typeof(MainFormSettingsPage));
         }
 
         protected override void OnNavigating(ShellNavigatingEventArgs args)

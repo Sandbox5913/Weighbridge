@@ -107,7 +107,8 @@
                                    PlaceholderColor="#9CA3AF"
                                    BackgroundColor="Transparent"
                                    FontSize="16"
-                                   Margin="16,12" />
+                                   Margin="16,12"
+                                   Completed="OnLoginClicked" />
                         </Border>
                     </StackLayout>
 

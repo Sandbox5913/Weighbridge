@@ -10,5 +10,13 @@ namespace Weighbridge.Pages
             BindingContext = viewModel;
             viewModel.ShowAlert += (title, message, cancel) => DisplayAlert(title, message, cancel);
         }
+
+        private void OnLoginClicked(object sender, EventArgs e)
+        {
+            if (BindingContext is LoginViewModel viewModel && viewModel.LoginCommand.CanExecute(null))
+            {
+                viewModel.LoginCommand.Execute(null);
+            }
+        }
     }
 }

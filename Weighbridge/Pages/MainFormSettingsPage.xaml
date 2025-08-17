@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:Weighbridge.ViewModels"
+             x:Class="Weighbridge.Pages.MainFormSettingsPage"
+             Title="Main Form Settings">
+    <ScrollView>
+        <StackLayout Spacing="20" Padding="20">
+            <TableView Intent="Settings">
+                <TableRoot>
+                    <TableSection Title="Vehicle">
+                        <SwitchCell Text="Visible" On="{Binding FormConfig.Vehicle.IsVisible}" />
+                        <EntryCell Label="Label" Text="{Binding FormConfig.Vehicle.Label}" />
+                        <SwitchCell Text="Mandatory" On="{Binding FormConfig.Vehicle.IsMandatory}" />
+                    </TableSection>
+                    <TableSection Title="Source Site">
+                        <SwitchCell Text="Visible" On="{Binding FormConfig.SourceSite.IsVisible}" />
+                        <EntryCell Label="Label" Text="{Binding FormConfig.SourceSite.Label}" />
+                        <SwitchCell Text="Mandatory" On="{Binding FormConfig.SourceSite.IsMandatory}" />
+                    </TableSection>
+                    <TableSection Title="Destination Site">
+                        <SwitchCell Text="Visible" On="{Binding FormConfig.DestinationSite.IsVisible}" />
+                        <EntryCell Label="Label" Text="{Binding FormConfig.DestinationSite.Label}" />
+                        <SwitchCell Text="Mandatory" On="{Binding FormConfig.DestinationSite.IsMandatory}" />
+                    </TableSection>
+                    <TableSection Title="Item">
+                        <SwitchCell Text="Visible" On="{Binding FormConfig.Item.IsVisible}" />
+                        <EntryCell Label="Label" Text="{Binding FormConfig.Item.Label}" />
+                        <SwitchCell Text="Mandatory" On="{Binding FormConfig.Item.IsMandatory}" />
+                    </TableSection>
+                    <TableSection Title="Customer">
+                        <SwitchCell Text="Visible" On="{Binding FormConfig.Customer.IsVisible}" />
+                        <EntryCell Label="Label" Text="{Binding FormConfig.Customer.Label}" />
+                        <SwitchCell Text="Mandatory" On="{Binding FormConfig.Customer.IsMandatory}" />
+                    </TableSection>
+                    <TableSection Title="Transport">
+                        <SwitchCell Text="Visible" On="{Binding FormConfig.Transport.IsVisible}" />
+                        <EntryCell Label="Label" Text="{Binding FormConfig.Transport.Label}" />
+                        <SwitchCell Text="Mandatory" On="{Binding FormConfig.Transport.IsMandatory}" />
+                    </TableSection>
+                    <TableSection Title="Driver">
+                        <SwitchCell Text="Visible" On="{Binding FormConfig.Driver.IsVisible}" />
+                        <EntryCell Label="Label" Text="{Binding FormConfig.Driver.Label}" />
+                        <SwitchCell Text="Mandatory" On="{Binding FormConfig.Driver.IsMandatory}" />
+                    </TableSection>
+                    <TableSection Title="Remarks">
+                        <SwitchCell Text="Visible" On="{Binding FormConfig.Remarks.IsVisible}" />
+                        <EntryCell Label="Label" Text="{Binding FormConfig.Remarks.Label}" />
+                        <SwitchCell Text="Mandatory" On="{Binding FormConfig.Remarks.IsMandatory}" />
+                    </TableSection>
+                </TableRoot>
+            </TableView>
+            <Button Text="Save" Command="{Binding SaveConfigCommand}" />
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

@@ -108,6 +108,11 @@ namespace Weighbridge.Pages
         {
             await Shell.Current.GoToAsync(nameof(PrintSettingsPage));
         }
+
+        private async void OnMainFormSettingsClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync(nameof(MainFormSettingsPage));
+        }
         private async void OnSaveLogClicked(object sender, EventArgs e)
         {
             try
