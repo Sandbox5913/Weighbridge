@@ -31,6 +31,10 @@
                 Title="Main Form Settings"
                 ContentTemplate="{DataTemplate pages:MainFormSettingsPage}"
                 Route="MainFormSettingsPage" />
+            <ShellContent
+                Title="User Management"
+                ContentTemplate="{DataTemplate pages:UserManagementPage}"
+                Route="UserManagementPage" />
         </Tab>
         <Tab Title="Data Management"
              Icon="dotnet_bot.png"

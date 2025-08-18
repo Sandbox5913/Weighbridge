@@ -201,7 +201,7 @@
                                            TextColor="{Binding StabilityStatusColour, FallbackValue=Red}" 
                                            FontSize="{StaticResource LabelFontSize}" VerticalOptions="Center" FontAttributes="Bold"/>
                                 </StackLayout>
-                                <Label x:Name="ConnectionStatusLabel" Grid.Column="1" Text="COM1 • 9600 bps" 
+                                <Label x:Name="ConnectionStatusLabel" Grid.Column="1" Text="{Binding ConnectionStatus}" 
                                        TextColor="#CCCCCC" FontSize="10" VerticalOptions="Center"/>
                             </Grid>
                         </Border>

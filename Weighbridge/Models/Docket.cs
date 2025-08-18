@@ -22,5 +22,6 @@ namespace Weighbridge.Models
         public string? Remarks { get; set; }
         public DateTime Timestamp { get; set; }
         public string? Status { get; set; }
+        public DateTime UpdatedAt { get; set; } // Add this line
     }
 }

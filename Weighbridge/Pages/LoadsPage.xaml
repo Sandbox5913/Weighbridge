@@ -7,7 +7,6 @@
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <!-- Responsive font sizes -->
             <x:Double x:Key="HeaderFontSize">28</x:Double>
             <x:Double x:Key="SubHeaderFontSize">16</x:Double>
             <x:Double x:Key="ItemTitleFontSize">16</x:Double>
@@ -15,7 +14,6 @@
             <x:Double x:Key="ItemTimestampFontSize">12</x:Double>
             <x:Double x:Key="ButtonFontSize">12</x:Double>
 
-            <!-- Mobile font sizes -->
             <x:Double x:Key="MobileHeaderFontSize">22</x:Double>
             <x:Double x:Key="MobileSubHeaderFontSize">14</x:Double>
             <x:Double x:Key="MobileItemTitleFontSize">14</x:Double>
@@ -23,13 +21,11 @@
             <x:Double x:Key="MobileItemTimestampFontSize">10</x:Double>
             <x:Double x:Key="MobileButtonFontSize">10</x:Double>
 
-            <!-- Responsive spacing -->
             <x:Double x:Key="ContainerPadding">24</x:Double>
             <x:Double x:Key="ContainerSpacing">24</x:Double>
             <x:Double x:Key="ItemPadding">20</x:Double>
             <x:Double x:Key="ItemSpacing">8</x:Double>
 
-            <!-- Mobile spacing -->
             <x:Double x:Key="MobileContainerPadding">16</x:Double>
             <x:Double x:Key="MobileContainerSpacing">16</x:Double>
             <x:Double x:Key="MobileItemPadding">16</x:Double>
@@ -44,7 +40,6 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Header Section -->
         <StackLayout Grid.Row="0" Spacing="8">
             <Label Text="Transaction History" TextColor="White" 
                    FontSize="{StaticResource HeaderFontSize}" FontAttributes="Bold" />
@@ -52,10 +47,8 @@
                    FontSize="{StaticResource SubHeaderFontSize}" />
         </StackLayout>
 
-        <!-- Filters Section -->
         <StackLayout Grid.Row="1" x:Name="FiltersSection" Spacing="12" Margin="0,12,0,0">
 
-            <!-- Primary Filters Grid -->
             <Grid x:Name="PrimaryFiltersGrid" ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -63,7 +56,6 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Status Filter -->
                 <Border Grid.Column="0" BackgroundColor="#1A1A1A" StrokeThickness="1" Stroke="#444">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="8" />
@@ -81,7 +73,6 @@
                     </Picker>
                 </Border>
 
-                <!-- Date From Filter -->
                 <Border Grid.Column="1" BackgroundColor="#1A1A1A" StrokeThickness="1" Stroke="#444">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="8" />
@@ -91,7 +82,6 @@
                                 Margin="8,4" FontSize="12" />
                 </Border>
 
-                <!-- Date To Filter -->
                 <Border Grid.Column="2" BackgroundColor="#1A1A1A" StrokeThickness="1" Stroke="#444">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="8" />
@@ -102,7 +92,6 @@
                 </Border>
             </Grid>
 
-            <!-- Vehicle Registration Filter -->
             <Border BackgroundColor="#1A1A1A" StrokeThickness="1" Stroke="#444">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="8" />
@@ -112,7 +101,6 @@
                        Margin="8,4" FontSize="12" />
             </Border>
 
-            <!-- Filter Actions -->
             <Grid x:Name="FilterActionsGrid" ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*" />
@@ -130,13 +118,57 @@
             </Grid>
         </StackLayout>
 
-        <!-- Loads List -->
         <RefreshView Grid.Row="2" IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
             <CollectionView x:Name="loadsCollectionView" ItemsSource="{Binding Loads}" 
                            BackgroundColor="Transparent" SelectionMode="None">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Grid Padding="0,4">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup Name="CommonStates">
+                                    <VisualState Name="MobilePortrait">
+                                        <VisualState.StateTriggers>
+                                            <AdaptiveTrigger MinWindowWidth="0" MinWindowHeight="600" />
+                                        </VisualState.StateTriggers>
+                                        <VisualState.Setters>
+                                            <Setter TargetName="ItemContentGrid" Property="Grid.Padding" Value="{StaticResource MobileItemPadding}" />
+                                            <Setter TargetName="ItemContentGrid" Property="Grid.RowSpacing" Value="{StaticResource MobileItemSpacing}" />
+                                            <Setter TargetName="WeightInfoGrid" Property="Grid.ColumnDefinitions" Value="*" />
+                                            <Setter TargetName="WeightInfoGrid" Property="Grid.RowDefinitions" Value="Auto,Auto,Auto" />
+                                            <Setter TargetName="WeightInfoGrid" Property="Grid.RowSpacing" Value="8" />
+                                            <Setter TargetName="TransactionDetailsGrid" Property="Grid.ColumnDefinitions" Value="*" />
+                                            <Setter TargetName="TransactionDetailsGrid" Property="Grid.RowDefinitions" Value="Auto,Auto" />
+                                            <Setter TargetName="TransactionDetailsGrid" Property="Grid.RowSpacing" Value="8" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState Name="MobileLandscape">
+                                        <VisualState.StateTriggers>
+                                            <AdaptiveTrigger MinWindowWidth="600" MinWindowHeight="0" />
+                                        </VisualState.StateTriggers>
+                                        <VisualState.Setters>
+                                            <Setter TargetName="TransactionDetailsGrid" Property="Grid.ColumnDefinitions" Value="*,*" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState Name="Tablet">
+                                        <VisualState.StateTriggers>
+                                            <AdaptiveTrigger MinWindowWidth="768" />
+                                        </VisualState.StateTriggers>
+                                        <VisualState.Setters>
+                                            <Setter TargetName="WeightInfoGrid" Property="Grid.ColumnDefinitions" Value="*,*,*" />
+                                            <Setter TargetName="TransactionDetailsGrid" Property="Grid.ColumnDefinitions" Value="*,*" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState Name="Desktop">
+                                        <VisualState.StateTriggers>
+                                            <AdaptiveTrigger MinWindowWidth="1024" />
+                                        </VisualState.StateTriggers>
+                                        <VisualState.Setters>
+                                            <Setter TargetName="WeightInfoGrid" Property="Grid.ColumnDefinitions" Value="*,*,*" />
+                                            <Setter TargetName="TransactionDetailsGrid" Property="Grid.ColumnDefinitions" Value="*,*" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
                             <Border BackgroundColor="#1A1A1A" StrokeThickness="1" Stroke="#333">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
@@ -155,17 +187,18 @@
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
 
-                                    <!-- Header with Vehicle and Timestamp -->
-                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
                                         <Label Grid.Column="0" Text="{Binding VehicleLicense, StringFormat='Vehicle: {0}'}" 
                                                TextColor="White" FontSize="{StaticResource ItemTitleFontSize}" 
                                                FontAttributes="Bold" VerticalOptions="Center" />
                                         <Label Grid.Column="1" Text="{Binding Timestamp, StringFormat='{0:g}'}" 
                                                TextColor="#CCCCCC" FontSize="{StaticResource ItemTimestampFontSize}"
                                                VerticalOptions="Center" />
+                                        <Label Grid.Column="2" Text="{Binding Status}" 
+                                               TextColor="#CCCCCC" FontSize="{StaticResource ItemTimestampFontSize}"
+                                               VerticalOptions="Center" />
                                     </Grid>
 
-                                    <!-- Weight Information Grid -->
                                     <Grid Grid.Row="1" x:Name="WeightInfoGrid" ColumnSpacing="16" 
                                           Margin="0,8,0,0">
                                         <Grid.ColumnDefinitions>
@@ -197,7 +230,6 @@
                                         </StackLayout>
                                     </Grid>
 
-                                    <!-- Transaction Details Grid -->
                                     <Grid Grid.Row="2" x:Name="TransactionDetailsGrid" ColumnSpacing="16" 
                                           Margin="0,8,0,0">
                                         <Grid.ColumnDefinitions>
@@ -230,7 +262,6 @@
                                         </StackLayout>
                                     </Grid>
 
-                                    <!-- Remarks (if available) -->
                                     <StackLayout Grid.Row="3" IsVisible="{Binding HasRemarks}" Margin="0,4,0,0">
                                         <Label Text="Remarks:" TextColor="#888" FontSize="10" FontAttributes="Bold" />
                                         <Label Text="{Binding Remarks}" TextColor="#CCCCCC" 
@@ -238,7 +269,6 @@
                                                LineBreakMode="WordWrap" />
                                     </StackLayout>
 
-                                    <!-- Action Buttons -->
                                     <Grid Grid.Row="4" x:Name="ActionButtonsGrid" ColumnSpacing="12" 
                                           Margin="0,12,0,0">
                                         <Grid.ColumnDefinitions>
@@ -261,7 +291,6 @@
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
 
-                <!-- Empty State -->
                 <CollectionView.EmptyView>
                     <StackLayout Padding="40" Spacing="16" VerticalOptions="Center">
                         <Label Text="📋" FontSize="48" HorizontalOptions="Center" />
@@ -275,128 +304,5 @@
             </CollectionView>
         </RefreshView>
     </Grid>
-
-    <!-- Visual State Manager for Responsive Design -->
-    <VisualStateManager.VisualStateGroups>
-        <VisualStateGroup Name="CommonStates">
-
-            <!-- Mobile Portrait Layout -->
-            <VisualState Name="MobilePortrait">
-                <VisualState.StateTriggers>
-                    <AdaptiveTrigger MinWindowWidth="0" MinWindowHeight="600" />
-                </VisualState.StateTriggers>
-                <VisualState.Setters>
-                    <!-- Adjust container spacing for mobile -->
-                    <Setter TargetName="MainGrid" Property="Grid.Padding" Value="{StaticResource MobileContainerPadding}" />
-                    <Setter TargetName="MainGrid" Property="Grid.RowSpacing" Value="{StaticResource MobileContainerSpacing}" />
-
-                    <!-- Stack filter grid vertically -->
-                    <Setter TargetName="PrimaryFiltersGrid" Property="Grid.ColumnDefinitions" Value="*" />
-                    <Setter TargetName="PrimaryFiltersGrid" Property="Grid.RowDefinitions" Value="Auto,Auto,Auto" />
-                    <Setter TargetName="PrimaryFiltersGrid" Property="Grid.RowSpacing" Value="8" />
-
-                    <!-- Reposition filter elements -->
-                    <Setter Property="Grid.Column" Value="0" />
-                    <Setter Property="Grid.Row" Value="1" />
-
-                    <!-- Stack action buttons vertically -->
-                    <Setter TargetName="FilterActionsGrid" Property="Grid.ColumnDefinitions" Value="*" />
-                    <Setter TargetName="FilterActionsGrid" Property="Grid.RowDefinitions" Value="Auto,Auto" />
-                    <Setter TargetName="FilterActionsGrid" Property="Grid.RowSpacing" Value="8" />
-
-                    <!-- Adjust item content -->
-                    <Setter TargetName="ItemContentGrid" Property="Grid.Padding" Value="{StaticResource MobileItemPadding}" />
-                    <Setter TargetName="ItemContentGrid" Property="Grid.RowSpacing" Value="{StaticResource MobileItemSpacing}" />
-
-                    <!-- Stack weight info vertically on mobile -->
-                    <Setter TargetName="WeightInfoGrid" Property="Grid.ColumnDefinitions" Value="*" />
-                    <Setter TargetName="WeightInfoGrid" Property="Grid.RowDefinitions" Value="Auto,Auto,Auto" />
-                    <Setter TargetName="WeightInfoGrid" Property="Grid.RowSpacing" Value="8" />
-
-                    <!-- Stack transaction details vertically -->
-                    <Setter TargetName="TransactionDetailsGrid" Property="Grid.ColumnDefinitions" Value="*" />
-                    <Setter TargetName="TransactionDetailsGrid" Property="Grid.RowDefinitions" Value="Auto,Auto" />
-                    <Setter TargetName="TransactionDetailsGrid" Property="Grid.RowSpacing" Value="8" />
-
-                    <!-- Use mobile font sizes -->
-                    <Setter Property="Label.FontSize" Value="{StaticResource MobileItemDetailFontSize}" />
-                    <Setter Property="Button.FontSize" Value="{StaticResource MobileButtonFontSize}" />
-                </VisualState.Setters>
-            </VisualState>
-
-            <!-- Mobile Landscape Layout -->
-            <VisualState Name="MobileLandscape">
-                <VisualState.StateTriggers>
-                    <AdaptiveTrigger MinWindowWidth="600" MinWindowHeight="0" />
-                </VisualState.StateTriggers>
-                <VisualState.Setters>
-                    <!-- Adjust for landscape mobile -->
-                    <Setter TargetName="MainGrid" Property="Grid.Padding" Value="16,12,16,12" />
-
-                    <!-- Keep filters in a row but make them smaller -->
-                    <Setter TargetName="PrimaryFiltersGrid" Property="Grid.ColumnDefinitions" Value="*,*,*" />
-                    <Setter TargetName="FilterActionsGrid" Property="Grid.ColumnDefinitions" Value="2*,*" />
-
-                    <!-- Adjust transaction details for landscape -->
-                    <Setter TargetName="TransactionDetailsGrid" Property="Grid.ColumnDefinitions" Value="*,*" />
-                </VisualState.Setters>
-            </VisualState>
-
-            <!-- Tablet Layout -->
-            <VisualState Name="Tablet">
-                <VisualState.StateTriggers>
-                    <AdaptiveTrigger MinWindowWidth="768" />
-                </VisualState.StateTriggers>
-                <VisualState.Setters>
-                    <!-- Optimized for tablet screens -->
-                    <Setter TargetName="MainGrid" Property="Grid.Padding" Value="20" />
-                    <Setter TargetName="MainGrid" Property="Grid.RowSpacing" Value="20" />
-
-                    <!-- Keep filter grid horizontal -->
-                    <Setter TargetName="PrimaryFiltersGrid" Property="Grid.ColumnDefinitions" Value="*,*,*" />
-                    <Setter TargetName="FilterActionsGrid" Property="Grid.ColumnDefinitions" Value="2*,*" />
-
-                    <!-- Optimal layout for transaction details -->
-                    <Setter TargetName="WeightInfoGrid" Property="Grid.ColumnDefinitions" Value="*,*,*" />
-                    <Setter TargetName="TransactionDetailsGrid" Property="Grid.ColumnDefinitions" Value="*,*" />
-                </VisualState.Setters>
-            </VisualState>
-
-            <!-- Desktop Layout -->
-            <VisualState Name="Desktop">
-                <VisualState.StateTriggers>
-                    <AdaptiveTrigger MinWindowWidth="1024" />
-                </VisualState.StateTriggers>
-                <VisualState.Setters>
-                    <!-- Full desktop layout -->
-                    <Setter TargetName="MainGrid" Property="Grid.Padding" Value="24" />
-                    <Setter TargetName="MainGrid" Property="Grid.RowSpacing" Value="24" />
-
-                    <!-- Desktop optimal filter layout -->
-                    <Setter TargetName="PrimaryFiltersGrid" Property="Grid.ColumnDefinitions" Value="*,*,*" />
-                    <Setter TargetName="FilterActionsGrid" Property="Grid.ColumnDefinitions" Value="2*,*" />
-
-                    <!-- Full desktop item layout -->
-                    <Setter TargetName="WeightInfoGrid" Property="Grid.ColumnDefinitions" Value="*,*,*" />
-                    <Setter TargetName="TransactionDetailsGrid" Property="Grid.ColumnDefinitions" Value="*,*" />
-                </VisualState.Setters>
-            </VisualState>
-
-            <!-- Large Desktop Layout -->
-            <VisualState Name="LargeDesktop">
-                <VisualState.StateTriggers>
-                    <AdaptiveTrigger MinWindowWidth="1440" />
-                </VisualState.StateTriggers>
-                <VisualState.Setters>
-                    <!-- Maximum spacing for large screens -->
-                    <Setter TargetName="MainGrid" Property="Grid.Padding" Value="32" />
-                    <Setter TargetName="MainGrid" Property="Grid.RowSpacing" Value="32" />
-
-                    <!-- Larger fonts for big screens -->
-                    <Setter Property="Label.FontSize" Value="16" />
-                </VisualState.Setters>
-            </VisualState>
-        </VisualStateGroup>
-    </VisualStateManager.VisualStateGroups>
 
 </ContentPage>

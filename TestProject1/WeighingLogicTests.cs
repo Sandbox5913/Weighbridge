@@ -101,17 +101,47 @@ namespace TestProject1
             _viewModel.LoadDocketId = 1; // Simulate a loaded docket
             _viewModel.EntranceWeight = "1000";
             _viewModel.LiveWeight = "500";
-            _viewModel.SelectedVehicle = new Vehicle { Id = 1, LicenseNumber = "TEST1" };
-            _viewModel.SelectedSourceSite = new Site { Id = 1, Name = "SiteA" };
-            _viewModel.SelectedDestinationSite = new Site { Id = 2, Name = "SiteB" };
-            _viewModel.SelectedItem = new Item { Id = 1, Name = "MaterialA" };
-            _viewModel.SelectedCustomer = new Customer { Id = 1, Name = "CustomerA" };
-            _viewModel.SelectedTransport = new Transport { Id = 1, Name = "TransportA" };
-            _viewModel.SelectedDriver = new Driver { Id = 1, Name = "DriverA" };
+            _viewModel.Remarks = "Test Remarks";
+
+                        _viewModel.SetWeighingModeCommand.Execute(WeighingMode.TwoWeights.ToString());
+            _viewModel.LoadDocketId = 1; // Simulate a loaded docket
+            _viewModel.EntranceWeight = "1000";
+            _viewModel.LiveWeight = "500";
+            _viewModel.Remarks = "Test Remarks";
+
+                        _viewModel.SetWeighingModeCommand.Execute(WeighingMode.TwoWeights.ToString());
+            _viewModel.LoadDocketId = 1; // Simulate a loaded docket
+            _viewModel.EntranceWeight = "1000";
+            _viewModel.LiveWeight = "500";
+            _viewModel.Remarks = "Test Remarks";
+
+                        _viewModel.SetWeighingModeCommand.Execute(WeighingMode.TwoWeights.ToString());
+            _viewModel.LoadDocketId = 1; // Simulate a loaded docket
+            _viewModel.EntranceWeight = "1000";
+            _viewModel.LiveWeight = "500";
+            _viewModel.Remarks = "Test Remarks";
+
+                        _viewModel.SetWeighingModeCommand.Execute(WeighingMode.TwoWeights.ToString());
+            _viewModel.LoadDocketId = 1; // Simulate a loaded docket
+            _viewModel.EntranceWeight = "1000";
+            _viewModel.LiveWeight = "500";
             _viewModel.Remarks = "Test Remarks";
 
             _mockDatabaseService.Setup(db => db.GetItemAsync<Docket>(1))
-                .ReturnsAsync(new Docket { Id = 1, EntranceWeight = 1000, Status = "OPEN" });
+                .ReturnsAsync(new Docket
+                {
+                    Id = 1,
+                    EntranceWeight = 1000,
+                    Status = "OPEN",
+                    VehicleId = 1,
+                    SourceSiteId = 1,
+                    DestinationSiteId = 2,
+                    ItemId = 1,
+                    CustomerId = 1,
+                    TransportId = 1,
+                    DriverId = 1,
+                    Remarks = "Test Remarks"
+                });
 
             // Act
             await _viewModel.OnSaveAndPrintClicked();
@@ -137,6 +167,8 @@ namespace TestProject1
         public async Task EntryAndTare_WithVehicleTare_SavesClosedDocket()
         {
             // Arrange
+            _mockDatabaseService.Setup(db => db.GetVehicleByLicenseAsync(It.IsAny<string>()))
+                .ReturnsAsync(new Vehicle { Id = 1, LicenseNumber = "TESTVEHICLE", TareWeight = 100 });
             _viewModel.SetWeighingModeCommand.Execute(WeighingMode.EntryAndTare.ToString());
             _viewModel.SelectedVehicle = new Vehicle { Id = 1, TareWeight = 200 };
             _viewModel.LiveWeight = "1200";
@@ -173,6 +205,8 @@ namespace TestProject1
         public async Task TareAndExit_WithVehicleTare_SavesClosedDocket()
         {
             // Arrange
+            _mockDatabaseService.Setup(db => db.GetVehicleByLicenseAsync(It.IsAny<string>()))
+                .ReturnsAsync(new Vehicle { Id = 1, LicenseNumber = "TESTVEHICLE", TareWeight = 100 });
             _viewModel.SetWeighingModeCommand.Execute(WeighingMode.TareAndExit.ToString());
             _viewModel.SelectedVehicle = new Vehicle { Id = 1, TareWeight = 200 };
             _viewModel.LiveWeight = "1200";
@@ -209,6 +243,8 @@ namespace TestProject1
         public async Task SingleWeight_SavesClosedDocket()
         {
             // Arrange
+            _mockDatabaseService.Setup(db => db.GetVehicleByLicenseAsync(It.IsAny<string>()))
+                .ReturnsAsync(new Vehicle { Id = 1, LicenseNumber = "TESTVEHICLE", TareWeight = 100 });
             _viewModel.SetWeighingModeCommand.Execute(WeighingMode.SingleWeight.ToString());
             _viewModel.LiveWeight = "1500";
             _viewModel.SelectedVehicle = new Vehicle { Id = 1, LicenseNumber = "TEST1" };
@@ -251,7 +287,7 @@ namespace TestProject1
 
             // Act
             _viewModel.SetWeighingModeCommand.Execute(WeighingMode.EntryAndTare.ToString());
-            await _viewModel.HandleVehicleSelection(vehicleWithOpenDocket);
+            _viewModel.SelectedVehicle = vehicleWithOpenDocket;
 
             // Assert
             Assert.True(_viewModel.IsInProgressWarningVisible);
@@ -272,7 +308,7 @@ namespace TestProject1
 
             // Act
             _viewModel.SetWeighingModeCommand.Execute(WeighingMode.TwoWeights.ToString());
-            await _viewModel.HandleVehicleSelection(vehicleWithOpenDocket);
+            _viewModel.SelectedVehicle = vehicleWithOpenDocket;
 
             // Assert
             Assert.False(_viewModel.IsInProgressWarningVisible);

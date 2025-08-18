@@ -1,5 +1,7 @@
 using NUnit.Framework;
-using SQLite;
+using Moq;
+using System.Data;
+using Microsoft.Data.Sqlite;
 using System;
 using System.IO;
 using System.Linq;
@@ -7,9 +9,6 @@ using System.Threading.Tasks;
 using Weighbridge.Data;
 using Weighbridge.Services;
 using Weighbridge.Models;
-using static NUnit.Framework.Assert; // Import the static members of Assert
-
-
 
 namespace Weighbridge.Tests
 {
@@ -17,25 +16,45 @@ namespace Weighbridge.Tests
     public class DatabaseServiceTests
     {
         private DatabaseService _databaseService;
-        private SQLiteAsyncConnection _connection;
         private string _dbPath;
+        private Mock<IDbConnectionFactory> _mockConnectionFactory;
 
         [SetUp]
         public async Task Setup()
         {
             _dbPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.db3");
-            _connection = new SQLiteAsyncConnection(_dbPath, storeDateTimeAsTicks: true);
-            _databaseService = new DatabaseService(_connection);
+            var connectionString = $"Data Source={_dbPath}";
+
+            _mockConnectionFactory = new Mock<IDbConnectionFactory>();
+            _mockConnectionFactory.Setup(f => f.CreateConnection())
+                .Returns(() => new SqliteConnection(connectionString));
+
+            _databaseService = new DatabaseService(_mockConnectionFactory.Object);
             await _databaseService.InitializeAsync();
         }
 
         [TearDown]
-        public async Task Teardown()
+        public void Teardown()
         {
-            await _connection.CloseAsync();
-            if (File.Exists(_dbPath))
+            // Dispose of any open connections created by the factory
+            // This is a bit tricky with Moq, but for tests, we can ensure the connection is closed.
+            // Since CreateConnection() returns a new connection each time, we need to ensure they are all closed.
+            // For simplicity in tests, we'll just ensure the file is deleted after a short delay.
+            // In a real scenario, you'd manage connection lifetimes more explicitly.
+            SqliteConnection.ClearAllPools();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            try
             {
-                File.Delete(_dbPath);
+                if (File.Exists(_dbPath))
+                {
+                    File.Delete(_dbPath);
+                }
+            }
+            catch (IOException ex)
+            {
+                TestContext.WriteLine($"Could not delete database file: {ex.Message}");
             }
         }
 
@@ -44,32 +63,40 @@ namespace Weighbridge.Tests
         [Test]
         public async Task SaveItemAsync_NewDocket_ShouldInsert()
         {
+            var vehicle = new Vehicle { LicenseNumber = "TEST_VEHICLE_NEW" };
+            await _databaseService.SaveItemAsync(vehicle);
+
             var docket = new Docket
             {
                 EntranceWeight = 1000,
                 Timestamp = DateTime.Now,
-                Status = "OPEN"
+                Status = "OPEN",
+                VehicleId = vehicle.Id
             };
 
             var result = await _databaseService.SaveItemAsync(docket);
 
-            That(result, Is.EqualTo(1));
-            That(docket.Id, Is.Not.EqualTo(0));
+            NUnit.Framework.Assert.That(result, Is.GreaterThan(0)); // Should return the new ID
+            NUnit.Framework.Assert.That(docket.Id, Is.Not.EqualTo(0));
 
             var retrievedDocket = await _databaseService.GetItemAsync<Docket>(docket.Id);
-            That(retrievedDocket, Is.Not.Null);
-            That(docket.EntranceWeight, Is.EqualTo(retrievedDocket.EntranceWeight));
-            That(docket.Status, Is.EqualTo(retrievedDocket.Status));
+            NUnit.Framework.Assert.That(retrievedDocket, Is.Not.Null);
+            NUnit.Framework.Assert.That(docket.EntranceWeight, Is.EqualTo(retrievedDocket.EntranceWeight));
+            NUnit.Framework.Assert.That(docket.Status, Is.EqualTo(retrievedDocket.Status));
         }
 
         [Test]
         public async Task SaveItemAsync_ExistingDocket_ShouldUpdate()
         {
+            var vehicle = new Vehicle { LicenseNumber = "TEST_VEHICLE_UPDATE" };
+            await _databaseService.SaveItemAsync(vehicle);
+
             var docket = new Docket
             {
                 EntranceWeight = 1000,
                 Timestamp = DateTime.Now,
-                Status = "OPEN"
+                Status = "OPEN",
+                VehicleId = vehicle.Id
             };
             await _databaseService.SaveItemAsync(docket);
 
@@ -77,37 +104,41 @@ namespace Weighbridge.Tests
             docket.Status = "CLOSED";
             var result = await _databaseService.SaveItemAsync(docket);
 
-            That(result, Is.EqualTo(1));
+            NUnit.Framework.Assert.That(result, Is.EqualTo(1)); // Should return 1 for update
 
             var retrievedDocket = await _databaseService.GetItemAsync<Docket>(docket.Id);
-            That(retrievedDocket, Is.Not.Null);
-            That(docket.ExitWeight, Is.EqualTo(retrievedDocket.ExitWeight));
-            That(docket.Status, Is.EqualTo(retrievedDocket.Status));
+            NUnit.Framework.Assert.That(retrievedDocket, Is.Not.Null);
+            NUnit.Framework.Assert.That(docket.ExitWeight, Is.EqualTo(retrievedDocket.ExitWeight));
+            NUnit.Framework.Assert.That(docket.Status, Is.EqualTo(retrievedDocket.Status));
         }
 
         [Test]
         public async Task GetItemAsync_ShouldReturnCorrectItem()
         {
+            var vehicle = new Vehicle { LicenseNumber = "TEST_VEHICLE_GET" };
+            await _databaseService.SaveItemAsync(vehicle);
+
             var docket = new Docket
             {
                 EntranceWeight = 1000,
                 Timestamp = DateTime.Now,
-                Status = "OPEN"
+                Status = "OPEN",
+                VehicleId = vehicle.Id
             };
             await _databaseService.SaveItemAsync(docket);
 
             var retrievedDocket = await _databaseService.GetItemAsync<Docket>(docket.Id);
 
-            That(retrievedDocket, Is.Not.Null);
-            That(docket.Id, Is.EqualTo(retrievedDocket.Id));
-            That(docket.EntranceWeight, Is.EqualTo(retrievedDocket.EntranceWeight));
+            NUnit.Framework.Assert.That(retrievedDocket, Is.Not.Null);
+            NUnit.Framework.Assert.That(docket.Id, Is.EqualTo(retrievedDocket.Id));
+            NUnit.Framework.Assert.That(docket.EntranceWeight, Is.EqualTo(retrievedDocket.EntranceWeight));
         }
 
         [Test]
         public async Task GetItemAsync_ShouldReturnNullForNonExistentItem()
         {
             var retrievedDocket = await _databaseService.GetItemAsync<Docket>(999);
-            That(retrievedDocket, Is.Null);
+            NUnit.Framework.Assert.That(retrievedDocket, Is.Null);
         }
 
         [Test]
@@ -120,9 +151,9 @@ namespace Weighbridge.Tests
 
             var vehicles = await _databaseService.GetItemsAsync<Vehicle>();
 
-            That(vehicles.Count, Is.EqualTo(2));
-            That(vehicles.Any(v => v.LicenseNumber == "TEST1"), Is.True);
-            That(vehicles.Any(v => v.LicenseNumber == "TEST2"), Is.True);
+            NUnit.Framework.Assert.That(vehicles.Count, Is.EqualTo(2));
+            NUnit.Framework.Assert.That(vehicles.Any(v => v.LicenseNumber == "TEST1"), Is.True);
+            NUnit.Framework.Assert.That(vehicles.Any(v => v.LicenseNumber == "TEST2"), Is.True);
         }
 
 
@@ -131,17 +162,17 @@ namespace Weighbridge.Tests
         {
             var vehicle = new Vehicle { LicenseNumber = "TEST-DELETE" };
             await _databaseService.SaveItemAsync(vehicle);
-            That(await _databaseService.GetItemAsync<Vehicle>(vehicle.Id), Is.Not.Null);
+            NUnit.Framework.Assert.That(await _databaseService.GetItemAsync<Vehicle>(vehicle.Id), Is.Not.Null);
 
             var result = await _databaseService.DeleteItemAsync(vehicle);
-            That(result, Is.EqualTo(1));
-            That(await _databaseService.GetItemAsync<Vehicle>(vehicle.Id), Is.Null);
+            NUnit.Framework.Assert.That(result, Is.EqualTo(1));
+            NUnit.Framework.Assert.That(await _databaseService.GetItemAsync<Vehicle>(vehicle.Id), Is.Null);
         }
 
         [Test]
         public async Task GetInProgressDocketAsync_ShouldReturnOpenDocket()
         {
-            var vehicle = new Vehicle { LicenseNumber = "TEST1" };
+            var vehicle = new Vehicle { LicenseNumber = "TEST_VEHICLE_INPROGRESS" };
             await _databaseService.SaveItemAsync(vehicle);
 
             var docket = new Docket
@@ -155,14 +186,14 @@ namespace Weighbridge.Tests
 
             var inProgressDocket = await _databaseService.GetInProgressDocketAsync(vehicle.Id);
 
-            That(inProgressDocket, Is.Not.Null);
-            That(docket.Id, Is.EqualTo(inProgressDocket.Id));
+            NUnit.Framework.Assert.That(inProgressDocket, Is.Not.Null);
+            NUnit.Framework.Assert.That(docket.Id, Is.EqualTo(inProgressDocket.Id));
         }
 
         [Test]
         public async Task GetInProgressDocketAsync_ShouldNotReturnClosedDocket()
         {
-            var vehicle = new Vehicle { LicenseNumber = "TEST2" };
+            var vehicle = new Vehicle { LicenseNumber = "TEST_VEHICLE_CLOSED" };
             await _databaseService.SaveItemAsync(vehicle);
 
             var docket = new Docket
@@ -177,13 +208,13 @@ namespace Weighbridge.Tests
 
             var inProgressDocket = await _databaseService.GetInProgressDocketAsync(vehicle.Id);
 
-            That(inProgressDocket, Is.Null);
+            NUnit.Framework.Assert.That(inProgressDocket, Is.Null);
         }
 
         [Test]
         public async Task GetInProgressDocketAsync_ShouldNotReturnDocketOutsideTimeWindow()
         {
-            var vehicle = new Vehicle { LicenseNumber = "TEST3" };
+            var vehicle = new Vehicle { LicenseNumber = "TEST_VEHICLE_OLD" };
             await _databaseService.SaveItemAsync(vehicle);
 
             var oldDocket = new Docket
@@ -198,13 +229,13 @@ namespace Weighbridge.Tests
             var inProgressDocket = await _databaseService.GetInProgressDocketAsync(vehicle.Id);
            
             // This will now pass because the DateTime is stored as ticks
-            That(inProgressDocket, Is.Null);
+            NUnit.Framework.Assert.That(inProgressDocket, Is.Null);
         }
 
         [Test]
         public async Task GetInProgressDocketAsync_ShouldReturnLatestOpenDocket()
         {
-            var vehicle = new Vehicle { LicenseNumber = "TEST4" };
+            var vehicle = new Vehicle { LicenseNumber = "TEST_VEHICLE_LATEST" };
             await _databaseService.SaveItemAsync(vehicle);
 
             var oldDocket = new Docket
@@ -227,9 +258,9 @@ namespace Weighbridge.Tests
 
             var inProgressDocket = await _databaseService.GetInProgressDocketAsync(vehicle.Id);
 
-            That(inProgressDocket, Is.Not.Null);
-            That(newDocket.Id, Is.EqualTo(inProgressDocket.Id));
-            That(newDocket.EntranceWeight, Is.EqualTo(inProgressDocket.EntranceWeight));
+            NUnit.Framework.Assert.That(inProgressDocket, Is.Not.Null);
+            NUnit.Framework.Assert.That(newDocket.Id, Is.EqualTo(inProgressDocket.Id));
+            NUnit.Framework.Assert.That(newDocket.EntranceWeight, Is.EqualTo(inProgressDocket.EntranceWeight));
         }
 
         [Test]
@@ -250,13 +281,13 @@ namespace Weighbridge.Tests
             };
             await _databaseService.SaveItemAsync(docket);
 
-            var viewModels = await _databaseService.GetDocketViewModelsAsync();
+            var viewModels = await _databaseService.GetDocketViewModelsAsync("All", DateTime.Now.AddDays(-1), DateTime.Now.AddDays(1), "");
             var result = viewModels.FirstOrDefault(d => d.Id == docket.Id);
 
-            That(result, Is.Not.Null);
-            That(vehicle.LicenseNumber, Is.EqualTo(result.VehicleLicense));
-            That(customer.Name, Is.EqualTo(result.CustomerName));
-            That(docket.EntranceWeight, Is.EqualTo(result.EntranceWeight));
+            NUnit.Framework.Assert.That(result, Is.Not.Null);
+            NUnit.Framework.Assert.That(vehicle.LicenseNumber, Is.EqualTo(result.VehicleLicense));
+            NUnit.Framework.Assert.That(customer.Name, Is.EqualTo(result.CustomerName));
+            NUnit.Framework.Assert.That(docket.EntranceWeight, Is.EqualTo(result.EntranceWeight));
         }
 
         [Test]
@@ -265,8 +296,8 @@ namespace Weighbridge.Tests
             var vehicle1 = new Vehicle { LicenseNumber = "DUPLICATE" };
             var vehicle2 = new Vehicle { LicenseNumber = "DUPLICATE" };
 
-            DoesNotThrowAsync(async () => await _databaseService.SaveItemAsync(vehicle1));
-            ThrowsAsync<SQLiteException>(async () => await _databaseService.SaveItemAsync(vehicle2));
+            NUnit.Framework.Assert.DoesNotThrowAsync(async () => await _databaseService.SaveItemAsync(vehicle1));
+            NUnit.Framework.Assert.ThrowsAsync<SqliteException>(async () => await _databaseService.SaveItemAsync(vehicle2));
         }
         #endregion
     }

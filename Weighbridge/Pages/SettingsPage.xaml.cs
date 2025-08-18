@@ -113,6 +113,11 @@ namespace Weighbridge.Pages
         {
             await Shell.Current.GoToAsync(nameof(MainFormSettingsPage));
         }
+
+        private async void OnUserManagementClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync(nameof(UserManagementPage));
+        }
         private async void OnSaveLogClicked(object sender, EventArgs e)
         {
             try

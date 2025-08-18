@@ -1,0 +1,64 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:Weighbridge.ViewModels"
+             x:Class="Weighbridge.Pages.UserManagementPage"
+             Title="User Management">
+
+    <Grid RowDefinitions="Auto, *, Auto" Padding="20">
+        <!-- User Input Form -->
+        <VerticalStackLayout Grid.Row="0" Spacing="10" Margin="0,0,0,20">
+            <Label Text="Username:" FontAttributes="Bold" />
+            <Entry Text="{Binding NewUsername}" Placeholder="Enter username" />
+
+            <Label Text="Password:" FontAttributes="Bold" />
+            <Entry Text="{Binding NewPassword}" IsPassword="True" Placeholder="Enter password (leave blank to keep current)" />
+
+            <HorizontalStackLayout Spacing="10">
+                <CheckBox IsChecked="{Binding CanEditDockets}" />
+                <Label Text="Can Edit Dockets" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
+            <HorizontalStackLayout Spacing="10">
+                <CheckBox IsChecked="{Binding CanDeleteDockets}" />
+                <Label Text="Can Delete Dockets" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
+            <HorizontalStackLayout Spacing="10">
+                <CheckBox IsChecked="{Binding IsAdmin}" />
+                <Label Text="Is Admin" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
+            <HorizontalStackLayout Spacing="10" HorizontalOptions="EndAndExpand">
+                <Button Text="Add User" Command="{Binding AddUserCommand}" />
+                <Button Text="Update User" Command="{Binding UpdateUserCommand}" CommandParameter="{Binding SelectedUser}" />
+                <Button Text="Delete User" Command="{Binding DeleteUserCommand}" CommandParameter="{Binding SelectedUser}" BackgroundColor="Red" TextColor="White" />
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+
+        <!-- User List -->
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}" SelectionMode="Single">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame Padding="10" Margin="5" BorderColor="LightGray" CornerRadius="5">
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="{Binding Username}" FontAttributes="Bold" FontSize="Medium" />
+                            <Label Text="{Binding Role}" FontSize="Small" TextColor="Gray" />
+                            <HorizontalStackLayout Spacing="10">
+                                <Label Text="Edit Dockets:" FontAttributes="Bold" />
+                                <Label Text="{Binding CanEditDockets}" />
+                            </HorizontalStackLayout>
+                            <HorizontalStackLayout Spacing="10">
+                                <Label Text="Delete Dockets:" FontAttributes="Bold" />
+                                <Label Text="{Binding CanDeleteDockets}" />
+                            </HorizontalStackLayout>
+                            <HorizontalStackLayout Spacing="10">
+                                <Label Text="Admin:" FontAttributes="Bold" />
+                                <Label Text="{Binding IsAdmin}" />
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

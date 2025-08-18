@@ -12,5 +12,6 @@ namespace Weighbridge.Models
         public string? CustomerName { get; set; }
         public string? TransportName { get; set; }
         public string? DriverName { get; set; }
+        public bool? HasRemarks { get; set; }
     }
 }

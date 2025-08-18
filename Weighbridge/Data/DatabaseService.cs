@@ -68,6 +68,7 @@ namespace Weighbridge.Data
                     Remarks TEXT,
                     Timestamp TEXT NOT NULL,
                     Status TEXT NOT NULL,
+                    UpdatedAt TEXT,
                     FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id),
                     FOREIGN KEY (SourceSiteId) REFERENCES Sites(Id),
                     FOREIGN KEY (DestinationSiteId) REFERENCES Sites(Id),
@@ -76,6 +77,17 @@ namespace Weighbridge.Data
                     FOREIGN KEY (TransportId) REFERENCES Transports(Id),
                     FOREIGN KEY (DriverId) REFERENCES Drivers(Id)
                 );");
+
+                // Create indexes for performance
+                await db.ExecuteAsync("CREATE INDEX IF NOT EXISTS IX_Dockets_Timestamp ON Dockets (Timestamp);");
+                await db.ExecuteAsync("CREATE INDEX IF NOT EXISTS IX_Dockets_VehicleId ON Dockets (VehicleId);");
+
+                // Migration: Add UpdatedAt column to Dockets table if it doesn't exist
+                var tableInfo = await db.QueryAsync<dynamic>("PRAGMA table_info(Dockets);");
+                if (!tableInfo.Any(c => c.name == "UpdatedAt"))
+                {
+                    await db.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN UpdatedAt TEXT;");
+                }
 
                 await db.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Users (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -180,7 +192,9 @@ namespace Weighbridge.Data
                     string columns = string.Join(", ", properties.Select(p => p.Name));
                     string values = string.Join(", ", properties.Select(p => $"@{p.Name}"));
                     string sql = $"INSERT INTO {tableName} ({columns}) VALUES ({values}); SELECT last_insert_rowid();"; // For SQLite
-                    return await db.ExecuteScalarAsync<int>(sql, item);
+                    int newId = await db.ExecuteScalarAsync<int>(sql, item);
+                    item.Id = newId; // Set the ID on the item object
+                    return 1; // Return 1 for successful insert
                 }
             }
         }

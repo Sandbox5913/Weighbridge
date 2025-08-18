@@ -34,6 +34,7 @@ namespace Weighbridge.ViewModels
         private string _tareWeight = string.Empty;
         private bool _isInProgressWarningVisible;
         private string _inProgressWarningText = string.Empty;
+        private string _connectionStatus = string.Empty;
 
         // --- Public properties for data binding ---
         public string? EntranceWeight { get => _entranceWeight; set => SetProperty(ref _entranceWeight, value); }
@@ -50,6 +51,7 @@ namespace Weighbridge.ViewModels
         public string TareWeight { get => _tareWeight; set => SetProperty(ref _tareWeight, value); }
         public bool IsInProgressWarningVisible { get => _isInProgressWarningVisible; set => SetProperty(ref _isInProgressWarningVisible, value); }
         public string InProgressWarningText { get => _inProgressWarningText; set => SetProperty(ref _inProgressWarningText, value); }
+        public string ConnectionStatus { get => _connectionStatus; set => SetProperty(ref _connectionStatus, value); }
 
         // --- Observable Collections for Pickers ---
         public ObservableCollection<Vehicle> Vehicles { get; set; } = new();
@@ -68,33 +70,55 @@ namespace Weighbridge.ViewModels
         }
 
         private Vehicle? _selectedVehicle;
+        public async Task HandleVehicleSelection(Vehicle? value)
+        {
+            if (_selectedVehicle != value)
+            {
+                SetProperty(ref _selectedVehicle, value);
+                // Handle logic when a vehicle is selected from the picker
+                if (value != null && _isInitialized)
+                {
+                    // If a vehicle is selected from the picker, update VehicleRegistration
+                    VehicleRegistration = value.LicenseNumber;
+                    // Also, if in tare mode, update tare weight
+                    if (_currentMode == WeighingMode.EntryAndTare || _currentMode == WeighingMode.TareAndExit)
+                    {
+                        TareWeight = value.TareWeight.ToString(CultureInfo.InvariantCulture);
+                    }
+
+                    var inProgressDocket = await CheckForInProgressDocket(value.Id);
+                    if (inProgressDocket != null)
+                    {
+                        if (_currentMode == WeighingMode.TwoWeights)
+                        {
+                            await LoadDocketAsync(inProgressDocket.Id);
+                        }
+                        else
+                        {
+                            IsInProgressWarningVisible = true;
+                            InProgressWarningText = "This truck has not weighed out.";
+                        }
+                    }
+                }
+                else if (value == null)
+                {
+                    // If selection is cleared, clear VehicleRegistration and TareWeight
+                    VehicleRegistration = string.Empty;
+                    TareWeight = string.Empty;
+                }
+                else
+                {
+                    IsInProgressWarningVisible = false; // Clear warning on new selection
+                }
+            }
+        }
+
         public Vehicle? SelectedVehicle
         {
             get => _selectedVehicle;
             set
             {
-                if (_selectedVehicle != value)
-                {
-                    SetProperty(ref _selectedVehicle, value);
-                    // Handle logic when a vehicle is selected from the picker
-                    if (value != null && _isInitialized)
-                    {
-                        // If a vehicle is selected from the picker, update VehicleRegistration
-                        VehicleRegistration = value.LicenseNumber;
-                        // Also, if in tare mode, update tare weight
-                        if (_currentMode == WeighingMode.EntryAndTare || _currentMode == WeighingMode.TareAndExit)
-                        {
-                            TareWeight = value.TareWeight.ToString(CultureInfo.InvariantCulture);
-                        }
-                    }
-                    else if (value == null)
-                    {
-                        // If selection is cleared, clear VehicleRegistration and TareWeight
-                        VehicleRegistration = string.Empty;
-                        TareWeight = string.Empty;
-                    }
-                    IsInProgressWarningVisible = false; // Clear warning on new selection
-                }
+                var _ = HandleVehicleSelection(value);
             }
         }
 
@@ -198,6 +222,13 @@ namespace Weighbridge.ViewModels
 
                 // Open the weighbridge service
                 _weighbridgeService?.Open();
+
+                // Update connection status
+                var config = _weighbridgeService?.GetConfig();
+                if (config != null)
+                {
+                    ConnectionStatus = $"{config.PortName} • {config.BaudRate} bps";
+                }
 
                 // If we have a pending docket to load, load it now
                 if (LoadDocketId > 0)
@@ -485,13 +516,13 @@ namespace Weighbridge.ViewModels
             }
 
             Vehicle? vehicle = null;
-            if (!string.IsNullOrWhiteSpace(VehicleRegistration))
-            {
-                vehicle = await GetOrCreateVehicleAsync(VehicleRegistration);
-            }
-            else if (SelectedVehicle != null)
+            if (SelectedVehicle != null)
             {
                 vehicle = SelectedVehicle;
+            }
+            else if (!string.IsNullOrWhiteSpace(VehicleRegistration))
+            {
+                vehicle = await GetOrCreateVehicleAsync(VehicleRegistration);
             }
             else
             {
@@ -534,6 +565,7 @@ namespace Weighbridge.ViewModels
                         {
                             await ShowSimpleAlert.Invoke("Success", "First weight captured. Docket created.", "OK");
                         }
+                        ResetForm(); // Clear form after first weight
                     }
                     catch (Exception ex)
                     {
@@ -650,7 +682,21 @@ namespace Weighbridge.ViewModels
                 return;
             }
 
-            Vehicle? vehicle = await GetOrCreateVehicleAsync(VehicleRegistration);
+            Vehicle? vehicle = null;
+            if (SelectedVehicle != null)
+            {
+                vehicle = SelectedVehicle;
+            }
+            else if (!string.IsNullOrWhiteSpace(VehicleRegistration))
+            {
+                vehicle = await GetOrCreateVehicleAsync(VehicleRegistration);
+            }
+            else
+            {
+                await ShowSimpleAlert.Invoke("Validation Error", "Please enter a vehicle registration or select one from the list.", "OK");
+                return;
+            }
+
             if (vehicle == null)
             {
                 return;
@@ -663,7 +709,9 @@ namespace Weighbridge.ViewModels
                     var docket = await _databaseService.GetItemAsync<Docket>(LoadDocketId);
                     if (docket != null)
                     {
+                        System.Diagnostics.Debug.WriteLine($"LiveWeight before parsing: {LiveWeight}");
                         docket.ExitWeight = decimal.TryParse(LiveWeight, NumberStyles.Any, CultureInfo.InvariantCulture, out var exit) ? exit : 0;
+                        System.Diagnostics.Debug.WriteLine($"Parsed ExitWeight: {docket.ExitWeight}");
                         docket.NetWeight = Math.Abs(docket.EntranceWeight - docket.ExitWeight);
                         docket.Timestamp = DateTime.Now;
                         docket.Status = "CLOSED";
@@ -827,6 +875,7 @@ namespace Weighbridge.ViewModels
             Remarks = string.Empty;
             TareWeight = string.Empty;
             VehicleRegistration = string.Empty; // Add this line
+            SelectedVehicle = null;
             SelectedSourceSite = null;
             SelectedDestinationSite = null;
             SelectedItem = null;

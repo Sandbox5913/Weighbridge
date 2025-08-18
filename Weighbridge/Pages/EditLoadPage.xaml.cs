@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using Weighbridge.Services;
 using Weighbridge.Data;
 using Weighbridge.Models;
 
@@ -12,7 +13,7 @@ namespace Weighbridge.Pages
 
     public partial class EditLoadPage : ContentPage, INotifyPropertyChanged
     {
-        private readonly DatabaseService _databaseService;
+        private readonly IDatabaseService _databaseService;
   
 
         // Private fields for properties
@@ -118,7 +119,7 @@ namespace Weighbridge.Pages
         public ICommand CancelCommand { get; private set; }
         public ICommand RefreshCommand { get; private set; }
 
-        public EditLoadPage(DatabaseService databaseService)
+        public EditLoadPage(IDatabaseService databaseService)
         {
             InitializeComponent();
             _databaseService = databaseService;

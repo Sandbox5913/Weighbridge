@@ -22,6 +22,12 @@ namespace Weighbridge.Pages
         private bool _isRefreshing = false;
         private ObservableCollection<DocketViewModel> _loads = new();
 
+        // Filter debouncing and operation control
+        private Timer _filterDebounceTimer;
+        private readonly object _filterLock = new object();
+        private bool _isFilterOperationInProgress = false;
+        private CancellationTokenSource? _loadCancellationTokenSource;
+
         // Public properties with change notification
         public string SelectedStatusFilter
         {
@@ -88,28 +94,61 @@ namespace Weighbridge.Pages
         {
             try
             {
+                // Cancel any existing load operation
+                _loadCancellationTokenSource?.Cancel();
+                _loadCancellationTokenSource = new CancellationTokenSource();
+                var cancellationToken = _loadCancellationTokenSource.Token;
+
                 IsRefreshing = true;
 
-                var loads = await _databaseService.GetDocketViewModelsAsync(
-                    SelectedStatusFilter,
-                    DateFromFilter,
-                    DateToFilter,
-                    VehicleRegFilter);
-
-                // Clear and repopulate the collection
-                Loads.Clear();
-                var sortedLoads = loads.OrderByDescending(l => l.Timestamp);
-
-                foreach (var load in sortedLoads)
+                // Run the database operation and data processing completely on background thread
+                var processedLoads = await Task.Run(async () =>
                 {
-                    // Add HasRemarks property for UI binding
-                 load.HasRemarks = !string.IsNullOrWhiteSpace(load.Remarks);
-                    Loads.Add(load);
-                }
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    var loads = await _databaseService.GetDocketViewModelsAsync(
+                        SelectedStatusFilter,
+                        DateFromFilter,
+                        DateToFilter,
+                        VehicleRegFilter);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    // Process all data on background thread
+                    var sortedLoads = loads.OrderByDescending(l => l.Timestamp).ToList();
+
+                    // Set HasRemarks property on background thread
+                    foreach (var load in sortedLoads)
+                    {
+                        if (cancellationToken.IsCancellationRequested) break;
+                        load.HasRemarks = !string.IsNullOrWhiteSpace(load.Remarks);
+                    }
+
+                    return sortedLoads;
+                }, cancellationToken);
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // Update UI on main thread - create new collection to replace the old one
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    if (cancellationToken.IsCancellationRequested) return;
+
+                    // Replace the entire collection at once instead of clearing and adding
+                    Loads = new ObservableCollection<DocketViewModel>(processedLoads);
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // Operation was cancelled, this is expected behavior
+                return;
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Failed to load transactions: {ex.Message}", "OK");
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await DisplayAlert("Error", $"Failed to load transactions: {ex.Message}", "OK");
+                });
             }
             finally
             {
@@ -212,6 +251,15 @@ namespace Weighbridge.Pages
 
         private async void OnApplyFiltersClicked(object sender, EventArgs e)
         {
+            lock (_filterLock)
+            {
+                if (_isFilterOperationInProgress)
+                {
+                    return; // Ignore if already processing
+                }
+                _isFilterOperationInProgress = true;
+            }
+
             try
             {
                 // Disable button during loading
@@ -221,19 +269,53 @@ namespace Weighbridge.Pages
                     button.Text = "APPLYING...";
                 }
 
-                await LoadLoads();
+                // Debounce the filter operation
+                _filterDebounceTimer?.Dispose();
+                _filterDebounceTimer = new Timer(async _ =>
+                {
+                    try
+                    {
+                        await LoadLoads();
+                    }
+                    catch (Exception ex)
+                    {
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            await DisplayAlert("Error", $"Failed to apply filters: {ex.Message}", "OK");
+                        });
+                    }
+                    finally
+                    {
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        {
+                            if (sender is Button btn)
+                            {
+                                btn.IsEnabled = true;
+                                btn.Text = "APPLY FILTERS";
+                            }
+                        });
+
+                        lock (_filterLock)
+                        {
+                            _isFilterOperationInProgress = false;
+                        }
+                    }
+                }, null, 300, Timeout.Infinite); // 300ms debounce
             }
             catch (Exception ex)
             {
                 await DisplayAlert("Error", $"Failed to apply filters: {ex.Message}", "OK");
-            }
-            finally
-            {
-                // Re-enable button
+
+                // Reset button state
                 if (sender is Button button)
                 {
                     button.IsEnabled = true;
                     button.Text = "APPLY FILTERS";
+                }
+
+                lock (_filterLock)
+                {
+                    _isFilterOperationInProgress = false;
                 }
             }
         }
@@ -242,6 +324,13 @@ namespace Weighbridge.Pages
         {
             try
             {
+                // Disable button during operation
+                if (sender is Button button)
+                {
+                    button.IsEnabled = false;
+                    button.Text = "CLEARING...";
+                }
+
                 ClearFilters();
                 await LoadLoads();
                 await DisplayAlert("Info", "Filters cleared", "OK");
@@ -249,6 +338,15 @@ namespace Weighbridge.Pages
             catch (Exception ex)
             {
                 await DisplayAlert("Error", $"Failed to clear filters: {ex.Message}", "OK");
+            }
+            finally
+            {
+                // Reset button state
+                if (sender is Button button)
+                {
+                    button.IsEnabled = true;
+                    button.Text = "CLEAR";
+                }
             }
         }
 
@@ -332,6 +430,16 @@ namespace Weighbridge.Pages
             {
                 await DisplayAlert("Error", $"Failed to export: {ex.Message}", "OK");
             }
+        }
+
+        // Clean up resources when page is disposed
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+
+            // Cancel any ongoing operations
+            _loadCancellationTokenSource?.Cancel();
+            _filterDebounceTimer?.Dispose();
         }
 
         #region INotifyPropertyChanged Implementation

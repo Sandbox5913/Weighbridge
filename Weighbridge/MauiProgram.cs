@@ -46,6 +46,7 @@ public static class MauiProgram
         builder.Services.AddTransient<DriverManagementViewModel>();
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<MainFormSettingsViewModel>();
+        builder.Services.AddTransient<UserManagementViewModel>();
 
         // Register Pages and inject ViewModels
         builder.Services.AddSingleton<MainPage>();
@@ -56,6 +57,7 @@ public static class MauiProgram
         builder.Services.AddTransient<LoginPage>();
         builder.Services.AddSingleton<AppShell>();
         builder.Services.AddTransient<MainFormSettingsPage>();
+        builder.Services.AddTransient<UserManagementPage>();
 
         // Register Data Management Pages
         builder.Services.AddTransient<CustomerManagementPage>();
