@@ -1,3 +1,4 @@
+// Weighbridge/ViewModels/MainPageViewModel.cs
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -6,6 +7,7 @@ using System.Text.Json;
 using System.Windows.Input;
 using Weighbridge.Models;
 using Weighbridge.Services;
+using Weighbridge.Pages; // Added this line
 
 namespace Weighbridge.ViewModels
 {
@@ -17,11 +19,9 @@ namespace Weighbridge.ViewModels
         private readonly Task _initializationTask;
         private bool _isInitialized = false;
 
-        // Event for showing alerts
         public event Func<string, string, string, string, Task<bool>>? ShowAlert;
         public event Func<string, string, string, Task>? ShowSimpleAlert;
 
-        // --- Backing fields for data binding ---
         private string? _entranceWeight;
         private string? _exitWeight;
         private string? _netWeight;
@@ -35,17 +35,21 @@ namespace Weighbridge.ViewModels
         private bool _isInProgressWarningVisible;
         private string _inProgressWarningText = string.Empty;
         private string _connectionStatus = string.Empty;
+        private WeighingMode _currentMode = WeighingMode.TwoWeights;
 
-        // --- Public properties for data binding ---
+        public WeighingMode CurrentMode
+        {
+            get => _currentMode;
+            set => SetProperty(ref _currentMode, value);
+        }
+
         public string? EntranceWeight { get => _entranceWeight; set => SetProperty(ref _entranceWeight, value); }
         public string? ExitWeight { get => _exitWeight; set => SetProperty(ref _exitWeight, value); }
         public string? NetWeight { get => _netWeight; set => SetProperty(ref _netWeight, value); }
         public string? Remarks { get => _remarks; set => SetProperty(ref _remarks, value); }
         public string? LiveWeight { get => _liveWeight; set => SetProperty(ref _liveWeight, value); }
         public string? StabilityStatus { get => _stabilityStatus; set => SetProperty(ref _stabilityStatus, value); }
-
         public Color? StabilityStatusColour { get => _stabilityStatusColour; set => SetProperty(ref _stabilityStatusColour, value); }
-
         public Color? StabilityColor { get => _stabilityColor; set => SetProperty(ref _stabilityColor, value); }
         public bool IsWeightStable { get => _isWeightStable; set => SetProperty(ref _isWeightStable, value); }
         public string TareWeight { get => _tareWeight; set => SetProperty(ref _tareWeight, value); }
@@ -53,7 +57,6 @@ namespace Weighbridge.ViewModels
         public string InProgressWarningText { get => _inProgressWarningText; set => SetProperty(ref _inProgressWarningText, value); }
         public string ConnectionStatus { get => _connectionStatus; set => SetProperty(ref _connectionStatus, value); }
 
-        // --- Observable Collections for Pickers ---
         public ObservableCollection<Vehicle> Vehicles { get; set; } = new();
         public ObservableCollection<Site> Sites { get; set; } = new();
         public ObservableCollection<Item> Items { get; set; } = new();
@@ -75,51 +78,72 @@ namespace Weighbridge.ViewModels
             if (_selectedVehicle != value)
             {
                 SetProperty(ref _selectedVehicle, value);
-                // Handle logic when a vehicle is selected from the picker
                 if (value != null && _isInitialized)
                 {
-                    // If a vehicle is selected from the picker, update VehicleRegistration
                     VehicleRegistration = value.LicenseNumber;
-                    // Also, if in tare mode, update tare weight
                     if (_currentMode == WeighingMode.EntryAndTare || _currentMode == WeighingMode.TareAndExit)
                     {
                         TareWeight = value.TareWeight.ToString(CultureInfo.InvariantCulture);
                     }
-
-                    var inProgressDocket = await CheckForInProgressDocket(value.Id);
-                    if (inProgressDocket != null)
-                    {
-                        if (_currentMode == WeighingMode.TwoWeights)
-                        {
-                            await LoadDocketAsync(inProgressDocket.Id);
-                        }
-                        else
-                        {
-                            IsInProgressWarningVisible = true;
-                            InProgressWarningText = "This truck has not weighed out.";
-                        }
-                    }
+                    // In-progress docket check moved to OnToYardClicked
+                    IsInProgressWarningVisible = false; // Ensure warning is hidden on vehicle selection
                 }
                 else if (value == null)
                 {
-                    // If selection is cleared, clear VehicleRegistration and TareWeight
                     VehicleRegistration = string.Empty;
                     TareWeight = string.Empty;
                 }
                 else
                 {
-                    IsInProgressWarningVisible = false; // Clear warning on new selection
+                    IsInProgressWarningVisible = false;
                 }
             }
+        }
+
+        private async Task<bool> HandleInProgressDocketWarning(Vehicle vehicle)
+        {
+            var inProgressDocket = await CheckForInProgressDocket(vehicle.Id);
+            if (inProgressDocket != null)
+            {
+                string action = await Application.Current.MainPage.DisplayActionSheet(
+                    "In-Progress Docket Found",
+                    "Cancel",
+                    null, // No destructive button
+                    "Continue Existing",
+                    "Start New",
+                    "Edit Open Docket"
+                );
+
+                if (action == "Continue Existing")
+                {
+                    await LoadDocketAsync(inProgressDocket.Id);
+                    IsInProgressWarningVisible = false; // Hide warning if continuing
+                    return true; // User chose to continue existing
+                }
+                else if (action == "Edit Open Docket")
+                {
+                    await Shell.Current.GoToAsync($"{nameof(EditLoadPage)}?docketId={inProgressDocket.Id}");
+                    IsInProgressWarningVisible = false; // Hide warning if editing
+                    return true; // User chose to edit existing
+                }
+                else // action == "Start New" or "Cancel"
+                {
+                    // User chose to start a new one, so clear current docket and show warning
+                    ResetForm(); // Clear the current form to start fresh
+                    SelectedVehicle = vehicle; // Re-select the vehicle for the new docket
+                    IsInProgressWarningVisible = true;
+                    InProgressWarningText = $"Warning: Docket ID {inProgressDocket.Id} for {vehicle.LicenseNumber} remains open. Please close it from the Loads page.";
+                    return false; // User chose to start new or cancelled
+                }
+            }
+            IsInProgressWarningVisible = false; // No in-progress docket, hide warning
+            return false; // No in-progress docket found
         }
 
         public Vehicle? SelectedVehicle
         {
             get => _selectedVehicle;
-            set
-            {
-                var _ = HandleVehicleSelection(value);
-            }
+            set { var _ = HandleVehicleSelection(value); }
         }
 
         private Site? _selectedSourceSite;
@@ -160,15 +184,18 @@ namespace Weighbridge.ViewModels
 
         public bool IsDocketLoaded => LoadDocketId > 0;
 
-        private WeighingMode _currentMode = WeighingMode.TwoWeights;
-
-        // --- Commands ---
         public ICommand SetWeighingModeCommand { get; }
         public ICommand ToYardCommand { get; }
         public ICommand SaveAndPrintCommand { get; }
         public ICommand CancelDocketCommand { get; }
+        public ICommand LoadVehiclesCommand { get; }
+        public ICommand LoadSitesCommand { get; }
+        public ICommand LoadItemsCommand { get; }
+        public ICommand LoadCustomersCommand { get; }
+        public ICommand LoadTransportsCommand { get; }
+        public ICommand LoadDriversCommand { get; }
+        public ICommand SimulateDocketsCommand { get; }
         public MainFormConfig FormConfig { get; private set; }
-
 
         public MainPageViewModel(IWeighbridgeService weighbridgeService, IDatabaseService databaseService, IDocketService docketService)
         {
@@ -178,12 +205,18 @@ namespace Weighbridge.ViewModels
 
             LoadFormConfig();
 
-            SetWeighingModeCommand = new Command<string>(s => SetWeighingMode((WeighingMode)Enum.Parse(typeof(WeighingMode), s)));
+            SetWeighingModeCommand = new Command<WeighingMode>(SetWeighingMode);
             ToYardCommand = new Command(async () => await OnToYardClicked());
             SaveAndPrintCommand = new Command(async () => await OnSaveAndPrintClicked());
             CancelDocketCommand = new Command(async () => await OnCancelDocketClicked());
+            LoadVehiclesCommand = new Command(async () => await LoadVehiclesAsync());
+            LoadSitesCommand = new Command(async () => await LoadSitesAsync());
+            LoadItemsCommand = new Command(async () => await LoadItemsAsync());
+            LoadCustomersCommand = new Command(async () => await LoadCustomersAsync());
+            LoadTransportsCommand = new Command(async () => await LoadTransportsAsync());
+            LoadDriversCommand = new Command(async () => await LoadDriversAsync());
+            SimulateDocketsCommand = new Command(async () => await SimulateDockets());
 
-            // Initialize default values
             EntranceWeight = "0";
             ExitWeight = "0";
             NetWeight = "0";
@@ -192,7 +225,6 @@ namespace Weighbridge.ViewModels
             StabilityColor = Microsoft.Maui.Graphics.Colors.Red;
             IsWeightStable = false;
 
-            // Subscribe to events early
             if (_weighbridgeService != null)
             {
                 _weighbridgeService.DataReceived += OnDataReceived;
@@ -204,51 +236,34 @@ namespace Weighbridge.ViewModels
 
         public async Task OnAppearing()
         {
-            // Wait for initialization to complete
             await _initializationTask;
-
             try
             {
                 IsStabilityDetectionEnabled = Preferences.Get("StabilityEnabled", true);
                 OnPropertyChanged(nameof(IsStabilityDetectionEnabled));
-
-                // Debug: Check if we have data
-                System.Diagnostics.Debug.WriteLine($"Vehicles count: {Vehicles.Count}");
-                System.Diagnostics.Debug.WriteLine($"Sites count: {Sites.Count}");
-                System.Diagnostics.Debug.WriteLine($"Items count: {Items.Count}");
-                System.Diagnostics.Debug.WriteLine($"Customers count: {Customers.Count}");
-                System.Diagnostics.Debug.WriteLine($"Transports count: {Transports.Count}");
-                System.Diagnostics.Debug.WriteLine($"Drivers count: {Drivers.Count}");
-
-                // Open the weighbridge service
                 _weighbridgeService?.Open();
-
-                // Update connection status
                 var config = _weighbridgeService?.GetConfig();
                 if (config != null)
                 {
                     ConnectionStatus = $"{config.PortName} • {config.BaudRate} bps";
                 }
-
-                // If we have a pending docket to load, load it now
                 if (LoadDocketId > 0)
                 {
                     await LoadDocketAsync(LoadDocketId);
                 }
 
-                // Add some test data if collections are empty
-                if (Vehicles.Count == 0)
-                {
-                    await AddSampleData();
-                }
+                // Load all picker data on appearing
+                await LoadVehiclesAsync();
+                await LoadSitesAsync();
+                await LoadItemsAsync();
+                await LoadCustomersAsync();
+                await LoadTransportsAsync();
+                await LoadDriversAsync();
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error in OnAppearing: {ex}");
-                if (ShowSimpleAlert != null)
-                {
-                    await ShowSimpleAlert.Invoke("Error", ex.Message, "OK");
-                }
+                await (ShowSimpleAlert?.Invoke("Error", ex.Message, "OK") ?? Task.CompletedTask);
             }
         }
 
@@ -263,187 +278,92 @@ namespace Weighbridge.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine("Starting database initialization...");
                 await _databaseService.InitializeAsync();
-                System.Diagnostics.Debug.WriteLine("Database initialized, loading data...");
-                await LoadDataAsync();
+                System.Diagnostics.Debug.WriteLine("Database initialized.");
                 _isInitialized = true;
                 System.Diagnostics.Debug.WriteLine("Initialization complete");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Initialization error: {ex}");
-                if (ShowSimpleAlert != null)
-                {
-                    await ShowSimpleAlert.Invoke("Error", $"Failed to initialize: {ex.Message}", "OK");
-                }
+                await (ShowSimpleAlert?.Invoke("Error", $"Failed to initialize: {ex.Message}", "OK") ?? Task.CompletedTask);
             }
         }
 
-        private async Task LoadDataAsync()
+        private async Task LoadCollectionAsync<T>(ObservableCollection<T> collection, Func<Task<List<T>>> getItems)
         {
+            collection.Clear(); // Clear existing items before loading new ones
             try
             {
-                System.Diagnostics.Debug.WriteLine("Loading data from database...");
-
-                var vehicles = await _databaseService.GetItemsAsync<Vehicle>();
-                var sites = await _databaseService.GetItemsAsync<Site>();
-                var items = await _databaseService.GetItemsAsync<Item>();
-                var customers = await _databaseService.GetItemsAsync<Customer>();
-                var transports = await _databaseService.GetItemsAsync<Transport>();
-                var drivers = await _databaseService.GetItemsAsync<Driver>();
-
-                System.Diagnostics.Debug.WriteLine($"Retrieved: {vehicles.Count} vehicles, {sites.Count} sites, {items.Count} items, {customers.Count} customers, {transports.Count} transports, {drivers.Count} drivers");
-
-                // Update collections on UI thread
+                var items = await getItems();
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    Vehicles.Clear();
-                    foreach (var vehicle in vehicles)
+                    foreach (var item in items)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Adding vehicle: {vehicle.LicenseNumber}");
-                        Vehicles.Add(vehicle);
+                        collection.Add(item);
                     }
-
-                    Sites.Clear();
-                    foreach (var site in sites) Sites.Add(site);
-
-                    Items.Clear();
-                    foreach (var item in items) Items.Add(item);
-
-                    Customers.Clear();
-                    foreach (var customer in customers) Customers.Add(customer);
-
-                    Transports.Clear();
-                    foreach (var transport in transports) Transports.Add(transport);
-
-                    Drivers.Clear();
-                    foreach (var driver in drivers) Drivers.Add(driver);
-
-                    System.Diagnostics.Debug.WriteLine($"Collections updated: Vehicles={Vehicles.Count}");
                 });
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading data: {ex}");
-                if (ShowSimpleAlert != null)
-                {
-                    await ShowSimpleAlert.Invoke("Error", $"Failed to load data: {ex.Message}", "OK");
-                }
+                System.Diagnostics.Debug.WriteLine($"Error loading collection: {ex}");
+                await (ShowSimpleAlert?.Invoke("Error", $"Failed to load data: {ex.Message}", "OK") ?? Task.CompletedTask);
             }
         }
 
-        private async Task AddSampleData()
+        private async Task LoadVehiclesAsync()
         {
-            try
-            {
-                System.Diagnostics.Debug.WriteLine("Adding sample data...");
-
-                // Add sample vehicles
-                var sampleVehicles = new[]
-                {
-                    new Vehicle { LicenseNumber = "ABC-123", TareWeight = 5500 },
-                    new Vehicle { LicenseNumber = "XYZ-789", TareWeight = 6200 },
-                    new Vehicle { LicenseNumber = "DEF-456", TareWeight = 4800 }
-                };
-
-                var sampleSites = new[]
-                {
-                    new Site { Name = "Quarry A" },
-                    new Site { Name = "Quarry B" },
-                    new Site { Name = "Construction Site 1" },
-                    new Site { Name = "Depot" }
-                };
-
-                var sampleItems = new[]
-                {
-                    new Item { Name = "Gravel" },
-                    new Item { Name = "Sand" },
-                    new Item { Name = "Concrete" },
-                    new Item { Name = "Crushed Stone" }
-                };
-
-                var sampleCustomers = new[]
-                {
-                    new Customer { Name = "ABC Construction" },
-                    new Customer { Name = "XYZ Builders" },
-                    new Customer { Name = "Local Council" }
-                };
-
-                var sampleTransports = new[]
-                {
-                    new Transport { Name = "Fast Haulage Ltd" },
-                    new Transport { Name = "Reliable Transport" },
-                    new Transport { Name = "Express Logistics" }
-                };
-
-                var sampleDrivers = new[]
-                {
-                    new Driver { Name = "John Smith" },
-                    new Driver { Name = "Mike Johnson" },
-                    new Driver { Name = "Sarah Wilson" }
-                };
-
-                // Save to database
-                foreach (var vehicle in sampleVehicles)
-                    await _databaseService.SaveItemAsync(vehicle);
-
-                foreach (var site in sampleSites)
-                    await _databaseService.SaveItemAsync(site);
-
-                foreach (var item in sampleItems)
-                    await _databaseService.SaveItemAsync(item);
-
-                foreach (var customer in sampleCustomers)
-                    await _databaseService.SaveItemAsync(customer);
-
-                foreach (var transport in sampleTransports)
-                    await _databaseService.SaveItemAsync(transport);
-
-                foreach (var driver in sampleDrivers)
-                    await _databaseService.SaveItemAsync(driver);
-
-                // Reload data
-                await LoadDataAsync();
-
-                System.Diagnostics.Debug.WriteLine("Sample data added successfully");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error adding sample data: {ex}");
-            }
+            System.Diagnostics.Debug.WriteLine("LoadVehiclesAsync called.");
+            await LoadCollectionAsync(Vehicles, () => _databaseService.GetItemsAsync<Vehicle>());
+        }
+        private async Task LoadSitesAsync()
+        {
+            System.Diagnostics.Debug.WriteLine("LoadSitesAsync called.");
+            await LoadCollectionAsync(Sites, () => _databaseService.GetItemsAsync<Site>());
+        }
+        private async Task LoadItemsAsync()
+        {
+            System.Diagnostics.Debug.WriteLine("LoadItemsAsync called.");
+            await LoadCollectionAsync(Items, () => _databaseService.GetItemsAsync<Item>());
+        }
+        private async Task LoadCustomersAsync()
+        {
+            System.Diagnostics.Debug.WriteLine("LoadCustomersAsync called.");
+            await LoadCollectionAsync(Customers, () => _databaseService.GetItemsAsync<Customer>());
+        }
+        private async Task LoadTransportsAsync()
+        {
+            System.Diagnostics.Debug.WriteLine("LoadTransportsAsync called.");
+            await LoadCollectionAsync(Transports, () => _databaseService.GetItemsAsync<Transport>());
+        }
+        private async Task LoadDriversAsync()
+        {
+            System.Diagnostics.Debug.WriteLine("LoadDriversAsync called.");
+            await LoadCollectionAsync(Drivers, () => _databaseService.GetItemsAsync<Driver>());
         }
 
         private void OnDataReceived(object? sender, WeightReading weightReading)
         {
-            System.Diagnostics.Debug.WriteLine($"Weight received: {weightReading.Weight} {weightReading.Unit}");
-
-            // Ensure UI updates happen on the main thread
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 LiveWeight = weightReading.Weight.ToString("F2");
-                System.Diagnostics.Debug.WriteLine($"LiveWeight updated to: {LiveWeight}");
             });
         }
 
         private void OnStabilityChanged(object? sender, bool isStable)
         {
-            System.Diagnostics.Debug.WriteLine($"Stability changed: {isStable}");
-
-            // Ensure UI updates happen on the main thread
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 IsWeightStable = isStable;
                 StabilityStatus = isStable ? "STABLE" : "UNSTABLE";
                 StabilityColor = isStable ? Colors.Green : Colors.Red;
                 StabilityStatusColour = isStable ? Colors.Green : Colors.Red;
-                System.Diagnostics.Debug.WriteLine($"StabilityStatus updated to: {StabilityStatus}");
             });
         }
 
         private void SetWeighingMode(WeighingMode mode)
         {
-            _currentMode = mode;
-
-            if ((_currentMode == WeighingMode.EntryAndTare || _currentMode == WeighingMode.TareAndExit) && SelectedVehicle != null)
+            CurrentMode = mode;
+            if ((CurrentMode == WeighingMode.EntryAndTare || CurrentMode == WeighingMode.TareAndExit) && SelectedVehicle != null)
             {
                 TareWeight = SelectedVehicle.TareWeight.ToString(CultureInfo.InvariantCulture);
             }
@@ -451,91 +371,60 @@ namespace Weighbridge.ViewModels
             {
                 TareWeight = string.Empty;
             }
-
-            OnPropertyChanged(nameof(IsTwoWeightsMode));
-            OnPropertyChanged(nameof(IsEntryAndTareMode));
-            OnPropertyChanged(nameof(IsTareAndExitMode));
-            OnPropertyChanged(nameof(IsSingleWeightMode));
             OnPropertyChanged(nameof(IsTareEntryVisible));
             OnPropertyChanged(nameof(FirstWeightButtonText));
             OnPropertyChanged(nameof(IsSecondWeightButtonVisible));
         }
 
-        public bool IsTwoWeightsMode => _currentMode == WeighingMode.TwoWeights;
-        public bool IsEntryAndTareMode => _currentMode == WeighingMode.EntryAndTare;
-        public bool IsTareAndExitMode => _currentMode == WeighingMode.TareAndExit;
-        public bool IsSingleWeightMode => _currentMode == WeighingMode.SingleWeight;
-        public bool IsTareEntryVisible => _currentMode == WeighingMode.EntryAndTare || _currentMode == WeighingMode.TareAndExit;
-        public string FirstWeightButtonText => _currentMode == WeighingMode.TwoWeights ? "First Weight" : "Get Weight";
-        public bool IsSecondWeightButtonVisible => _currentMode == WeighingMode.TwoWeights;
+        public bool IsTareEntryVisible => CurrentMode == WeighingMode.EntryAndTare || CurrentMode == WeighingMode.TareAndExit;
+        public string FirstWeightButtonText => CurrentMode == WeighingMode.TwoWeights ? "First Weight" : "Get Weight";
+        public bool IsSecondWeightButtonVisible => CurrentMode == WeighingMode.TwoWeights;
 
-        // Simulate weight data for testing if no real weighbridge is connected
         public void SimulateWeightData()
         {
             var random = new Random();
-            var weight = random.Next(10000, 50000) / 100.0m; // Random weight between 100-500 kg
+            var weight = random.Next(10000, 50000) / 100.0m;
             var isStable = random.Next(0, 2) == 1;
-
             OnDataReceived(this, new WeightReading { Weight = weight, Unit = "KG" });
             OnStabilityChanged(this, isStable);
         }
 
         private async Task<Vehicle?> GetOrCreateVehicleAsync(string licenseNumber)
         {
-            if (string.IsNullOrWhiteSpace(licenseNumber))
-            {
-                return null;
-            }
-
+            if (string.IsNullOrWhiteSpace(licenseNumber)) return null;
             var existingVehicle = await _databaseService.GetVehicleByLicenseAsync(licenseNumber);
-            if (existingVehicle != null)
+            if (existingVehicle != null) return existingVehicle;
+
+            bool createNew = await (ShowAlert?.Invoke("New Vehicle", $"The vehicle '{licenseNumber}' was not found. Create a new vehicle?", "Yes", "No") ?? Task.FromResult(false));
+            if (createNew)
             {
-                return existingVehicle;
+                var newVehicle = new Vehicle { LicenseNumber = licenseNumber };
+                await _databaseService.SaveItemAsync(newVehicle);
+                await LoadVehiclesAsync();
+                return newVehicle;
             }
-            else
-            {
-                bool createNew = await ShowAlert.Invoke("New Vehicle", $"The vehicle with license plate '{licenseNumber}' was not found. Do you want to create a new vehicle?", "Yes", "No");
-                if (createNew)
-                {
-                    var newVehicle = new Vehicle { LicenseNumber = licenseNumber };
-                    await _databaseService.SaveItemAsync(newVehicle);
-                    return newVehicle;
-                }
-                else
-                {
-                    return null;
-                }
-            }
+            return null;
         }
 
         public async Task OnToYardClicked()
         {
-            if (!IsDocketValid())
-            {
-                return;
-            }
-
-            Vehicle? vehicle = null;
-            if (SelectedVehicle != null)
-            {
-                vehicle = SelectedVehicle;
-            }
-            else if (!string.IsNullOrWhiteSpace(VehicleRegistration))
-            {
-                vehicle = await GetOrCreateVehicleAsync(VehicleRegistration);
-            }
-            else
-            {
-                await ShowSimpleAlert.Invoke("Validation Error", "Please enter a vehicle registration or select one from the list.", "OK");
-                return;
-            }
-
+            if (!IsDocketValid()) return;
+            Vehicle? vehicle = SelectedVehicle ?? await GetOrCreateVehicleAsync(VehicleRegistration);
             if (vehicle == null)
             {
+                await (ShowSimpleAlert?.Invoke("Validation Error", "Please enter a vehicle registration.", "OK") ?? Task.CompletedTask);
                 return;
             }
 
-            switch (_currentMode)
+            // Check for in-progress docket before creating a new one
+            if (await HandleInProgressDocketWarning(vehicle))
+            {
+                // If HandleInProgressDocketWarning returned true, it means the user chose to continue an existing docket
+                // and navigation to EditLoadPage has already occurred. So, we just return.
+                return;
+            }
+
+            switch (CurrentMode)
             {
                 case WeighingMode.TwoWeights:
                     EntranceWeight = LiveWeight;
@@ -546,9 +435,7 @@ namespace Weighbridge.ViewModels
                         var docket = new Docket
                         {
                             EntranceWeight = decimal.TryParse(EntranceWeight, NumberStyles.Any, CultureInfo.InvariantCulture, out var entrance) ? entrance : 0,
-                            ExitWeight = 0,
-                            NetWeight = 0,
-                            VehicleId = vehicle.Id, // Use vehicle.Id
+                            VehicleId = vehicle.Id,
                             SourceSiteId = SelectedSourceSite?.Id,
                             DestinationSiteId = SelectedDestinationSite?.Id,
                             ItemId = SelectedItem?.Id,
@@ -561,78 +448,52 @@ namespace Weighbridge.ViewModels
                         };
                         await _databaseService.SaveItemAsync(docket);
                         LoadDocketId = docket.Id;
-                        if (ShowSimpleAlert != null)
-                        {
-                            await ShowSimpleAlert.Invoke("Success", "First weight captured. Docket created.", "OK");
-                        }
-                        ResetForm(); // Clear form after first weight
+                        await (ShowSimpleAlert?.Invoke("Success", "First weight captured. Docket created.", "OK") ?? Task.CompletedTask);
                     }
                     catch (Exception ex)
                     {
-                        if (ShowSimpleAlert != null)
-                        {
-                            await ShowSimpleAlert.Invoke("Database Error", $"Failed to save the docket: {ex.Message}", "OK");
-                        }
+                        await (ShowSimpleAlert?.Invoke("Database Error", $"Failed to save the docket: {ex.Message}", "OK") ?? Task.CompletedTask);
                     }
                     break;
-
                 case WeighingMode.EntryAndTare:
                 case WeighingMode.TareAndExit:
                 case WeighingMode.SingleWeight:
-                    await SaveSingleWeightDocket();
+                    await SaveSingleWeightDocket(vehicle);
                     break;
             }
         }
 
-        private async Task SaveSingleWeightDocket()
+        private async Task SaveSingleWeightDocket(Vehicle vehicle)
         {
             try
             {
                 decimal entranceWeight, exitWeight, netWeight;
                 var liveWeightDecimal = decimal.TryParse(LiveWeight, NumberStyles.Any, CultureInfo.InvariantCulture, out var live) ? live : 0;
+                var tareWeightDecimal = decimal.TryParse(TareWeight, NumberStyles.Any, CultureInfo.InvariantCulture, out var tare) ? tare : 0;
 
-                switch (_currentMode)
+                switch (CurrentMode)
                 {
                     case WeighingMode.EntryAndTare:
                         entranceWeight = liveWeightDecimal;
-                        exitWeight = decimal.TryParse(TareWeight, out var tare) ? tare : 0;
-                        netWeight = Math.Abs(entranceWeight - exitWeight);
+                        exitWeight = tareWeightDecimal;
                         break;
                     case WeighingMode.TareAndExit:
-                        entranceWeight = decimal.TryParse(TareWeight, out tare) ? tare : 0;
+                        entranceWeight = tareWeightDecimal;
                         exitWeight = liveWeightDecimal;
-                        netWeight = Math.Abs(entranceWeight - exitWeight);
                         break;
-                    case WeighingMode.SingleWeight:
                     default:
                         entranceWeight = liveWeightDecimal;
                         exitWeight = 0;
-                        netWeight = entranceWeight; // Net weight is the single weight
                         break;
                 }
-
-                EntranceWeight = entranceWeight.ToString("F2");
-                ExitWeight = exitWeight.ToString("F2");
-                NetWeight = netWeight.ToString("F2");
-
-                // Need to get or create vehicle here as well
-                Vehicle? vehicle = await _databaseService.GetVehicleByLicenseAsync(VehicleRegistration);
-                if (vehicle == null)
-                {
-                    // If vehicle not found, and it's a single weight, it implies it should exist or be created
-                    // For simplicity, we'll create it if it doesn't exist for single weight dockets
-                    // A more robust solution might prompt the user or prevent saving
-                    vehicle = new Vehicle { LicenseNumber = VehicleRegistration };
-                    await _databaseService.SaveItemAsync(vehicle);
-                }
-
+                netWeight = Math.Abs(entranceWeight - exitWeight);
 
                 var docket = new Docket
                 {
                     EntranceWeight = entranceWeight,
                     ExitWeight = exitWeight,
                     NetWeight = netWeight,
-                    VehicleId = vehicle?.Id, // Use vehicle.Id
+                    VehicleId = vehicle.Id,
                     SourceSiteId = SelectedSourceSite?.Id,
                     DestinationSiteId = SelectedDestinationSite?.Id,
                     ItemId = SelectedItem?.Id,
@@ -644,61 +505,26 @@ namespace Weighbridge.ViewModels
                     Status = "CLOSED"
                 };
                 await _databaseService.SaveItemAsync(docket);
-                if (ShowSimpleAlert != null)
-                {
-                    await ShowSimpleAlert.Invoke("Success", "Docket saved successfully.", "OK");
-                }
+                await (ShowSimpleAlert?.Invoke("Success", "Docket saved successfully.", "OK") ?? Task.CompletedTask);
+                await PrintDocket(docket, vehicle);
                 ResetForm();
             }
             catch (Exception ex)
             {
-                if (ShowSimpleAlert != null)
-                {
-                    await ShowSimpleAlert.Invoke("Database Error", $"Failed to save the docket: {ex.Message}", "OK");
-                }
+                await (ShowSimpleAlert?.Invoke("Database Error", $"Failed to save the docket: {ex.Message}", "OK") ?? Task.CompletedTask);
             }
         }
 
-
         public async Task OnSaveAndPrintClicked()
         {
-            if (!IsDocketValid())
-            {
-                return;
-            }
+            if (!IsDocketValid()) return;
+            if (CurrentMode != WeighingMode.TwoWeights) return;
+            if (!await (ShowAlert?.Invoke("Confirm Details", "Are all the details correct?", "Yes", "No") ?? Task.FromResult(false))) return;
 
-            if (_currentMode != WeighingMode.TwoWeights)
-            {
-                return;
-            }
-
-            bool confirmed = false;
-            if (ShowAlert != null)
-            {
-                confirmed = await ShowAlert.Invoke("Confirm Details", "Are all the details correct?", "Yes", "No");
-            }
-            if (!confirmed)
-            {
-                return;
-            }
-
-            Vehicle? vehicle = null;
-            if (SelectedVehicle != null)
-            {
-                vehicle = SelectedVehicle;
-            }
-            else if (!string.IsNullOrWhiteSpace(VehicleRegistration))
-            {
-                vehicle = await GetOrCreateVehicleAsync(VehicleRegistration);
-            }
-            else
-            {
-                await ShowSimpleAlert.Invoke("Validation Error", "Please enter a vehicle registration or select one from the list.", "OK");
-                return;
-            }
-
+            Vehicle? vehicle = SelectedVehicle ?? await GetOrCreateVehicleAsync(VehicleRegistration);
             if (vehicle == null)
             {
+                await (ShowSimpleAlert?.Invoke("Validation Error", "Please enter a vehicle registration.", "OK") ?? Task.CompletedTask);
                 return;
             }
 
@@ -709,115 +535,84 @@ namespace Weighbridge.ViewModels
                     var docket = await _databaseService.GetItemAsync<Docket>(LoadDocketId);
                     if (docket != null)
                     {
-                        System.Diagnostics.Debug.WriteLine($"LiveWeight before parsing: {LiveWeight}");
                         docket.ExitWeight = decimal.TryParse(LiveWeight, NumberStyles.Any, CultureInfo.InvariantCulture, out var exit) ? exit : 0;
-                        System.Diagnostics.Debug.WriteLine($"Parsed ExitWeight: {docket.ExitWeight}");
                         docket.NetWeight = Math.Abs(docket.EntranceWeight - docket.ExitWeight);
                         docket.Timestamp = DateTime.Now;
                         docket.Status = "CLOSED";
                         docket.Remarks = Remarks;
-                        docket.VehicleId = vehicle.Id; // Use vehicle.Id
+                        docket.VehicleId = vehicle.Id;
                         docket.SourceSiteId = SelectedSourceSite?.Id;
                         docket.DestinationSiteId = SelectedDestinationSite?.Id;
                         docket.ItemId = SelectedItem?.Id;
                         docket.CustomerId = SelectedCustomer?.Id;
                         docket.TransportId = SelectedTransport?.Id;
                         docket.DriverId = SelectedDriver?.Id;
+
                         await _databaseService.SaveItemAsync(docket);
-
-                        // Update UI
-                        ExitWeight = docket.ExitWeight.ToString("F2");
-                        NetWeight = docket.NetWeight.ToString("F2");
-
-                        var docketData = new DocketData
-                        {
-                            EntranceWeight = docket.EntranceWeight.ToString("F2"),
-                            ExitWeight = docket.ExitWeight.ToString("F2"),
-                            NetWeight = docket.NetWeight.ToString("F2"),
-                            VehicleLicense = vehicle.LicenseNumber, // Use vehicle.LicenseNumber
-                            SourceSite = SelectedSourceSite?.Name,
-                            DestinationSite = SelectedDestinationSite?.Name,
-                            Material = SelectedItem?.Name,
-                            Customer = SelectedCustomer?.Name,
-                            TransportCompany = SelectedTransport?.Name,
-                            Driver = SelectedDriver?.Name,
-                            Remarks = Remarks,
-                            Timestamp = docket.Timestamp
-                        };
-                        var templateJson = Preferences.Get("DocketTemplate", string.Empty);
-                        var docketTemplate = !string.IsNullOrEmpty(templateJson)
-                            ? JsonSerializer.Deserialize<DocketTemplate>(templateJson) ?? new DocketTemplate()
-                            : new DocketTemplate();
-                        var filePath = await _docketService.GeneratePdfAsync(docketData, docketTemplate);
-                        try
-                        {
-                            await Launcher.OpenAsync(new OpenFileRequest
-                            {
-                                File = new ReadOnlyFile(filePath)
-                            });
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Failed to open PDF: {ex.Message}");
-                        }
+                        await PrintDocket(docket, vehicle);
                         ResetForm();
                     }
                 }
                 else
                 {
-                    if (ShowSimpleAlert != null)
-                    {
-                        await ShowSimpleAlert.Invoke("Error", "No open docket found for the first weight. Please capture the first weight first.", "OK");
-                    }
+                    await (ShowSimpleAlert?.Invoke("Error", "No open docket found. Please capture the first weight.", "OK") ?? Task.CompletedTask);
                 }
             }
             catch (Exception ex)
             {
-                if (ShowSimpleAlert != null)
-                {
-                    await ShowSimpleAlert.Invoke("Error", $"An error occurred: {ex.Message}", "OK");
-                }
+                await (ShowSimpleAlert?.Invoke("Error", $"An error occurred: {ex.Message}", "OK") ?? Task.CompletedTask);
+            }
+        }
+
+        private async Task PrintDocket(Docket docket, Vehicle vehicle)
+        {
+            var docketData = new DocketData
+            {
+                EntranceWeight = docket.EntranceWeight.ToString("F2"),
+                ExitWeight = docket.ExitWeight.ToString("F2"),
+                NetWeight = docket.NetWeight.ToString("F2"),
+                VehicleLicense = vehicle.LicenseNumber,
+                SourceSite = Sites.FirstOrDefault(s => s.Id == docket.SourceSiteId)?.Name,
+                DestinationSite = Sites.FirstOrDefault(s => s.Id == docket.DestinationSiteId)?.Name,
+                Material = Items.FirstOrDefault(i => i.Id == docket.ItemId)?.Name,
+                Customer = Customers.FirstOrDefault(c => c.Id == docket.CustomerId)?.Name,
+                TransportCompany = Transports.FirstOrDefault(t => t.Id == docket.TransportId)?.Name,
+                Driver = Drivers.FirstOrDefault(d => d.Id == docket.DriverId)?.Name,
+                Remarks = docket.Remarks,
+                Timestamp = docket.Timestamp
+            };
+            var templateJson = Preferences.Get("DocketTemplate", string.Empty);
+            var docketTemplate = !string.IsNullOrEmpty(templateJson)
+                ? JsonSerializer.Deserialize<DocketTemplate>(templateJson) ?? new DocketTemplate()
+                : new DocketTemplate();
+            var filePath = await _docketService.GeneratePdfAsync(docketData, docketTemplate);
+            try
+            {
+                await Launcher.OpenAsync(new OpenFileRequest { File = new ReadOnlyFile(filePath) });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to open PDF: {ex.Message}");
             }
         }
 
         public async Task OnCancelDocketClicked()
         {
-            if (LoadDocketId > 0)
+            if (LoadDocketId > 0 && await (ShowAlert?.Invoke("Confirm Cancellation", "Are you sure you want to cancel this docket?", "Yes", "No") ?? Task.FromResult(false)))
             {
-                bool confirmed = false;
-                if (ShowAlert != null)
+                try
                 {
-                    confirmed = await ShowAlert.Invoke("Confirm Cancellation", "Are you sure you want to cancel this docket?", "Yes", "No");
+                    var docket = await _databaseService.GetItemAsync<Docket>(LoadDocketId);
+                    if (docket != null)
+                    {
+                        await _databaseService.DeleteItemAsync(docket);
+                        await (ShowSimpleAlert?.Invoke("Success", "The docket has been cancelled.", "OK") ?? Task.CompletedTask);
+                        ResetForm();
+                    }
                 }
-                if (confirmed)
+                catch (Exception ex)
                 {
-                    try
-                    {
-                        var docket = await _databaseService.GetItemAsync<Docket>(LoadDocketId);
-                        if (docket != null)
-                        {
-                            await _databaseService.DeleteItemAsync(docket);
-                            if (ShowSimpleAlert != null)
-                            {
-                                await ShowSimpleAlert.Invoke("Success", "The docket has been cancelled.", "OK");
-                            }
-                            ResetForm();
-                        }
-                        else
-                        {
-                            if (ShowSimpleAlert != null)
-                            {
-                                await ShowSimpleAlert.Invoke("Error", "Could not find the docket to cancel.", "OK");
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        if (ShowSimpleAlert != null)
-                        {
-                            await ShowSimpleAlert.Invoke("Error", $"Failed to cancel the docket: {ex.Message}", "OK");
-                        }
-                    }
+                    await (ShowSimpleAlert?.Invoke("Error", $"Failed to cancel the docket: {ex.Message}", "OK") ?? Task.CompletedTask);
                 }
             }
         }
@@ -829,13 +624,12 @@ namespace Weighbridge.ViewModels
 
         private async Task LoadDocketAfterInitialization(int docketId)
         {
-            await _initializationTask; // Wait for the data to be ready
+            await _initializationTask;
             await LoadDocketAsync(docketId);
         }
 
         private async Task LoadDocketAsync(int docketId)
         {
-           // _isLoadingDocket = true;
             try
             {
                 var docket = await _databaseService.GetItemAsync<Docket>(docketId);
@@ -852,6 +646,12 @@ namespace Weighbridge.ViewModels
                     {
                         VehicleRegistration = vehicle.LicenseNumber;
                     }
+                    await LoadSitesAsync();
+                    await LoadItemsAsync();
+                    await LoadCustomersAsync();
+                    await LoadTransportsAsync();
+                    await LoadDriversAsync();
+
                     SelectedSourceSite = Sites.FirstOrDefault(s => s.Id == docket.SourceSiteId);
                     SelectedDestinationSite = Sites.FirstOrDefault(s => s.Id == docket.DestinationSiteId);
                     SelectedItem = Items.FirstOrDefault(i => i.Id == docket.ItemId);
@@ -860,9 +660,9 @@ namespace Weighbridge.ViewModels
                     SelectedDriver = Drivers.FirstOrDefault(d => d.Id == docket.DriverId);
                 }
             }
-            finally
+            catch (Exception ex)
             {
-               // _isLoadingDocket = false;
+                await (ShowSimpleAlert?.Invoke("Error", $"Failed to load docket: {ex.Message}", "OK") ?? Task.CompletedTask);
             }
         }
 
@@ -874,7 +674,7 @@ namespace Weighbridge.ViewModels
             NetWeight = "0";
             Remarks = string.Empty;
             TareWeight = string.Empty;
-            VehicleRegistration = string.Empty; // Add this line
+            VehicleRegistration = string.Empty;
             SelectedVehicle = null;
             SelectedSourceSite = null;
             SelectedDestinationSite = null;
@@ -884,6 +684,82 @@ namespace Weighbridge.ViewModels
             SelectedDriver = null;
             IsInProgressWarningVisible = false;
             InProgressWarningText = string.Empty;
+        }
+
+        private async Task SimulateDockets()
+        {
+            try
+            {
+                await ShowSimpleAlert?.Invoke("Simulating Dockets", "Generating 100 dockets... This may take a moment.", "OK");
+
+                // Ensure all reference data is loaded
+                await LoadVehiclesAsync();
+                await LoadSitesAsync();
+                await LoadItemsAsync();
+                await LoadCustomersAsync();
+                await LoadTransportsAsync();
+                await LoadDriversAsync();
+
+                if (!Vehicles.Any() || !Sites.Any() || !Items.Any() || !Customers.Any() || !Transports.Any() || !Drivers.Any())
+                {
+                    await ShowSimpleAlert?.Invoke("Simulation Error", "Cannot simulate dockets: Missing reference data. Please ensure Vehicles, Sites, Items, Customers, Transports, and Drivers tables have data.", "OK");
+                    return;
+                }
+
+                var random = new Random();
+                for (int i = 0; i < 100; i++)
+                {
+                    var vehicle = Vehicles[random.Next(Vehicles.Count)];
+                    var sourceSite = Sites[random.Next(Sites.Count)];
+                    var destinationSite = Sites[random.Next(Sites.Count)];
+                    var item = Items[random.Next(Items.Count)];
+                    var customer = Customers[random.Next(Customers.Count)];
+                    var transport = Transports[random.Next(Transports.Count)];
+                    var driver = Drivers[random.Next(Drivers.Count)];
+
+                    decimal entranceWeight = random.Next(1000, 10000);
+                    decimal exitWeight = random.Next(1000, 10000);
+                    decimal netWeight = Math.Abs(entranceWeight - exitWeight);
+
+                    // Random timestamp within the last 24 hours
+                    DateTime timestamp = DateTime.Now.AddHours(-random.Next(0, 24)).AddMinutes(-random.Next(0, 60)).AddSeconds(-random.Next(0, 60));
+
+                    string status;
+                    if (random.Next(0, 10) < 2) // 20% chance to be an open docket
+                    {
+                        exitWeight = 0;
+                        netWeight = 0;
+                        status = "OPEN";
+                    }
+                    else
+                    {
+                        status = "CLOSED";
+                    }
+
+                    var docket = new Docket
+                    {
+                        EntranceWeight = entranceWeight,
+                        ExitWeight = exitWeight,
+                        NetWeight = netWeight,
+                        VehicleId = vehicle.Id,
+                        SourceSiteId = sourceSite.Id,
+                        DestinationSiteId = destinationSite.Id,
+                        ItemId = item.Id,
+                        CustomerId = customer.Id,
+                        TransportId = transport.Id,
+                        DriverId = driver.Id,
+                        Remarks = $"Simulated docket {i + 1}",
+                        Timestamp = timestamp,
+                        Status = status
+                    };
+                    await _databaseService.SaveItemAsync(docket);
+                }
+                await ShowSimpleAlert?.Invoke("Simulation Complete", "100 dockets simulated successfully!", "OK");
+            }
+            catch (Exception ex)
+            {
+                await ShowSimpleAlert?.Invoke("Simulation Error", $"An error occurred during simulation: {ex.Message}", "OK");
+            }
         }
 
         private void LoadFormConfig()
@@ -901,18 +777,17 @@ namespace Weighbridge.ViewModels
                     FormConfig = new MainFormConfig();
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // Handle exceptions (e.g., log the error)
                 FormConfig = new MainFormConfig();
             }
         }
 
         private bool IsDocketValid()
         {
-            if (FormConfig.Vehicle.IsMandatory && string.IsNullOrWhiteSpace(VehicleRegistration))
+            if (FormConfig.Vehicle.IsMandatory && string.IsNullOrWhiteSpace(VehicleRegistration) && SelectedVehicle == null)
             {
-                ShowSimpleAlert?.Invoke("Validation Error", "Please enter a vehicle registration.", "OK");
+                ShowSimpleAlert?.Invoke("Validation Error", "Please enter or select a vehicle.", "OK");
                 return false;
             }
             if (FormConfig.SourceSite.IsMandatory && SelectedSourceSite == null)

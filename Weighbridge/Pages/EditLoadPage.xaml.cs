@@ -37,6 +37,7 @@ namespace Weighbridge.Pages
             {
                 if (SetProperty(ref _loadDocketId, value) && value > 0)
                 {
+                    System.Diagnostics.Debug.WriteLine($"EditLoadPage: LoadDocketId set to {value}");
                     // Load data when ID is set
                     Task.Run(async () => await LoadPageDataAsync(value));
                 }
@@ -47,7 +48,11 @@ namespace Weighbridge.Pages
         public bool IsLoading
         {
             get => _isLoading;
-            set => SetProperty(ref _isLoading, value);
+            set
+            {
+                SetProperty(ref _isLoading, value);
+                System.Diagnostics.Debug.WriteLine($"EditLoadPage: IsLoading set to {value}");
+            }
         }
 
         public bool IsSaving
@@ -75,43 +80,71 @@ namespace Weighbridge.Pages
         public Vehicle? SelectedVehicle
         {
             get => _selectedVehicle;
-            set => SetProperty(ref _selectedVehicle, value);
+            set
+            {
+                SetProperty(ref _selectedVehicle, value);
+                System.Diagnostics.Debug.WriteLine($"EditLoadPage: SelectedVehicle set to {value?.LicenseNumber ?? "null"}");
+            }
         }
 
         public Site? SelectedSourceSite
         {
             get => _selectedSourceSite;
-            set => SetProperty(ref _selectedSourceSite, value);
+            set
+            {
+                SetProperty(ref _selectedSourceSite, value);
+                System.Diagnostics.Debug.WriteLine($"EditLoadPage: SelectedSourceSite set to {value?.Name ?? "null"}");
+            }
         }
 
         public Site? SelectedDestinationSite
         {
             get => _selectedDestinationSite;
-            set => SetProperty(ref _selectedDestinationSite, value);
+            set
+            {
+                SetProperty(ref _selectedDestinationSite, value);
+                System.Diagnostics.Debug.WriteLine($"EditLoadPage: SelectedDestinationSite set to {value?.Name ?? "null"}");
+            }
         }
 
         public Item? SelectedItem
         {
             get => _selectedItem;
-            set => SetProperty(ref _selectedItem, value);
+            set
+            {
+                SetProperty(ref _selectedItem, value);
+                System.Diagnostics.Debug.WriteLine($"EditLoadPage: SelectedItem set to {value?.Name ?? "null"}");
+            }
         }
 
         public Customer? SelectedCustomer
         {
             get => _selectedCustomer;
-            set => SetProperty(ref _selectedCustomer, value);
+            set
+            {
+                SetProperty(ref _selectedCustomer, value);
+                System.Diagnostics.Debug.WriteLine($"EditLoadPage: SelectedCustomer set to {value?.Name ?? "null"}");
+            }
         }
 
         public Transport? SelectedTransport
         {
             get => _selectedTransport;
-            set => SetProperty(ref _selectedTransport, value);
+            set
+            {
+                SetProperty(ref _selectedTransport, value);
+                System.Diagnostics.Debug.WriteLine($"EditLoadPage: SelectedTransport set to {value?.Name ?? "null"}");
+            }
         }
 
         public Driver? SelectedDriver
         {
             get => _selectedDriver;
-            set => SetProperty(ref _selectedDriver, value);
+            set
+            {
+                SetProperty(ref _selectedDriver, value);
+                System.Diagnostics.Debug.WriteLine($"EditLoadPage: SelectedDriver set to {value?.Name ?? "null"}");
+            }
         }
 
         // Commands
@@ -130,30 +163,35 @@ namespace Weighbridge.Pages
             RefreshCommand = new Command(async () => await RefreshDataAsync());
 
             BindingContext = this;
+            System.Diagnostics.Debug.WriteLine("EditLoadPage: Constructor called.");
         }
 
         protected override async void OnAppearing()
         {
             base.OnAppearing();
+            System.Diagnostics.Debug.WriteLine("EditLoadPage: OnAppearing called.");
 
-            if (LoadDocketId > 0)
-            {
-                await LoadPageDataAsync(LoadDocketId);
-            }
+            // Removed the LoadPageDataAsync call from here.
+            // The LoadDocketId setter will handle data loading when the query property is set.
         }
 
         private async Task LoadPageDataAsync(int docketId)
         {
+            System.Diagnostics.Debug.WriteLine($"EditLoadPage: LoadPageDataAsync called for docketId {docketId}");
             if (IsLoading) return;
 
             try
             {
                 IsLoading = true;
+                System.Diagnostics.Debug.WriteLine("EditLoadPage: Calling LoadPickerDataAsync.");
                 await LoadPickerDataAsync();
+                System.Diagnostics.Debug.WriteLine("EditLoadPage: Calling LoadDocketAsync.");
                 await LoadDocketAsync(docketId);
+                System.Diagnostics.Debug.WriteLine("EditLoadPage: LoadPageDataAsync completed.");
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"EditLoadPage: Error in LoadPageDataAsync: {ex}");
                 await DisplayAlert("Error", $"Failed to load data: {ex.Message}", "OK");
             }
             finally
@@ -164,7 +202,12 @@ namespace Weighbridge.Pages
 
         private async Task LoadPickerDataAsync()
         {
-            if (Vehicles.Any()) return; // Don't reload if already populated
+            System.Diagnostics.Debug.WriteLine("EditLoadPage: LoadPickerDataAsync called.");
+            if (Vehicles.Any()) // Don't reload if already populated
+            {
+                System.Diagnostics.Debug.WriteLine("EditLoadPage: Picker data already populated, skipping reload.");
+                return;
+            }
 
             try
             {
@@ -180,9 +223,11 @@ namespace Weighbridge.Pages
                 };
 
                 await Task.WhenAll(tasks);
+                System.Diagnostics.Debug.WriteLine("EditLoadPage: LoadPickerDataAsync completed successfully.");
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"EditLoadPage: Error in LoadPickerDataAsync: {ex}");
                 await DisplayAlert("Error", $"Failed to load picker data: {ex.Message}", "OK");
             }
         }
@@ -190,19 +235,25 @@ namespace Weighbridge.Pages
         private async Task LoadCollectionAsync<T>(ObservableCollection<T> collection, Task<List<T>> dataTask)
         {
             var items = await dataTask;
-            foreach (var item in items)
+            MainThread.BeginInvokeOnMainThread(() =>
             {
-                collection.Add(item);
-            }
+                foreach (var item in items)
+                {
+                    collection.Add(item);
+                }
+            });
+            System.Diagnostics.Debug.WriteLine($"EditLoadPage: Loaded {items.Count} items into {collection.GetType().GenericTypeArguments[0].Name} collection.");
         }
 
         private async Task LoadDocketAsync(int docketId)
         {
+            System.Diagnostics.Debug.WriteLine($"EditLoadPage: LoadDocketAsync called for docketId {docketId}");
             try
             {
                 var docket = await _databaseService.GetItemAsync<Docket>(docketId);
                 if (docket != null)
                 {
+                    System.Diagnostics.Debug.WriteLine($"EditLoadPage: Docket {docketId} found. Populating UI.");
                     // Update UI properties
                     Remarks = docket.Remarks ?? string.Empty;
                     SelectedVehicle = Vehicles.FirstOrDefault(v => v.Id == docket.VehicleId);
@@ -212,15 +263,18 @@ namespace Weighbridge.Pages
                     SelectedCustomer = Customers.FirstOrDefault(c => c.Id == docket.CustomerId);
                     SelectedTransport = Transports.FirstOrDefault(t => t.Id == docket.TransportId);
                     SelectedDriver = Drivers.FirstOrDefault(d => d.Id == docket.DriverId);
+                    System.Diagnostics.Debug.WriteLine("EditLoadPage: UI properties populated.");
                 }
                 else
                 {
+                    System.Diagnostics.Debug.WriteLine($"EditLoadPage: Docket {docketId} not found.");
                     await DisplayAlert("Error", "Docket not found", "OK");
                     await Shell.Current.GoToAsync("..");
                 }
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"EditLoadPage: Error in LoadDocketAsync: {ex}");
                 await DisplayAlert("Error", $"Failed to load docket: {ex.Message}", "OK");
             }
         }

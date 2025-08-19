@@ -19,6 +19,7 @@ namespace Weighbridge.Pages
         private DateTime _dateFromFilter = DateTime.Today.AddMonths(-1);
         private DateTime _dateToFilter = DateTime.Today;
         private string _vehicleRegFilter = string.Empty;
+        private string _globalSearchFilter = string.Empty;
         private bool _isRefreshing = false;
         private ObservableCollection<DocketViewModel> _loads = new();
 
@@ -51,6 +52,12 @@ namespace Weighbridge.Pages
         {
             get => _vehicleRegFilter;
             set => SetProperty(ref _vehicleRegFilter, value);
+        }
+
+        public string GlobalSearchFilter
+        {
+            get => _globalSearchFilter;
+            set => SetProperty(ref _globalSearchFilter, value);
         }
 
         public bool IsRefreshing
@@ -110,7 +117,8 @@ namespace Weighbridge.Pages
                         SelectedStatusFilter,
                         DateFromFilter,
                         DateToFilter,
-                        VehicleRegFilter);
+                        VehicleRegFilter,
+                        GlobalSearchFilter);
 
                     cancellationToken.ThrowIfCancellationRequested();
 

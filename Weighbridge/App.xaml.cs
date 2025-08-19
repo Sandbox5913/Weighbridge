@@ -1,5 +1,6 @@
 using Weighbridge.Pages;
 using Weighbridge.Services;
+using System.Diagnostics;
 
 namespace Weighbridge
 {
@@ -21,12 +22,16 @@ namespace Weighbridge
             if (userService?.CurrentUser != null)
             {
                 // User is logged in, show the main app
-                mainPage = services.GetService<AppShell>();
+                var appShell = services.GetService<AppShell>();
+                Debug.WriteLine($"Setting MainPage to AppShell. HashCode: {appShell.GetHashCode()}");
+                mainPage = appShell;
             }
             else
             {
                 // User is not logged in, show login page
-                mainPage = services.GetService<LoginPage>();
+                var loginPage = services.GetService<LoginPage>();
+                Debug.WriteLine($"Setting MainPage to LoginPage. HashCode: {loginPage.GetHashCode()}");
+                mainPage = loginPage;
             }
 
             var window = new Window(mainPage);

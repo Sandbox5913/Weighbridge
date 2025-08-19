@@ -65,25 +65,25 @@ namespace Weighbridge
 
         private void OnTwoWeightsClicked(object sender, EventArgs e)
         {
-            _viewModel.SetWeighingModeCommand.Execute(WeighingMode.TwoWeights.ToString());
+            _viewModel.SetWeighingModeCommand.Execute(WeighingMode.TwoWeights);
             UpdateModeButtonStyles(sender as Border);
         }
 
         private void OnEntryAndTareClicked(object sender, EventArgs e)
         {
-            _viewModel.SetWeighingModeCommand.Execute(WeighingMode.EntryAndTare.ToString());
+            _viewModel.SetWeighingModeCommand.Execute(WeighingMode.EntryAndTare);
             UpdateModeButtonStyles(sender as Border);
         }
 
         private void OnTareAndExitClicked(object sender, EventArgs e)
         {
-            _viewModel.SetWeighingModeCommand.Execute(WeighingMode.TareAndExit.ToString());
+            _viewModel.SetWeighingModeCommand.Execute(WeighingMode.TareAndExit);
             UpdateModeButtonStyles(sender as Border);
         }
 
         private void OnSingleWeightClicked(object sender, EventArgs e)
         {
-            _viewModel.SetWeighingModeCommand.Execute(WeighingMode.SingleWeight.ToString());
+            _viewModel.SetWeighingModeCommand.Execute(WeighingMode.SingleWeight);
             UpdateModeButtonStyles(sender as Border);
         }
 
@@ -155,6 +155,18 @@ namespace Weighbridge
             {
                 System.Diagnostics.Debug.WriteLine($"Current LiveWeight binding: {_viewModel.LiveWeight}");
                 System.Diagnostics.Debug.WriteLine($"LiveWeightLabel.Text: {LiveWeightLabel.Text}");
+            }
+        }
+
+        private async void OnSimulateDocketsClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                _viewModel.SimulateDocketsCommand.Execute(null);
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to simulate dockets: {ex.Message}", "OK");
             }
         }
     }

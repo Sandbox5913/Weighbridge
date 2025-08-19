@@ -82,6 +82,13 @@ namespace Weighbridge.Data
                 await db.ExecuteAsync("CREATE INDEX IF NOT EXISTS IX_Dockets_Timestamp ON Dockets (Timestamp);");
                 await db.ExecuteAsync("CREATE INDEX IF NOT EXISTS IX_Dockets_VehicleId ON Dockets (VehicleId);");
 
+                await db.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS UserPageAccesses (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    UserId INTEGER NOT NULL,
+                    PageName TEXT NOT NULL,
+                    FOREIGN KEY (UserId) REFERENCES Users(Id)
+                );");
+
                 // Migration: Add UpdatedAt column to Dockets table if it doesn't exist
                 var tableInfo = await db.QueryAsync<dynamic>("PRAGMA table_info(Dockets);");
                 if (!tableInfo.Any(c => c.name == "UpdatedAt"))
@@ -89,19 +96,87 @@ namespace Weighbridge.Data
                     await db.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN UpdatedAt TEXT;");
                 }
 
-                await db.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Users (
+                                await db.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Users (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     Username TEXT NOT NULL UNIQUE,
                     PasswordHash TEXT NOT NULL,
-                    Role TEXT NOT NULL
+                    Role TEXT NOT NULL,
+                    CanEditDockets BOOLEAN NOT NULL DEFAULT 0,
+                    CanDeleteDockets BOOLEAN NOT NULL DEFAULT 0,
+                    IsAdmin BOOLEAN NOT NULL DEFAULT 0
                 );");
+
+                // Migration: Add CanEditDockets, CanDeleteDockets, and IsAdmin columns to Users table if they don't exist
+                var tableInfoUsers = await db.QueryAsync<dynamic>("PRAGMA table_info(Users);");
+                if (!tableInfoUsers.Any(c => c.name == "CanEditDockets"))
+                {
+                    await db.ExecuteAsync("ALTER TABLE Users ADD COLUMN CanEditDockets BOOLEAN NOT NULL DEFAULT 0;");
+                }
+                if (!tableInfoUsers.Any(c => c.name == "CanDeleteDockets"))
+                {
+                    await db.ExecuteAsync("ALTER TABLE Users ADD COLUMN CanDeleteDockets BOOLEAN NOT NULL DEFAULT 0;");
+                }
+                if (!tableInfoUsers.Any(c => c.name == "IsAdmin"))
+                {
+                    await db.ExecuteAsync("ALTER TABLE Users ADD COLUMN IsAdmin BOOLEAN NOT NULL DEFAULT 0;");
+                }
+
 
                 // Add sample users if none exist
                 var userCount = await db.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Users;");
                 if (userCount == 0)
                 {
-                    await db.ExecuteAsync("INSERT INTO Users (Username, PasswordHash, Role) VALUES (@Username, @PasswordHash, @Role);", new { Username = "admin", PasswordHash = "admin", Role = "Admin" });
-                    await db.ExecuteAsync("INSERT INTO Users (Username, PasswordHash, Role) VALUES (@Username, @PasswordHash, @Role);", new { Username = "operator", PasswordHash = "operator", Role = "Operator" });
+                    await db.ExecuteAsync("INSERT INTO Users (Username, PasswordHash, Role, CanEditDockets, CanDeleteDockets, IsAdmin) VALUES (@Username, @PasswordHash, @Role, @CanEditDockets, @CanDeleteDockets, @IsAdmin);", new { Username = "admin", PasswordHash = "admin", Role = "Admin", CanEditDockets = true, CanDeleteDockets = true, IsAdmin = true });
+                    await db.ExecuteAsync("INSERT INTO Users (Username, PasswordHash, Role, CanEditDockets, CanDeleteDockets, IsAdmin) VALUES (@Username, @PasswordHash, @Role, @CanEditDockets, @CanDeleteDockets, @IsAdmin);", new { Username = "operator", PasswordHash = "operator", Role = "Operator", CanEditDockets = false, CanDeleteDockets = false, IsAdmin = false });
+                }
+
+
+                // Add sample Vehicles if none exist
+                var vehicleCount = await db.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Vehicles;");
+                if (vehicleCount == 0)
+                {
+                    await db.ExecuteAsync("INSERT INTO Vehicles (LicenseNumber, TareWeight) VALUES ('ABC-123', 5000);");
+                    await db.ExecuteAsync("INSERT INTO Vehicles (LicenseNumber, TareWeight) VALUES ('XYZ-789', 6500); ");
+                }
+
+                // Add sample Sites if none exist
+                var siteCount = await db.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Sites;");
+                if (siteCount == 0)
+                {
+                    await db.ExecuteAsync("INSERT INTO Sites (Name) VALUES ('Site A');");
+                    await db.ExecuteAsync("INSERT INTO Sites (Name) VALUES ('Site B');");
+                }
+
+                // Add sample Items if none exist
+                var itemCount = await db.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Items;");
+                if (itemCount == 0)
+                {
+                    await db.ExecuteAsync("INSERT INTO Items (Name) VALUES ('Sand');");
+                    await db.ExecuteAsync("INSERT INTO Items (Name) VALUES ('Gravel');");
+                }
+
+                // Add sample Customers if none exist
+                var customerCount = await db.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Customers;");
+                if (customerCount == 0)
+                {
+                    await db.ExecuteAsync("INSERT INTO Customers (Name) VALUES ('Customer 1');");
+                    await db.ExecuteAsync("INSERT INTO Customers (Name) VALUES ('Customer 2');");
+                }
+
+                // Add sample Transports if none exist
+                var transportCount = await db.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Transports;");
+                if (transportCount == 0)
+                {
+                    await db.ExecuteAsync("INSERT INTO Transports (Name) VALUES ('Transport Co A');");
+                    await db.ExecuteAsync("INSERT INTO Transports (Name) VALUES ('Transport Co B');");
+                }
+
+                // Add sample Drivers if none exist
+                var driverCount = await db.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Drivers;");
+                if (driverCount == 0)
+                {
+                    await db.ExecuteAsync("INSERT INTO Drivers (Name) VALUES ('John Doe');");
+                    await db.ExecuteAsync("INSERT INTO Drivers (Name) VALUES ('Jane Smith');");
                 }
             }
         }
@@ -114,7 +189,7 @@ namespace Weighbridge.Data
             }
         }
 
-        public async Task<List<DocketViewModel>> GetDocketViewModelsAsync(string statusFilter, DateTime dateFromFilter, DateTime dateToFilter, string vehicleRegFilter)
+        public async Task<List<DocketViewModel>> GetDocketViewModelsAsync(string statusFilter, DateTime dateFromFilter, DateTime dateToFilter, string vehicleRegFilter, string globalSearchFilter)
         {
             using (IDbConnection db = _connectionFactory.CreateConnection())
             {
@@ -154,6 +229,20 @@ namespace Weighbridge.Data
                 {
                     sql += " AND v.LicenseNumber LIKE @VehicleReg";
                     parameters.Add("VehicleReg", $"%{vehicleRegFilter}%");
+                }
+
+                if (!string.IsNullOrWhiteSpace(globalSearchFilter))
+                {
+                    sql += " AND (v.LicenseNumber LIKE @GlobalSearch OR " +
+                           "d.Id LIKE @GlobalSearch OR " +
+                           "c.Name LIKE @GlobalSearch OR " +
+                           "i.Name LIKE @GlobalSearch OR " +
+                           "s_src.Name LIKE @GlobalSearch OR " +
+                           "s_dest.Name LIKE @GlobalSearch OR " +
+                           "t.Name LIKE @GlobalSearch OR " +
+                           "dr.Name LIKE @GlobalSearch OR " +
+                           "d.Remarks LIKE @GlobalSearch)";
+                    parameters.Add("GlobalSearch", $"%{globalSearchFilter}%");
                 }
 
                 sql += " ORDER BY d.Timestamp DESC;";
@@ -244,6 +333,37 @@ namespace Weighbridge.Data
             using (IDbConnection db = _connectionFactory.CreateConnection())
             {
                 return await db.QueryFirstOrDefaultAsync<Vehicle>("SELECT * FROM Vehicles WHERE LicenseNumber = @LicenseNumber", new { LicenseNumber = licenseNumber });
+            }
+        }
+
+        public async Task<List<UserPageAccess>> GetUserPageAccessAsync(int userId)
+        {
+            using (IDbConnection db = _connectionFactory.CreateConnection())
+            {
+                return (await db.QueryAsync<UserPageAccess>("SELECT * FROM UserPageAccesses WHERE UserId = @UserId", new { UserId = userId })).ToList();
+            }
+        }
+
+        public async Task<int> SaveUserPageAccessAsync(UserPageAccess userPageAccess)
+        {
+            using (IDbConnection db = _connectionFactory.CreateConnection())
+            {
+                if (userPageAccess.Id != 0)
+                {
+                    return await db.ExecuteAsync("UPDATE UserPageAccesses SET UserId = @UserId, PageName = @PageName WHERE Id = @Id", userPageAccess);
+                }
+                else
+                {
+                    return await db.ExecuteAsync("INSERT INTO UserPageAccesses (UserId, PageName) VALUES (@UserId, @PageName)", userPageAccess);
+                }
+            }
+        }
+
+        public async Task<int> DeleteUserPageAccessAsync(UserPageAccess userPageAccess)
+        {
+            using (IDbConnection db = _connectionFactory.CreateConnection())
+            {
+                return await db.ExecuteAsync("DELETE FROM UserPageAccesses WHERE Id = @Id", new { userPageAccess.Id });
             }
         }
     }

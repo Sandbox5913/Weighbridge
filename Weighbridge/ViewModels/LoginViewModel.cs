@@ -4,6 +4,7 @@ using System.Windows.Input;
 using Weighbridge.Services;
 using System.Threading.Tasks;
 using System;
+using System.Diagnostics;
 
 namespace Weighbridge.ViewModels
 {
@@ -42,9 +43,12 @@ namespace Weighbridge.ViewModels
 
         public ICommand LoginCommand { get; }
 
-        public LoginViewModel(IUserService userService)
+        private readonly INavigationService _navigationService;
+
+        public LoginViewModel(IUserService userService, INavigationService navigationService)
         {
             _userService = userService;
+            _navigationService = navigationService;
             LoginCommand = new Command(async () => await Login(), () => !IsBusy);
         }
 
@@ -54,8 +58,22 @@ namespace Weighbridge.ViewModels
             var user = await _userService.LoginAsync(Username, Password);
             if (user != null)
             {
-                // Store user session and pass userService to AppShell
-                Application.Current.MainPage = new AppShell(_userService);
+               // Debug.WriteLine($"Login successful. Attempting to get AppShell from services.");
+                var services = Application.Current.Handler?.MauiContext?.Services;
+                if (services == null)
+                {
+             //       Debug.WriteLine($"Services is null in LoginViewModel.");
+                    return;
+                }
+                var appShell = services.GetService<AppShell>();
+                if (appShell == null)
+                {
+           //         Debug.WriteLine($"AppShell is null when retrieved from services.");
+                    return;
+                }
+            //    Debug.WriteLine($"AppShell retrieved from services. HashCode: {appShell.GetHashCode()}");
+                Application.Current.MainPage = appShell;
+             //   Debug.WriteLine($"MainPage set to AppShell. New MainPage HashCode: {Application.Current.MainPage.GetHashCode()}");
             }
             else
             {

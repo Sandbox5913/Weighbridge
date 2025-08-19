@@ -107,6 +107,7 @@ namespace Weighbridge.ViewModels
             {
                 Username = NewUsername,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(NewPassword),
+                Role = IsAdmin ? "Admin" : "Operator",
                 CanEditDockets = CanEditDockets,
                 CanDeleteDockets = CanDeleteDockets,
                 IsAdmin = IsAdmin
@@ -129,6 +130,7 @@ namespace Weighbridge.ViewModels
             {
                 SelectedUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(NewPassword);
             }
+            SelectedUser.Role = IsAdmin ? "Admin" : "Operator";
             SelectedUser.CanEditDockets = CanEditDockets;
             SelectedUser.CanDeleteDockets = CanDeleteDockets;
             SelectedUser.IsAdmin = IsAdmin;

@@ -39,6 +39,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IDocketService, DocketService>();
         builder.Services.AddSingleton<IPreviewService, PreviewService>();
         builder.Services.AddSingleton<IUserService, UserService>();
+        builder.Services.AddSingleton<INavigationService, NavigationService>();
 
         // Register ViewModels
         builder.Services.AddSingleton<MainPageViewModel>();
@@ -47,6 +48,7 @@ public static class MauiProgram
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<MainFormSettingsViewModel>();
         builder.Services.AddTransient<UserManagementViewModel>();
+        builder.Services.AddTransient<UserPageAccessManagementViewModel>();
 
         // Register Pages and inject ViewModels
         builder.Services.AddSingleton<MainPage>();
@@ -58,6 +60,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<AppShell>();
         builder.Services.AddTransient<MainFormSettingsPage>();
         builder.Services.AddTransient<UserManagementPage>();
+        builder.Services.AddTransient<UserPageAccessManagementPage>();
 
         // Register Data Management Pages
         builder.Services.AddTransient<CustomerManagementPage>();

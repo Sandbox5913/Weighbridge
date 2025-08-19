@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:Weighbridge"
              xmlns:converters="clr-namespace:Weighbridge.Converters"
+             xmlns:behaviors="clr-namespace:Weighbridge.Behaviors"
              x:Class="Weighbridge.MainPage"
              Title="Weighbridge System"
              BackgroundColor="#0E0E0E">
@@ -11,19 +12,16 @@
         <ResourceDictionary>
             <converters:BoolToStringConverter x:Key="BoolToStringConverter" />
 
-            <!-- Responsive breakpoint triggers -->
             <DataTrigger x:Key="MobileLayoutTrigger" TargetType="Grid" Binding="{Binding Source={x:Reference MainGrid}, Path=Width}" Value="600">
                 <Setter Property="ColumnDefinitions" Value="*" />
             </DataTrigger>
 
-            <!-- Responsive font sizes -->
             <x:Double x:Key="HeaderFontSize">24</x:Double>
             <x:Double x:Key="WeightFontSize">48</x:Double>
             <x:Double x:Key="SubWeightFontSize">32</x:Double>
             <x:Double x:Key="LabelFontSize">12</x:Double>
             <x:Double x:Key="ButtonFontSize">12</x:Double>
 
-            <!-- Mobile font sizes -->
             <x:Double x:Key="MobileHeaderFontSize">20</x:Double>
             <x:Double x:Key="MobileWeightFontSize">36</x:Double>
             <x:Double x:Key="MobileSubWeightFontSize">24</x:Double>
@@ -38,14 +36,12 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Main Content Grid - Responsive Layout -->
         <Grid Grid.Row="1" x:Name="ContentGrid" ColumnSpacing="16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1.2*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- LEFT PANEL -->
             <Border Grid.Column="0" BackgroundColor="#1A1A1A" Stroke="Transparent" StrokeThickness="0">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="16" />
@@ -63,7 +59,6 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <!-- Modes - Responsive Button Layout -->
                         <Grid Grid.Row="0" x:Name="ModesGrid" ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -117,7 +112,6 @@
                             </Border>
                         </Grid>
 
-                        <!-- Live Weight - Responsive -->
                         <Border Grid.Row="2" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444" Margin="0,8,0,0">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="12" />
@@ -131,10 +125,11 @@
                                 <Label Text="KG" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="14" />
                                 <Button x:Name="TestButton" Text="TEST" BackgroundColor="Orange" TextColor="Black" 
                                         Clicked="OnTestWeightClicked" FontSize="10" HeightRequest="30" Margin="0,4,0,0"/>
+                                <Button x:Name="SimulateDocketsButton" Text="SIMULATE 100" BackgroundColor="Purple" TextColor="White" 
+                                        Clicked="OnSimulateDocketsClicked" FontSize="10" HeightRequest="30" Margin="0,4,0,0"/>
                             </VerticalStackLayout>
                         </Border>
 
-                        <!-- Entrance / Exit / Net - Responsive Grid -->
                         <Grid Grid.Row="3" x:Name="WeightsGrid" ColumnSpacing="12" VerticalOptions="FillAndExpand">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -142,7 +137,6 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <!-- Entrance -->
                             <Border Grid.Column="0" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
@@ -158,7 +152,6 @@
                                 </StackLayout>
                             </Border>
 
-                            <!-- Exit -->
                             <Border Grid.Column="1" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
@@ -173,7 +166,6 @@
                                 </StackLayout>
                             </Border>
 
-                            <!-- Net Weight -->
                             <Border Grid.Column="2" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
@@ -189,7 +181,6 @@
                             </Border>
                         </Grid>
 
-                        <!-- Status -->
                         <Border Grid.Row="4" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="8" />
@@ -209,7 +200,6 @@
                 </ScrollView>
             </Border>
 
-            <!-- RIGHT PANEL -->
             <Border Grid.Column="1" BackgroundColor="#1A1A1A" Stroke="Transparent" StrokeThickness="0">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="16" />
@@ -219,13 +209,10 @@
                 </Border.Shadow>
                 <ScrollView>
                     <VerticalStackLayout Spacing="8" Padding="10">
-                        <!-- Transaction Header -->
                         <StackLayout Spacing="4">
                             <Label Text="Transaction Details" TextColor="White" FontSize="18" FontAttributes="Bold" />
-  
                         </StackLayout>
 
-                        <!-- Vehicle -->
                         <StackLayout IsVisible="{Binding FormConfig.Vehicle.IsVisible}" Spacing="4">
                             <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
                                 <Label.FormattedText>
@@ -244,12 +231,15 @@
                                            TextColor="White" BackgroundColor="Transparent" Margin="8,4" FontSize="12" />
                                     <Picker x:Name="VehiclePicker"  TextColor="White" TitleColor="#888" 
                                             BackgroundColor="Transparent" ItemsSource="{Binding Vehicles}" SelectedItem="{Binding SelectedVehicle}" 
-                                            ItemDisplayBinding="{Binding LicenseNumber}" Margin="8,4" FontSize="12" />
+                                            ItemDisplayBinding="{Binding LicenseNumber}" Margin="8,4" FontSize="12">
+                                        <Picker.Behaviors>
+                                            <behaviors:EventToCommandBehavior EventName="Focused" Command="{Binding LoadVehiclesCommand}" />
+                                        </Picker.Behaviors>
+                                    </Picker>
                                 </StackLayout>
                             </Border>
                         </StackLayout>
 
-                        <!-- Tare Weight -->
                         <StackLayout IsVisible="{Binding IsTareEntryVisible}" Spacing="4">
                             <Label x:Name="TareWeightLabel" Text="TARE WEIGHT (KG)" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" />
                             <Border x:Name="TareWeightBorder" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
@@ -261,7 +251,6 @@
                             </Border>
                         </StackLayout>
 
-                        <!-- Source Site -->
                         <StackLayout IsVisible="{Binding FormConfig.SourceSite.IsVisible}" Spacing="4">
                             <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
                                 <Label.FormattedText>
@@ -277,11 +266,14 @@
                                 </Border.StrokeShape>
                                 <Picker x:Name="SourceSitePicker" TextColor="White" TitleColor="#888" 
                                         BackgroundColor="Transparent" ItemsSource="{Binding Sites}" SelectedItem="{Binding SelectedSourceSite}" 
-                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12" />
+                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12">
+                                    <Picker.Behaviors>
+                                        <behaviors:EventToCommandBehavior EventName="Focused" Command="{Binding LoadSitesCommand}" />
+                                    </Picker.Behaviors>
+                                </Picker>
                             </Border>
                         </StackLayout>
 
-                        <!-- Destination Site -->
                         <StackLayout IsVisible="{Binding FormConfig.DestinationSite.IsVisible}" Spacing="4">
                             <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
                                 <Label.FormattedText>
@@ -297,11 +289,14 @@
                                 </Border.StrokeShape>
                                 <Picker x:Name="DestinationSitePicker" TextColor="White" TitleColor="#888" 
                                         BackgroundColor="Transparent" ItemsSource="{Binding Sites}" SelectedItem="{Binding SelectedDestinationSite}" 
-                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12" />
+                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12">
+                                    <Picker.Behaviors>
+                                        <behaviors:EventToCommandBehavior EventName="Focused" Command="{Binding LoadSitesCommand}" />
+                                    </Picker.Behaviors>
+                                </Picker>
                             </Border>
                         </StackLayout>
 
-                        <!-- Item -->
                         <StackLayout IsVisible="{Binding FormConfig.Item.IsVisible}" Spacing="4">
                             <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
                                 <Label.FormattedText>
@@ -317,11 +312,14 @@
                                 </Border.StrokeShape>
                                 <Picker x:Name="ItemPicker"  TextColor="White" TitleColor="#888" 
                                         BackgroundColor="Transparent" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" 
-                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12" />
+                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12">
+                                    <Picker.Behaviors>
+                                        <behaviors:EventToCommandBehavior EventName="Focused" Command="{Binding LoadItemsCommand}" />
+                                    </Picker.Behaviors>
+                                </Picker>
                             </Border>
                         </StackLayout>
 
-                        <!-- Customer -->
                         <StackLayout IsVisible="{Binding FormConfig.Customer.IsVisible}" Spacing="4">
                             <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
                                 <Label.FormattedText>
@@ -337,11 +335,14 @@
                                 </Border.StrokeShape>
                                 <Picker x:Name="CustomerPicker"  TextColor="White" TitleColor="#888" 
                                         BackgroundColor="Transparent" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer}" 
-                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12" />
+                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12">
+                                    <Picker.Behaviors>
+                                        <behaviors:EventToCommandBehavior EventName="Focused" Command="{Binding LoadCustomersCommand}" />
+                                    </Picker.Behaviors>
+                                </Picker>
                             </Border>
                         </StackLayout>
 
-                        <!-- Transport -->
                         <StackLayout IsVisible="{Binding FormConfig.Transport.IsVisible}" Spacing="4">
                             <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
                                 <Label.FormattedText>
@@ -357,11 +358,14 @@
                                 </Border.StrokeShape>
                                 <Picker x:Name="TransportPicker"  TextColor="White" TitleColor="#888" 
                                         BackgroundColor="Transparent" ItemsSource="{Binding Transports}" SelectedItem="{Binding SelectedTransport}" 
-                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12" />
+                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12">
+                                    <Picker.Behaviors>
+                                        <behaviors:EventToCommandBehavior EventName="Focused" Command="{Binding LoadTransportsCommand}" />
+                                    </Picker.Behaviors>
+                                </Picker>
                             </Border>
                         </StackLayout>
 
-                        <!-- Driver -->
                         <StackLayout IsVisible="{Binding FormConfig.Driver.IsVisible}" Spacing="4">
                             <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
                                 <Label.FormattedText>
@@ -377,11 +381,14 @@
                                 </Border.StrokeShape>
                                 <Picker x:Name="DriverPicker"  TextColor="White" TitleColor="#888" 
                                         BackgroundColor="Transparent" ItemsSource="{Binding Drivers}" SelectedItem="{Binding SelectedDriver}" 
-                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12" />
+                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12">
+                                    <Picker.Behaviors>
+                                        <behaviors:EventToCommandBehavior EventName="Focused" Command="{Binding LoadDriversCommand}" />
+                                    </Picker.Behaviors>
+                                </Picker>
                             </Border>
                         </StackLayout>
 
-                        <!-- Remarks -->
                         <StackLayout IsVisible="{Binding FormConfig.Remarks.IsVisible}" Spacing="4">
                             <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
                                 <Label.FormattedText>
@@ -401,7 +408,6 @@
                             </Border>
                         </StackLayout>
 
-                        <!-- Buttons - Responsive Layout -->
                         <Grid RowDefinitions="Auto,Auto" RowSpacing="8" Margin="0,8,0,0">
                             <Grid Grid.Row="0" x:Name="MainButtonsGrid" ColumnSpacing="8">
                                 <Grid.ColumnDefinitions>
@@ -429,7 +435,7 @@
                                 </Grid.ColumnDefinitions>
 
                                 <Button Grid.Column="0" Text="UPDATE TARE" BackgroundColor="#2A2A2A" TextColor="White" 
-                                        CornerRadius="8" HeightRequest="35" FontSize="9" Clicked="OnUpdateTareClicked" />
+                                          CornerRadius="8" HeightRequest="35" FontSize="9" Clicked="OnUpdateTareClicked" />
                                 <Button Grid.Column="1" Text="CERTIFICATES" BackgroundColor="#2A2A2A" TextColor="White" 
                                         CornerRadius="8" HeightRequest="35" FontSize="9" Clicked="OnCertificatesClicked" />
                                 <Button Grid.Column="2" Text="REPORTS" BackgroundColor="#2A2A2A" TextColor="White" 
@@ -445,32 +451,25 @@
         </Grid>
     </Grid>
 
-    <!-- Visual State Manager for Responsive Design -->
     <VisualStateManager.VisualStateGroups>
         <VisualStateGroup Name="CommonStates">
 
-            <!-- Mobile Layout (Portrait) -->
             <VisualState Name="Mobile">
                 <VisualState.StateTriggers>
                     <AdaptiveTrigger MinWindowWidth="0" MinWindowHeight="0" />
                 </VisualState.StateTriggers>
                 <VisualState.Setters>
-                    <!-- Stack panels vertically on mobile -->
                     <Setter TargetName="ContentGrid" Property="Grid.ColumnDefinitions" Value="*" />
                     <Setter TargetName="ContentGrid" Property="Grid.RowDefinitions" Value="Auto,*" />
 
-                    <!-- Move right panel to second row -->
                     <Setter TargetName="ContentGrid" Property="Grid.Column" Value="0" />
 
-                    <!-- Adjust font sizes for mobile -->
                     <Setter TargetName="LiveWeightLabel" Property="Label.FontSize" Value="{StaticResource MobileWeightFontSize}" />
                     <Setter TargetName="EntranceWeightLabel" Property="Label.FontSize" Value="{StaticResource MobileSubWeightFontSize}" />
 
-                    <!-- Stack mode buttons vertically on very small screens -->
                     <Setter TargetName="ModesGrid" Property="Grid.ColumnDefinitions" Value="*,*" />
                     <Setter TargetName="ModesGrid" Property="Grid.RowDefinitions" Value="Auto,Auto" />
 
-                    <!-- Reposition mode buttons for mobile -->
                     <Setter TargetName="EntryAndTareButton" Property="Grid.Column" Value="1" />
                     <Setter TargetName="EntryAndTareButton" Property="Grid.Row" Value="0" />
                     <Setter TargetName="TareAndExitButton" Property="Grid.Column" Value="0" />
@@ -478,72 +477,59 @@
                     <Setter TargetName="SingleWeightButton" Property="Grid.Column" Value="1" />
                     <Setter TargetName="SingleWeightButton" Property="Grid.Row" Value="1" />
 
-                    <!-- Adjust button grid for mobile -->
                     <Setter TargetName="SecondaryButtonsGrid" Property="Grid.ColumnDefinitions" Value="*,*" />
                     <Setter TargetName="SecondaryButtonsGrid" Property="Grid.RowDefinitions" Value="Auto,Auto" />
 
-                    <!-- Reposition secondary buttons for mobile -->
                     <Setter TargetName="SecondaryButtonsGrid" Property="Grid.Column" Value="1" />
                     <Setter TargetName="SecondaryButtonsGrid" Property="Grid.Row" Value="0" />
                 </VisualState.Setters>
             </VisualState>
 
-            <!-- Tablet Layout -->
             <VisualState Name="Tablet">
                 <VisualState.StateTriggers>
                     <AdaptiveTrigger MinWindowWidth="768" />
                 </VisualState.StateTriggers>
                 <VisualState.Setters>
-                    <!-- Keep side-by-side layout but adjust proportions -->
                     <Setter TargetName="ContentGrid" Property="Grid.ColumnDefinitions" Value="1.5*,*" />
 
-                    <!-- Adjust spacing for tablet -->
                     <Setter TargetName="MainGrid" Property="Grid.Padding" Value="16,0,16,16" />
                     <Setter TargetName="ContentGrid" Property="Grid.ColumnSpacing" Value="20" />
                 </VisualState.Setters>
             </VisualState>
 
-            <!-- Desktop Layout -->
             <VisualState Name="Desktop">
                 <VisualState.StateTriggers>
                     <AdaptiveTrigger MinWindowWidth="1024" />
                 </VisualState.StateTriggers>
                 <VisualState.Setters>
-                    <!-- Full desktop layout with optimal proportions -->
                     <Setter TargetName="ContentGrid" Property="Grid.ColumnDefinitions" Value="1.2*,*" />
                     <Setter TargetName="MainGrid" Property="Grid.Padding" Value="20,0,20,20" />
                     <Setter TargetName="ContentGrid" Property="Grid.ColumnSpacing" Value="24" />
                 </VisualState.Setters>
             </VisualState>
 
-            <!-- Large Desktop Layout -->
             <VisualState Name="LargeDesktop">
                 <VisualState.StateTriggers>
                     <AdaptiveTrigger MinWindowWidth="1440" />
                 </VisualState.StateTriggers>
                 <VisualState.Setters>
-                    <!-- Maximum spacing and size for large screens -->
                     <Setter TargetName="MainGrid" Property="Grid.Padding" Value="24,0,24,24" />
                     <Setter TargetName="ContentGrid" Property="Grid.ColumnSpacing" Value="32" />
 
-                    <!-- Larger fonts for large screens -->
                     <Setter TargetName="LiveWeightLabel" Property="Label.FontSize" Value="52" />
                 </VisualState.Setters>
             </VisualState>
         </VisualStateGroup>
 
-        <!-- Orientation-based states -->
         <VisualStateGroup Name="OrientationStates">
             <VisualState Name="Portrait">
                 <VisualState.StateTriggers>
                     <AdaptiveTrigger MinWindowWidth="0" MinWindowHeight="600" />
                 </VisualState.StateTriggers>
                 <VisualState.Setters>
-                    <!-- Force vertical stacking in portrait mode on smaller screens -->
                     <Setter TargetName="ContentGrid" Property="Grid.ColumnDefinitions" Value="*" />
                     <Setter TargetName="ContentGrid" Property="Grid.RowDefinitions" Value="Auto,*" />
 
-                    <!-- Adjust the right panel to be in the second row -->
                     <Setter TargetName="ContentGrid" Property="Grid.Row" Value="1" />
                 </VisualState.Setters>
             </VisualState>
@@ -553,7 +539,6 @@
                     <AdaptiveTrigger MinWindowWidth="800" MinWindowHeight="0" />
                 </VisualState.StateTriggers>
                 <VisualState.Setters>
-                    <!-- Side-by-side layout for landscape -->
                     <Setter TargetName="ContentGrid" Property="Grid.ColumnDefinitions" Value="1.2*,*" />
                     <Setter TargetName="ContentGrid" Property="Grid.RowDefinitions" Value="*" />
                 </VisualState.Setters>

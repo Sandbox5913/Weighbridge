@@ -49,6 +49,15 @@
 
         <StackLayout Grid.Row="1" x:Name="FiltersSection" Spacing="12" Margin="0,12,0,0">
 
+            <Border BackgroundColor="#1A1A1A" StrokeThickness="1" Stroke="#444">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8" />
+                </Border.StrokeShape>
+                <Entry Placeholder="Search all fields (Reg, Docket #, Customer, etc.)" Text="{Binding GlobalSearchFilter}" 
+                       TextColor="White" BackgroundColor="Transparent" PlaceholderColor="#888"
+                       Margin="8,4" FontSize="12" />
+            </Border>
+
             <Grid x:Name="PrimaryFiltersGrid" ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -187,14 +196,17 @@
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
 
-                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
-                                        <Label Grid.Column="0" Text="{Binding VehicleLicense, StringFormat='Vehicle: {0}'}" 
+                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
+                                        <Label Grid.Column="0" Text="{Binding Id, StringFormat='#{0}'}"
+                                               TextColor="White" FontSize="{StaticResource ItemTitleFontSize}"
+                                               FontAttributes="Bold" VerticalOptions="Center" />
+                                        <Label Grid.Column="1" Text="{Binding VehicleLicense, StringFormat='Vehicle: {0}'}" 
                                                TextColor="White" FontSize="{StaticResource ItemTitleFontSize}" 
                                                FontAttributes="Bold" VerticalOptions="Center" />
-                                        <Label Grid.Column="1" Text="{Binding Timestamp, StringFormat='{0:g}'}" 
+                                        <Label Grid.Column="2" Text="{Binding Timestamp, StringFormat='{0:g}'}" 
                                                TextColor="#CCCCCC" FontSize="{StaticResource ItemTimestampFontSize}"
                                                VerticalOptions="Center" />
-                                        <Label Grid.Column="2" Text="{Binding Status}" 
+                                        <Label Grid.Column="3" Text="{Binding Status}" 
                                                TextColor="#CCCCCC" FontSize="{StaticResource ItemTimestampFontSize}"
                                                VerticalOptions="Center" />
                                     </Grid>

@@ -118,6 +118,11 @@ namespace Weighbridge.Pages
         {
             await Shell.Current.GoToAsync(nameof(UserManagementPage));
         }
+
+        private async void OnPageAccessManagementClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync(nameof(UserPageAccessManagementPage));
+        }
         private async void OnSaveLogClicked(object sender, EventArgs e)
         {
             try

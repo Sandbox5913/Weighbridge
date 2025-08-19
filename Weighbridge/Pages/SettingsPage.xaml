@@ -9,6 +9,7 @@
         <ToolbarItem Text="Print Settings" Clicked="OnPrintSettingsClicked" />
         <ToolbarItem Text="Main Form Settings" Clicked="OnMainFormSettingsClicked" />
         <ToolbarItem Text="User Management" Clicked="OnUserManagementClicked" />
+        <ToolbarItem Text="Page Access Management" Clicked="OnPageAccessManagementClicked" />
     </ContentPage.ToolbarItems>
 
     <ScrollView>

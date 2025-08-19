@@ -1,21 +1,26 @@
 using Weighbridge.Pages;
 using Weighbridge.Services;
+using Microsoft.Maui.Controls;
+using System.Diagnostics;
 
 namespace Weighbridge
 {
     public partial class AppShell : Shell
     {
         private readonly IUserService _userService;
+        private readonly INavigationService _navigationService;
 
-        public AppShell(IUserService userService)
+        public AppShell(IUserService userService, INavigationService navigationService)
         {
-            _userService = userService;
+            Debug.WriteLine($"AppShell constructor called. HashCode: {this.GetHashCode()}");
             InitializeComponent();
             RegisterRoutes();
             BindingContext = this;
+            _userService = userService;
+            _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService), "NavigationService cannot be null in AppShell constructor.");
         }
 
-        public bool IsAdmin => _userService.CurrentUser?.Role == "Admin";
+        public bool IsAdmin => _userService?.CurrentUser?.Role == "Admin";
 
         private void RegisterRoutes()
         {
@@ -31,25 +36,37 @@ namespace Weighbridge
             Routing.RegisterRoute(nameof(LoadsPage), typeof(LoadsPage));
             Routing.RegisterRoute(nameof(EditLoadPage), typeof(EditLoadPage));
             Routing.RegisterRoute(nameof(MainFormSettingsPage), typeof(MainFormSettingsPage));
+            Routing.RegisterRoute(nameof(UserManagementPage), typeof(UserManagementPage));
+            Routing.RegisterRoute(nameof(UserPageAccessManagementPage), typeof(UserPageAccessManagementPage));
         }
 
-        protected override void OnNavigating(ShellNavigatingEventArgs args)
+        protected override async void OnNavigating(ShellNavigatingEventArgs args)
         {
+            Debug.WriteLine($"OnNavigating called. HashCode: {this.GetHashCode()}");
             base.OnNavigating(args);
 
-            // Check if user is trying to access management pages
-            if (args.Target.Location.OriginalString.Contains("Management"))
+            try
             {
-                if (_userService.CurrentUser?.Role != "Admin")
-                {
-                    args.Cancel();
+                // Get the service from the DI container directly
+                var navigationService = Application.Current?.Handler?.MauiContext?.Services?.GetService<INavigationService>();
 
-                    // Optionally show an alert to inform the user
-                    MainThread.BeginInvokeOnMainThread(async () =>
-                    {
-                        await DisplayAlert("Access Denied", "You don't have permission to access this page.", "OK");
-                    });
+                if (navigationService == null)
+                {
+                    Debug.WriteLine("NavigationService could not be resolved");
+                    return;
                 }
+
+                if (await navigationService.HasAccessAsync(args.Target.Location.OriginalString))
+                {
+                    return;
+                }
+                args.Cancel();
+                await App.Current.MainPage.DisplayAlert("Access Denied", "You do not have permission to access this page.", "OK");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in OnNavigating: {ex.Message}");
+                // Optionally allow navigation to continue or handle the error
             }
         }
     }

@@ -1,0 +1,36 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:Weighbridge.ViewModels"
+             x:Class="Weighbridge.Pages.UserPageAccessManagementPage"
+             Title="User Page Access Management">
+
+    <Grid ColumnDefinitions="2*, 3*" Padding="20">
+        <!-- User List -->
+        <VerticalStackLayout Grid.Column="0" Spacing="10">
+            <Label Text="Users" FontAttributes="Bold" FontSize="Large" />
+            <CollectionView ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}" SelectionMode="Single">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Label Text="{Binding Username}" Padding="10" />
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+
+        <!-- Page Access List -->
+        <VerticalStackLayout Grid.Column="1" Spacing="10">
+            <Label Text="Page Access" FontAttributes="Bold" FontSize="Large" />
+            <CollectionView ItemsSource="{Binding Pages}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <HorizontalStackLayout Spacing="10" Padding="10">
+                            <Switch IsToggled="{Binding HasAccess}" />
+                            <Label Text="{Binding PageName}" VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+            <Button Text="Save" Command="{Binding SaveCommand}" HorizontalOptions="End" />
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

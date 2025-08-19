@@ -281,7 +281,7 @@ namespace Weighbridge.Tests
             };
             await _databaseService.SaveItemAsync(docket);
 
-            var viewModels = await _databaseService.GetDocketViewModelsAsync("All", DateTime.Now.AddDays(-1), DateTime.Now.AddDays(1), "");
+            var viewModels = await _databaseService.GetDocketViewModelsAsync("All", DateTime.Now.AddDays(-1), DateTime.Now.AddDays(1), "","");
             var result = viewModels.FirstOrDefault(d => d.Id == docket.Id);
 
             NUnit.Framework.Assert.That(result, Is.Not.Null);
