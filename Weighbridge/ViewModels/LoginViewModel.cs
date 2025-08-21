@@ -1,105 +1,52 @@
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Windows.Input;
-using Weighbridge.Services;
-using System.Threading.Tasks;
-using System;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System.Diagnostics;
+using System.Threading.Tasks;
+using Weighbridge.Services;
 
 namespace Weighbridge.ViewModels
 {
-    public class LoginViewModel : INotifyPropertyChanged
+    public partial class LoginViewModel : ObservableObject
     {
         private readonly IUserService _userService;
-        private string _username;
-        private string _password;
-        private bool _isBusy;
-
-        public event Func<string, string, string, Task> ShowAlert;
-
-        public string Username
-        {
-            get => _username;
-            set => SetProperty(ref _username, value);
-        }
-
-        public string Password
-        {
-            get => _password;
-            set => SetProperty(ref _password, value);
-        }
-
-        public bool IsBusy
-        {
-            get => _isBusy;
-            set
-            {
-                if (SetProperty(ref _isBusy, value))
-                {
-                    (LoginCommand as Command)?.ChangeCanExecute();
-                }
-            }
-        }
-
-        public ICommand LoginCommand { get; }
-
         private readonly INavigationService _navigationService;
+        private readonly IAuditService _auditService;
 
-        public LoginViewModel(IUserService userService, INavigationService navigationService)
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
+        private string _username;
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
+        private string _password;
+
+        public LoginViewModel(IUserService userService, INavigationService navigationService, IAuditService auditService)
         {
             _userService = userService;
             _navigationService = navigationService;
-            LoginCommand = new Command(async () => await Login(), () => !IsBusy);
+            _auditService = auditService;
         }
 
+        [RelayCommand(CanExecute = nameof(CanLogin))]
         private async Task Login()
         {
-            IsBusy = true;
             var user = await _userService.LoginAsync(Username, Password);
             if (user != null)
             {
-               // Debug.WriteLine($"Login successful. Attempting to get AppShell from services.");
-                var services = Application.Current.Handler?.MauiContext?.Services;
-                if (services == null)
-                {
-             //       Debug.WriteLine($"Services is null in LoginViewModel.");
-                    return;
-                }
-                var appShell = services.GetService<AppShell>();
-                if (appShell == null)
-                {
-           //         Debug.WriteLine($"AppShell is null when retrieved from services.");
-                    return;
-                }
-            //    Debug.WriteLine($"AppShell retrieved from services. HashCode: {appShell.GetHashCode()}");
-                Application.Current.MainPage = appShell;
-             //   Debug.WriteLine($"MainPage set to AppShell. New MainPage HashCode: {Application.Current.MainPage.GetHashCode()}");
+                await _auditService.LogActionAsync("Logged In", "User", user.Id, $"User {user.Username} logged in successfully.");
+                await Shell.Current.GoToAsync("//MainPage");
             }
             else
             {
-                if (ShowAlert != null)
-                {
-                    await ShowAlert("Login Failed", "Invalid username or password.", "OK");
-                }
+                await _auditService.LogActionAsync("Login Failed", "User", null, $"Attempted login with username: {Username}");
+                await Application.Current.MainPage.DisplayAlert("Login Failed", "Invalid username or password.", "OK");
             }
-            IsBusy = false;
         }
 
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string? propertyName = null)
+        private bool CanLogin()
         {
-            if (EqualityComparer<T>.Default.Equals(storage, value))
-            {
-                return false;
-            }
-            storage = value;
-            OnPropertyChanged(propertyName);
-            return true;
-        }
-
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            return !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password);
         }
     }
 }
+

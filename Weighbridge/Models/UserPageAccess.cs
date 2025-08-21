@@ -2,6 +2,7 @@ using SQLite;
 
 namespace Weighbridge.Models
 {
+    [Table("UserPageAccesses")]
     public class UserPageAccess : IEntity
     {
         [PrimaryKey, AutoIncrement]

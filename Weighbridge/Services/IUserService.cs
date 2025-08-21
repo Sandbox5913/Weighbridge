@@ -8,5 +8,6 @@ namespace Weighbridge.Services
         User CurrentUser { get; }
         Task<User> LoginAsync(string username, string password);
         void Logout();
+        event Action UserChanged;
     }
 }

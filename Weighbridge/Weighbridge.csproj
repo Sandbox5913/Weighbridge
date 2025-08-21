@@ -76,6 +76,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Dapper" Version="2.1.66" />
 		<PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.8" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.8" />
@@ -100,6 +101,15 @@
 
 	<ItemGroup>
 		<InternalsVisibleTo Include="TestProject1" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(IsTestProject)' == 'true'">
+		<Content Remove="Resources\**" />
+		<MauiIcon Remove="Resources\**" />
+		<MauiImage Remove="Resources\**" />
+		<MauiFont Remove="Resources\**" />
+		<MauiSplashScreen Remove="Resources\**" />
+		<MauiAsset Remove="Resources\**" />
 	</ItemGroup>
 
 </Project>

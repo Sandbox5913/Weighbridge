@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:Weighbridge.ViewModels"
+             x:DataType="viewModels:SettingsViewModel"
              x:Class="Weighbridge.Pages.SettingsPage"
              Title="System Settings"
              BackgroundColor="#0E0E0E">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Print Settings" Clicked="OnPrintSettingsClicked" />
-        <ToolbarItem Text="Main Form Settings" Clicked="OnMainFormSettingsClicked" />
-        <ToolbarItem Text="User Management" Clicked="OnUserManagementClicked" />
-        <ToolbarItem Text="Page Access Management" Clicked="OnPageAccessManagementClicked" />
+        <ToolbarItem Text="Print Settings" Command="{Binding NavigateToPrintSettingsCommand}" />
+        <ToolbarItem Text="Main Form Settings" Command="{Binding NavigateToMainFormSettingsCommand}" />
+        <ToolbarItem Text="User Management" Command="{Binding NavigateToUserManagementCommand}" />
+        <ToolbarItem Text="Page Access Management" Command="{Binding NavigateToPageAccessManagementCommand}" />
+        <ToolbarItem Text="Logout" Command="{Binding LogoutCommand}" />
     </ContentPage.ToolbarItems>
 
     <ScrollView>
@@ -47,7 +50,8 @@
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="8" />
                                     </Border.StrokeShape>
-                                    <Picker x:Name="PortPicker"
+                                    <Picker ItemsSource="{Binding AvailablePorts}"
+                                            SelectedItem="{Binding SelectedPort}"
                                             Title="Select Port"
                                             TextColor="White"
                                             TitleColor="#888"
@@ -62,7 +66,7 @@
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="8" />
                                     </Border.StrokeShape>
-                                    <Entry x:Name="BaudRateEntry"
+                                    <Entry Text="{Binding BaudRate}"
                                            Placeholder="9600"
                                            Keyboard="Numeric"
                                            PlaceholderColor="#888"
@@ -78,7 +82,7 @@
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="8" />
                                     </Border.StrokeShape>
-                                    <Entry x:Name="RegexEntry" Placeholder="Enter Regex" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
+                                    <Entry Text="{Binding RegexString}" Placeholder="Enter Regex" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
                                 </Border>
                             </StackLayout>
                         </StackLayout>
@@ -86,19 +90,19 @@
                             <Label Text="STABILITY DETECTION" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
                             <StackLayout Orientation="Horizontal" Spacing="8">
                                 <Label Text="Enable Stability Detection" TextColor="White" VerticalOptions="Center"/>
-                                <Switch x:Name="StabilitySwitch" IsToggled="True" />
+                                <Switch IsToggled="{Binding StabilityEnabled}" />
                             </StackLayout>
                             <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="8" />
                                 </Border.StrokeShape>
-                                <Entry x:Name="StableTimeEntry" Placeholder="Stable Time (seconds)" Keyboard="Numeric" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
+                                <Entry Text="{Binding StableTime}" Placeholder="Stable Time (seconds)" Keyboard="Numeric" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
                             </Border>
                             <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="8" />
                                 </Border.StrokeShape>
-                                <Entry x:Name="StabilityRegexEntry" Placeholder="Stability Regex (optional)" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
+                                <Entry Text="{Binding StabilityRegex}" Placeholder="Stability Regex (optional)" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
                             </Border>
                         </StackLayout>
                         <StackLayout Spacing="8">
@@ -107,37 +111,35 @@
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="8" />
                                 </Border.StrokeShape>
-                                <Label x:Name="SerialOutputLabel" TextColor="#00FF7F" FontSize="14" FontFamily="Courier New" HeightRequest="50" />
+                                <Label Text="{Binding SerialOutput}" TextColor="#00FF7F" FontSize="14" FontFamily="Courier New" HeightRequest="50" />
                             </Border>
                         </StackLayout>
 
                         <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="16">
                             <Button Grid.Column="0"
-            x:Name="TestConnectionButton"
-            Text="TEST CONNECTION"
-            BackgroundColor="#2A2A2A"
-            TextColor="White"
-            CornerRadius="8"
-            HeightRequest="48"
-            FontAttributes="Bold"
-            Clicked="OnTestConnectionClicked"/>
+                                    Command="{Binding TestConnectionCommand}"
+                                    Text="TEST CONNECTION"
+                                    BackgroundColor="#2A2A2A"
+                                    TextColor="White"
+                                    CornerRadius="8"
+                                    HeightRequest="48"
+                                    FontAttributes="Bold"/>
                             <Button Grid.Column="1"
-            x:Name="SaveLogButton" 
-            Text="SAVE LOG" 
-            BackgroundColor="#4CAF50" 
-            TextColor="White" 
-            CornerRadius="8" 
-            HeightRequest="48" 
-            FontAttributes="Bold" 
-            Clicked="OnSaveLogClicked" />
+                                    Command="{Binding SaveLogCommand}" 
+                                    Text="SAVE LOG" 
+                                    BackgroundColor="#4CAF50" 
+                                    TextColor="White" 
+                                    CornerRadius="8" 
+                                    HeightRequest="48" 
+                                    FontAttributes="Bold" />
                             <Button Grid.Column="2"
-            Text="SAVE SETTINGS"
-            BackgroundColor="#00FF7F"
-            TextColor="#0E0E0E"
-            CornerRadius="8"
-            HeightRequest="48"
-            FontAttributes="Bold"
-            Clicked="OnSaveClicked" />
+                                    Command="{Binding SaveSettingsCommand}"
+                                    Text="SAVE SETTINGS"
+                                    BackgroundColor="#00FF7F"
+                                    TextColor="#0E0E0E"
+                                    CornerRadius="8"
+                                    HeightRequest="48"
+                                    FontAttributes="Bold" />
                         </Grid>
                     </StackLayout>
                 </Border>

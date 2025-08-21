@@ -18,6 +18,7 @@ namespace Weighbridge.Tests
         private DatabaseService _databaseService;
         private string _dbPath;
         private Mock<IDbConnectionFactory> _mockConnectionFactory;
+        private Mock<IAuditService> _mockAuditService;
 
         [SetUp]
         public async Task Setup()
@@ -28,6 +29,8 @@ namespace Weighbridge.Tests
             _mockConnectionFactory = new Mock<IDbConnectionFactory>();
             _mockConnectionFactory.Setup(f => f.CreateConnection())
                 .Returns(() => new SqliteConnection(connectionString));
+
+            _mockAuditService = new Mock<IAuditService>(); // Initialize mock audit service
 
             _databaseService = new DatabaseService(_mockConnectionFactory.Object);
             await _databaseService.InitializeAsync();

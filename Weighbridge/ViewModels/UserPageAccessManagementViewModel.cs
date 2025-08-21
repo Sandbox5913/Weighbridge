@@ -6,6 +6,7 @@ using System.Windows.Input;
 using Weighbridge.Models;
 using Weighbridge.Services;
 using Weighbridge.Pages;
+using System.Diagnostics;
 
 namespace Weighbridge.ViewModels
 {
@@ -80,7 +81,8 @@ namespace Weighbridge.ViewModels
         nameof(TransportManagementPage),
         nameof(UserManagementPage),
         nameof(UserPageAccessManagementPage),
-        nameof(VehicleManagementPage)
+        nameof(VehicleManagementPage),
+        nameof(MainPage) // Added MainPage
     };
 
             Pages.Clear();
@@ -133,10 +135,12 @@ namespace Weighbridge.ViewModels
                 var hasAccess = userPageAccess.Any(pa => pa.PageName == page.PageName);
                 if (page.HasAccess && !hasAccess)
                 {
+                    Debug.WriteLine($"[UserPageAccessManagementViewModel] Saving access for: {page.PageName}");
                     await _databaseService.SaveUserPageAccessAsync(new UserPageAccess { UserId = SelectedUser.Id, PageName = page.PageName });
                 }
                 else if (!page.HasAccess && hasAccess)
                 {
+                    Debug.WriteLine($"[UserPageAccessManagementViewModel] Deleting access for: {page.PageName}");
                     var pageAccessToDelete = userPageAccess.First(pa => pa.PageName == page.PageName);
                     await _databaseService.DeleteItemAsync(pageAccessToDelete);
                 }

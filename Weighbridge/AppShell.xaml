@@ -7,63 +7,86 @@
     xmlns:pages="clr-namespace:Weighbridge.Pages"
     Title="Weighbridge">
 
-    <TabBar>
+    <!-- Login Page as default - will be hidden when user is logged in -->
+    <ShellContent
+        Title="Login"
+        ContentTemplate="{DataTemplate pages:LoginPage}"
+        Route="LoginPage" />
+
+    <!-- Main content - will be shown when user is logged in -->
+    <TabBar x:Name="MainTabBar" IsVisible="{Binding IsLoggedIn}">
         <ShellContent
             Title="Home"
             ContentTemplate="{DataTemplate local:MainPage}"
-            Route="MainPage" />
+            Route="MainPage"
+            IsVisible="{Binding CanAccessHome}" />
         <ShellContent
             Title="Loads"
             ContentTemplate="{DataTemplate pages:LoadsPage}"
-            Route="LoadsPage" />
+            Route="LoadsPage"
+            IsVisible="{Binding CanAccessLoads}" />
         <Tab Title="Settings"
              Icon="settings_icon.png"
-             IsVisible="{Binding IsAdmin}">
+             IsVisible="{Binding CanAccessSettings}">
             <ShellContent
                 Title="System Settings"
                 ContentTemplate="{DataTemplate pages:SettingsPage}"
-                Route="SettingsPage" />
+                Route="SettingsPage"
+                IsVisible="{Binding CanAccessSettingsPage}" />
             <ShellContent
                 Title="Print Settings"
                 ContentTemplate="{DataTemplate pages:PrintSettingsPage}"
-                Route="PrintSettingsPage" />
+                Route="PrintSettingsPage"
+                IsVisible="{Binding CanAccessPrintSettingsPage}" />
             <ShellContent
                 Title="Main Form Settings"
                 ContentTemplate="{DataTemplate pages:MainFormSettingsPage}"
-                Route="MainFormSettingsPage" />
+                Route="MainFormSettingsPage"
+                IsVisible="{Binding CanAccessMainFormSettingsPage}" />
             <ShellContent
                 Title="User Management"
                 ContentTemplate="{DataTemplate pages:UserManagementPage}"
-                Route="UserManagementPage" />
+                Route="UserManagementPage"
+                IsVisible="{Binding CanAccessUserManagementPage}" />
+            <ShellContent
+                Title="User Page Access"
+                ContentTemplate="{DataTemplate pages:UserPageAccessManagementPage}"
+                Route="UserPageAccessManagementPage"
+                IsVisible="{Binding CanAccessUserPageAccessManagementPage}" />
         </Tab>
         <Tab Title="Data Management"
              Icon="dotnet_bot.png"
-             IsVisible="{Binding IsAdmin}">
+             IsVisible="{Binding CanAccessDataManagement}">
             <ShellContent
                 Title="Customers"
                 ContentTemplate="{DataTemplate pages:CustomerManagementPage}"
-                Route="CustomerManagementPage" />
+                Route="CustomerManagementPage"
+                IsVisible="{Binding CanAccessCustomerManagementPage}" />
             <ShellContent
                 Title="Drivers"
                 ContentTemplate="{DataTemplate pages:DriverManagementPage}"
-                Route="DriverManagementPage" />
+                Route="DriverManagementPage"
+                IsVisible="{Binding CanAccessDriverManagementPage}" />
             <ShellContent
                 Title="Materials"
                 ContentTemplate="{DataTemplate pages:MaterialManagementPage}"
-                Route="MaterialManagementPage" />
+                Route="MaterialManagementPage"
+                IsVisible="{Binding CanAccessMaterialManagementPage}" />
             <ShellContent
                 Title="Sites"
                 ContentTemplate="{DataTemplate pages:SiteManagementPage}"
-                Route="SiteManagementPage" />
+                Route="SiteManagementPage"
+                IsVisible="{Binding CanAccessSiteManagementPage}" />
             <ShellContent
                 Title="Transport"
                 ContentTemplate="{DataTemplate pages:TransportManagementPage}"
-                Route="TransportManagementPage" />
+                Route="TransportManagementPage"
+                IsVisible="{Binding CanAccessTransportManagementPage}" />
             <ShellContent
                 Title="Vehicles"
                 ContentTemplate="{DataTemplate pages:VehicleManagementPage}"
-                Route="VehicleManagementPage" />
+                Route="VehicleManagementPage"
+                IsVisible="{Binding CanAccessVehicleManagementPage}" />
         </Tab>
     </TabBar>
-
 </Shell>

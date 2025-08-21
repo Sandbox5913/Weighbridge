@@ -1,16 +1,19 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Dapper;
 using Weighbridge.Models;
 using Weighbridge.Services;
+using System.Diagnostics;
 
 namespace Weighbridge.Data
 {
     public class DatabaseService : IDatabaseService
     {
         private readonly IDbConnectionFactory _connectionFactory;
+        private readonly IAuditService _auditService;
 
         public DatabaseService(IDbConnectionFactory connectionFactory)
         {
@@ -87,6 +90,17 @@ namespace Weighbridge.Data
                     UserId INTEGER NOT NULL,
                     PageName TEXT NOT NULL,
                     FOREIGN KEY (UserId) REFERENCES Users(Id)
+                );");
+
+                await db.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS AuditLogs (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Timestamp TEXT NOT NULL,
+                    UserId INTEGER,
+                    Username TEXT,
+                    Action TEXT NOT NULL,
+                    EntityType TEXT,
+                    EntityId INTEGER,
+                    Details TEXT
                 );");
 
                 // Migration: Add UpdatedAt column to Dockets table if it doesn't exist
@@ -185,7 +199,8 @@ namespace Weighbridge.Data
         {
             using (IDbConnection db = _connectionFactory.CreateConnection())
             {
-                return (await db.QueryAsync<T>($"SELECT * FROM {typeof(T).Name}s")).ToList();
+                string tableName = GetTableName<T>();
+                return (await db.QueryAsync<T>($"SELECT * FROM {tableName}")).ToList();
             }
         }
 
@@ -256,7 +271,8 @@ namespace Weighbridge.Data
         {
             using (IDbConnection db = _connectionFactory.CreateConnection())
             {
-                return await db.QueryFirstOrDefaultAsync<T>($"SELECT * FROM {typeof(T).Name}s WHERE Id = @Id", new { Id = id });
+                string tableName = GetTableName<T>();
+                return await db.QueryFirstOrDefaultAsync<T>($"SELECT * FROM {tableName} WHERE Id = @Id", new { Id = id });
             }
         }
 
@@ -267,22 +283,28 @@ namespace Weighbridge.Data
                 if (item.Id != 0)
                 {
                     // UPDATE
-                    string tableName = typeof(T).Name + "s";
+                    string tableName = GetTableName<T>();
                     var properties = typeof(T).GetProperties().Where(p => p.Name != "Id" && p.CanWrite);
                     string setClause = string.Join(", ", properties.Select(p => $"{p.Name} = @{p.Name}"));
                     string sql = $"UPDATE {tableName} SET {setClause} WHERE Id = @Id;";
-                    return await db.ExecuteAsync(sql, item);
+                    int rowsAffected = await db.ExecuteAsync(sql, item);
+                    if (rowsAffected > 0)
+                    {
+                        await _auditService.LogActionAsync("Updated", typeof(T).Name, item.Id, $"{typeof(T).Name} with ID: {item.Id} updated.");
+                    }
+                    return rowsAffected;
                 }
                 else
                 {
                     // INSERT
-                    string tableName = typeof(T).Name + "s";
+                    string tableName = GetTableName<T>();
                     var properties = typeof(T).GetProperties().Where(p => p.Name != "Id" && p.CanWrite);
                     string columns = string.Join(", ", properties.Select(p => p.Name));
                     string values = string.Join(", ", properties.Select(p => $"@{p.Name}"));
                     string sql = $"INSERT INTO {tableName} ({columns}) VALUES ({values}); SELECT last_insert_rowid();"; // For SQLite
                     int newId = await db.ExecuteScalarAsync<int>(sql, item);
                     item.Id = newId; // Set the ID on the item object
+                    await _auditService.LogActionAsync("Created", typeof(T).Name, item.Id, $"New {typeof(T).Name} created with ID: {item.Id}");
                     return 1; // Return 1 for successful insert
                 }
             }
@@ -304,7 +326,13 @@ namespace Weighbridge.Data
             using (IDbConnection db = _connectionFactory.CreateConnection())
             {
                 // Use square brackets to safely quote the table name
-                return await db.ExecuteAsync($"DELETE FROM [{typeof(T).Name}s] WHERE Id = @Id", new { Id = idValue });
+                string tableName = GetTableName<T>();
+                int rowsAffected = await db.ExecuteAsync($"DELETE FROM [{tableName}] WHERE Id = @Id", new { Id = idValue });
+                if (rowsAffected > 0)
+                {
+                    await _auditService.LogActionAsync("Deleted", typeof(T).Name, (int)idValue, $"{typeof(T).Name} with ID: {idValue} deleted.");
+                }
+                return rowsAffected;
             }
         }
   
@@ -340,7 +368,13 @@ namespace Weighbridge.Data
         {
             using (IDbConnection db = _connectionFactory.CreateConnection())
             {
-                return (await db.QueryAsync<UserPageAccess>("SELECT * FROM UserPageAccesses WHERE UserId = @UserId", new { UserId = userId })).ToList();
+                var accessList = (await db.QueryAsync<UserPageAccess>("SELECT * FROM UserPageAccesses WHERE UserId = @UserId", new { UserId = userId })).ToList();
+                Debug.WriteLine($"[DatabaseService] GetUserPageAccessAsync for UserId {userId}: Retrieved {accessList.Count} entries.");
+                foreach (var entry in accessList)
+                {
+                    Debug.WriteLine($"[DatabaseService]   - PageName: {entry.PageName}");
+                }
+                return accessList;
             }
         }
 
@@ -365,6 +399,17 @@ namespace Weighbridge.Data
             {
                 return await db.ExecuteAsync("DELETE FROM UserPageAccesses WHERE Id = @Id", new { userPageAccess.Id });
             }
+        }
+
+        // Helper method to get table name from [Table] attribute or use default pluralization
+        private string GetTableName<T>()
+        {
+            var tableAttribute = typeof(T).GetCustomAttributes(typeof(SQLite.TableAttribute), true).FirstOrDefault() as SQLite.TableAttribute;
+            if (tableAttribute != null && !string.IsNullOrWhiteSpace(tableAttribute.Name))
+            {
+                return tableAttribute.Name;
+            }
+            return typeof(T).Name + "s"; // Default pluralization
         }
     }
 }

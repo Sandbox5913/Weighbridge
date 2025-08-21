@@ -1,16 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UseMaui>false</UseMaui>
-    <EnableMauiResizetizer>false</EnableMauiResizetizer>
-    <IsMauiApp>false</IsMauiApp>
-    <EnableMauiImage>false</EnableMauiImage>
-    <EnableMauiFont>false</EnableMauiFont>
-    <EnableMauiSplashScreen>false</EnableMauiSplashScreen>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
@@ -23,13 +17,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Weighbridge\Weighbridge.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <MauiImage Remove="**\*.svg" />
-    <MauiFont Remove="**\*.ttf" />
-    <MauiSplashScreen Remove="**\*.svg" />
+    <ProjectReference Include="..\Weighbridge\Weighbridge.csproj">
+      <Private>True</Private>
+      <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+      <ReferenceOutputAssembly>True</ReferenceOutputAssembly>
+      <IncludeAssets>all</IncludeAssets>
+      <ExcludeAssets>build;buildTransitive</ExcludeAssets>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>

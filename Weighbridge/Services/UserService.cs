@@ -1,36 +1,50 @@
 using Weighbridge.Models;
 using Weighbridge.Services;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
-namespace Weighbridge.Services
+public class UserService : IUserService
 {
-    public class UserService : IUserService
+    private readonly IDatabaseService _databaseService;
+    private readonly IAuditService _auditService;
+
+    public User CurrentUser { get; private set; }
+    public event Action UserChanged;
+
+
+    public UserService(IDatabaseService databaseService, IAuditService auditService)
     {
-        private readonly IDatabaseService _databaseService;
+        _databaseService = databaseService;
+        _auditService = auditService;
+    }
 
-        public User CurrentUser { get; private set; }
+    public async Task<User> LoginAsync(string username, string password)
+    {
+        var user = await _databaseService.GetUserByUsernameAsync(username);
 
-        public UserService(IDatabaseService databaseService)
+        if (user != null && user.PasswordHash == password)
         {
-            _databaseService = databaseService;
+            CurrentUser = user;
+            Debug.WriteLine($"[UserService] LoginAsync: CurrentUser set to {CurrentUser.Username}");
+            UserChanged?.Invoke();
+            return user;
         }
 
-        public async Task<User> LoginAsync(string username, string password)
+        Debug.WriteLine("[UserService] LoginAsync: Login failed.");
+
+        return null;
+    }
+
+    public async void Logout()
+    {
+        var loggedOutUser = CurrentUser; // Capture user before setting to null
+        CurrentUser = null;
+        Debug.WriteLine("[UserService] Logout: CurrentUser set to null.");
+        UserChanged?.Invoke();
+
+        if (loggedOutUser != null)
         {
-            var user = await _databaseService.GetUserByUsernameAsync(username);
-
-            if (user != null && user.PasswordHash == password)
-            {
-                CurrentUser = user;
-                return user;
-            }
-
-            return null;
-        }
-
-        public void Logout()
-        {
-            CurrentUser = null;
+            await _auditService.LogActionAsync("Logged Out", "User", loggedOutUser.Id, $"User {loggedOutUser.Username} logged out.");
         }
     }
 }

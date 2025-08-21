@@ -8,7 +8,6 @@ namespace Weighbridge.Pages
         {
             InitializeComponent();
             BindingContext = viewModel;
-            viewModel.ShowAlert += (title, message, cancel) => DisplayAlert(title, message, cancel);
         }
 
         private void OnLoginClicked(object sender, EventArgs e)

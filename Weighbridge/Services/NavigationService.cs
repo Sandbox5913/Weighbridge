@@ -1,5 +1,6 @@
 using Weighbridge.Models;
 using Weighbridge.Services;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Diagnostics;
@@ -25,20 +26,40 @@ namespace Weighbridge.Services
             Debug.WriteLine($"_databaseService is null: {_databaseService == null}");
 
             var currentUser = _userService.CurrentUser;
+            Debug.WriteLine($"HasAccessAsync: CurrentUser is null? {currentUser == null}");
+
             if (currentUser == null)
             {
                 // No user logged in, only allow navigation to login page
-                return route == "//LoginPage";
+                bool canAccessLoginPage = route == "LoginPage";
+                Debug.WriteLine($"HasAccessAsync: No user, can access LoginPage? {canAccessLoginPage}");
+                return canAccessLoginPage;
             }
 
-            if (currentUser.IsAdmin)
+            // If user is logged in, always allow access to MainPage
+            if (route.Replace("//", "") == nameof(MainPage))
             {
-                // Admin has access to all pages
+                Debug.WriteLine($"HasAccessAsync: User is logged in, granting access to MainPage.");
                 return true;
             }
 
+            // If user is logged in, check admin status first
+            if (currentUser.IsAdmin)
+            {
+                // Admin has access to all pages
+                Debug.WriteLine($"HasAccessAsync: User is Admin, access granted.");
+                return true;
+            }
+
+            // If not admin, check specific page access
             var userPageAccess = await _databaseService.GetUserPageAccessAsync(currentUser.Id);
-            return userPageAccess.Any(pa => pa.PageName == route.Replace("//", ""));
+            foreach (var pa in userPageAccess)
+            {
+                Debug.WriteLine($"HasAccessAsync: Comparing stored PageName '{pa.PageName}' with route '{route.Replace("//", "")}'");
+            }
+            bool hasSpecificAccess = userPageAccess.Any(pa => pa.PageName == route.Replace("//", ""));
+            Debug.WriteLine($"HasAccessAsync: User has specific access to {route}? {hasSpecificAccess}");
+            return hasSpecificAccess;
         }
     }
 }
