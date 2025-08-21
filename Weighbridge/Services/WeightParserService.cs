@@ -5,7 +5,7 @@ namespace Weighbridge.Services
 {
     public class WeightParserService
     {
-        public WeightReading Parse(string data, string regexPattern)
+        public WeightReading? Parse(string? data, string? regexPattern)
         {
             if (string.IsNullOrWhiteSpace(data) || string.IsNullOrWhiteSpace(regexPattern))
             {

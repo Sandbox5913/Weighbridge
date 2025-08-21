@@ -36,6 +36,7 @@ namespace Weighbridge
         public bool CanAccessUserPageAccessManagementPage { get; private set; }
         public bool CanAccessVehicleManagementPage { get; private set; }
         public bool CanAccessMainPage { get; private set; }
+        public bool CanAccessAuditLogPage { get; private set; }
 
         public AppShell(IUserService userService, INavigationService navigationService)
         {
@@ -160,6 +161,9 @@ namespace Weighbridge
                 CanAccessMainPage = await _navigationService.HasAccessAsync(nameof(MainPage));
                 OnPropertyChanged(nameof(CanAccessMainPage));
 
+                CanAccessAuditLogPage = await _navigationService.HasAccessAsync(nameof(AuditLogPage));
+                OnPropertyChanged(nameof(CanAccessAuditLogPage));
+
                 // Explicitly update MainTabBar visibility
                 MainTabBar.IsVisible = IsLoggedIn;
             });
@@ -252,6 +256,7 @@ namespace Weighbridge
             Routing.RegisterRoute(nameof(MainFormSettingsPage), typeof(MainFormSettingsPage));
             Routing.RegisterRoute(nameof(UserManagementPage), typeof(UserManagementPage));
             Routing.RegisterRoute(nameof(UserPageAccessManagementPage), typeof(UserPageAccessManagementPage));
+            Routing.RegisterRoute(nameof(AuditLogPage), typeof(AuditLogPage));
         }
 
         protected override async void OnNavigating(ShellNavigatingEventArgs args)

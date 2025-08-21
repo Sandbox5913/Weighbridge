@@ -53,6 +53,11 @@
                 ContentTemplate="{DataTemplate pages:UserPageAccessManagementPage}"
                 Route="UserPageAccessManagementPage"
                 IsVisible="{Binding CanAccessUserPageAccessManagementPage}" />
+            <ShellContent
+                Title="Audit Logs"
+                ContentTemplate="{DataTemplate pages:AuditLogPage}"
+                Route="AuditLogPage"
+                IsVisible="{Binding CanAccessAuditLogPage}" />
         </Tab>
         <Tab Title="Data Management"
              Icon="dotnet_bot.png"

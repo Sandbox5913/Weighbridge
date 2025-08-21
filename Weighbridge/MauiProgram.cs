@@ -1,15 +1,16 @@
 using Microsoft.Extensions.Logging;
-using Weighbridge.ViewModels;
-using Weighbridge.Services;
-using Weighbridge.Data;
-using Weighbridge.Models;
-using System.IO;
-using Microsoft.Maui.Storage;
 using Microsoft.Extensions.Logging.Debug;
-using Weighbridge.Pages;
+using Microsoft.Maui.LifecycleEvents;
+using Microsoft.Maui.Storage;
 using SQLite; // Still needed for some models, but not for connection directly
 using System.Data; // Added for IDbConnection
 using System.Diagnostics;
+using System.IO;
+using Weighbridge.Data;
+using Weighbridge.Models;
+using Weighbridge.Pages;
+using Weighbridge.Services;
+using Weighbridge.ViewModels;
 
 namespace Weighbridge;
 
@@ -67,6 +68,7 @@ public static class MauiProgram
         builder.Services.AddTransient<UserManagementViewModel>();
         builder.Services.AddTransient<UserPageAccessManagementViewModel>();
         builder.Services.AddTransient<SettingsViewModel>();
+        builder.Services.AddTransient<AuditLogViewModel>();
 
         // Register Pages and inject ViewModels
         builder.Services.AddSingleton<MainPage>();
@@ -79,6 +81,7 @@ public static class MauiProgram
         builder.Services.AddTransient<MainFormSettingsPage>();
         builder.Services.AddTransient<UserManagementPage>();
         builder.Services.AddTransient<UserPageAccessManagementPage>();
+        builder.Services.AddTransient<AuditLogPage>();
 
         // Register Data Management Pages
         builder.Services.AddTransient<CustomerManagementPage>();
@@ -91,8 +94,27 @@ public static class MauiProgram
         builder.Services.AddSingleton<App>();
 
         Debug.WriteLine("[MauiProgram] CreateMauiApp: Building app.");
-        var app = builder.Build();
+         builder.UseMauiApp<App>()
+     .ConfigureLifecycleEvents(events =>
+     {
+#if WINDOWS
+         events.AddWindows(windows =>
+         {
+             windows.OnWindowCreated((window) =>
+             {
+                 var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
 
+                 var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
+                 var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+
+                 appWindow.SetPresenter(Microsoft.UI.Windowing.AppWindowPresenterKind.Default);
+             });
+         });
+#endif
+     });
+        var app = builder.Build();
+        
+    
         Debug.WriteLine("[MauiProgram] CreateMauiApp: Returning app.");
         return app;
     }

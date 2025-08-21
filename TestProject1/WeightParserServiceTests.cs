@@ -6,7 +6,7 @@ namespace Weighbridge.Tests
     [TestFixture]
     public class WeightParserServiceTests
     {
-        private WeightParserService _parser;
+        private WeightParserService _parser = null!;
         // This regex is an example. The actual regex would be configured in the app settings.
         private const string DefaultRegex = @"^\s*(?<sign>[-+])?(?<num>\d+(\.\d+)?)\s*(?<unit>kg|lb|t)?\s*$";
 
@@ -42,7 +42,7 @@ namespace Weighbridge.Tests
         [TestCase("1000 kgs", DefaultRegex)] // Does not match "kg"
         [TestCase("kg 1000", DefaultRegex)]
         [TestCase("10-00 kg", DefaultRegex)]
-        public void Parse_WithInvalidOrEmptyData_ShouldReturnNull(string data, string regex)
+        public void Parse_WithInvalidOrEmptyData_ShouldReturnNull(string? data, string regex)
         {
             // Act
             var result = _parser.Parse(data, regex);

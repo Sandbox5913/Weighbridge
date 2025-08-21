@@ -55,6 +55,8 @@ namespace TestProject1
             };
         }
 
+
+
         [Fact]
         public async Task TwoWeights_FirstWeight_CreatesOpenDocket()
         {
@@ -98,7 +100,7 @@ namespace TestProject1
                 d.DriverId == 1 &&
                 d.Remarks == "Test Remarks"
             )), Times.Once);
-            Assert.Equal(0, _viewModel.LoadDocketId); // Should reset after saving
+             Assert.Equal(0, _viewModel.LoadDocketId); // Should reset after saving
         }
 
         [Fact]
@@ -136,7 +138,7 @@ namespace TestProject1
                 d.DriverId == 1 &&
                 d.Remarks == "Test Remarks"
             )), Times.Once);
-            Assert.Equal("0", _viewModel.EntranceWeight); // Should reset
+             Assert.Equal("0", _viewModel.EntranceWeight); // Should reset
         }
 
         [Fact]
@@ -174,7 +176,7 @@ namespace TestProject1
                 d.DriverId == 1 &&
                 d.Remarks == "Test Remarks"
             )), Times.Once);
-            Assert.Equal("0", _viewModel.EntranceWeight); // Should reset
+             Assert.Equal("0", _viewModel.EntranceWeight); // Should reset
         }
 
         [Fact]
@@ -212,7 +214,7 @@ namespace TestProject1
                 d.DriverId == 1 &&
                 d.Remarks == "Test Remarks"
             )), Times.Once);
-            Assert.Equal("0", _viewModel.EntranceWeight); // Should reset
+             Assert.Equal("0", _viewModel.EntranceWeight); // Should reset
         }
 
         [Fact]
@@ -228,8 +230,8 @@ namespace TestProject1
             _viewModel.SelectedVehicle = vehicleWithOpenDocket;
 
             // Assert
-            Assert.True(_viewModel.IsInProgressWarningVisible);
-            Assert.Equal("This truck has not weighed out.", _viewModel.InProgressWarningText);
+             Assert.True(_viewModel.IsInProgressWarningVisible);
+             Assert.Equal("This truck has not weighed out.", _viewModel.InProgressWarningText);
             _mockDatabaseService.Verify(db => db.SaveItemAsync(It.IsAny<Docket>()), Times.Never); // Ensure no docket is saved
         }
 
@@ -249,8 +251,8 @@ namespace TestProject1
             _viewModel.SelectedVehicle = vehicleWithOpenDocket;
 
             // Assert
-            Assert.False(_viewModel.IsInProgressWarningVisible);
-            Assert.Equal(10, _viewModel.LoadDocketId);
+             Assert.False(_viewModel.IsInProgressWarningVisible);
+             Assert.Equal(10, _viewModel.LoadDocketId);
         }
 
         [Fact]
@@ -268,9 +270,9 @@ namespace TestProject1
 
             // Assert
             _mockDatabaseService.Verify(db => db.DeleteItemAsync(It.Is<Docket>(d => d.Id == 1)), Times.Once);
-            Assert.Equal(0, _viewModel.LoadDocketId);
-            Assert.False(_viewModel.IsDocketLoaded);
-            Assert.Equal("0", _viewModel.EntranceWeight); // Verify form reset
+             Assert.Equal(0, _viewModel.LoadDocketId);
+             Assert.False(_viewModel.IsDocketLoaded);
+             Assert.Equal("0", _viewModel.EntranceWeight); // Verify form reset
         }
 
         [Fact]
@@ -278,12 +280,13 @@ namespace TestProject1
         {
             // Arrange
             _viewModel.SelectedVehicle = null;
+            _viewModel.LiveWeight = "100";
 
             // Act
             await _viewModel.OnToYardClicked();
 
             // Assert
-            Assert.True(_alertShown);
+             Assert.True(_alertShown);
             _mockDatabaseService.Verify(db => db.SaveItemAsync(It.IsAny<Docket>()), Times.Never);
         }
 
@@ -292,6 +295,7 @@ namespace TestProject1
         {
             // Arrange
             _viewModel.SelectedVehicle = new Vehicle { Id = 1, LicenseNumber = "TEST1" };
+            _viewModel.LiveWeight = "100";
             _mockDatabaseService.Setup(db => db.SaveItemAsync(It.IsAny<Docket>()))
                 .ThrowsAsync(new Exception("Database error"));
 
@@ -299,7 +303,7 @@ namespace TestProject1
             await _viewModel.OnToYardClicked();
 
             // Assert
-            Assert.True(_alertShown);
+             Assert.True(_alertShown);
         }
 
         [Fact]
@@ -321,25 +325,25 @@ namespace TestProject1
             _viewModel.ResetForm();
 
             // Assert
-            Assert.Equal(0, _viewModel.LoadDocketId);
-            Assert.False(_viewModel.IsDocketLoaded);
-            Assert.Equal("0", _viewModel.EntranceWeight);
-            Assert.Null(_viewModel.SelectedVehicle);
-            Assert.Null(_viewModel.SelectedCustomer);
-            Assert.Null(_viewModel.SelectedDriver);
-            Assert.Null(_viewModel.SelectedItem);
-            Assert.Null(_viewModel.SelectedSourceSite);
-            Assert.Null(_viewModel.SelectedDestinationSite);
-            Assert.Null(_viewModel.SelectedTransport);
-            Assert.Empty(_viewModel.Remarks);
+             Assert.Equal(0, _viewModel.LoadDocketId);
+             Assert.False(_viewModel.IsDocketLoaded);
+             Assert.Equal("0", _viewModel.EntranceWeight);
+             Assert.Null(_viewModel.SelectedVehicle);
+             Assert.Null(_viewModel.SelectedCustomer);
+             Assert.Null(_viewModel.SelectedDriver);
+             Assert.Null(_viewModel.SelectedItem);
+             Assert.Null(_viewModel.SelectedSourceSite);
+             Assert.Null(_viewModel.SelectedDestinationSite);
+             Assert.Null(_viewModel.SelectedTransport);
+             Assert.Empty(_viewModel.Remarks);
         }
 
         [Theory]
-        [InlineData(WeighingMode.TwoWeights, true, false, false, false)]
-        [InlineData(WeighingMode.EntryAndTare, false, true, false, false)]
-        [InlineData(WeighingMode.TareAndExit, false, false, true, false)]
-        [InlineData(WeighingMode.SingleWeight, false, false, false, true)]
-        public void SetWeighingModeCommand_ShouldUpdateWeighingMode(WeighingMode mode, bool isTwoWeights, bool isEntryAndTare, bool isTareAndExit, bool isSingleWeight)
+        [InlineData(WeighingMode.TwoWeights)]
+        [InlineData(WeighingMode.EntryAndTare)]
+        [InlineData(WeighingMode.TareAndExit)]
+        [InlineData(WeighingMode.SingleWeight)]
+        public void SetWeighingModeCommand_ShouldUpdateWeighingMode(WeighingMode mode)
         {
             // Arrange
             var modeString = mode.ToString();
@@ -348,7 +352,7 @@ namespace TestProject1
             _viewModel.SetWeighingModeCommand.Execute(mode);
 
             // Assert
-            Assert.Equal(mode, _viewModel.CurrentMode);
+             Assert.Equal(mode, _viewModel.CurrentMode);
         }
     }
 }

@@ -785,6 +785,12 @@ namespace Weighbridge.ViewModels
 
         private bool IsDocketValid()
         {
+            if (!decimal.TryParse(LiveWeight, NumberStyles.Any, CultureInfo.InvariantCulture, out var liveWeight) || liveWeight <= 0)
+            {
+                ShowSimpleAlert?.Invoke("Validation Error", "Live weight must be a valid number greater than zero.", "OK");
+                return false;
+            }
+
             if (FormConfig.Vehicle.IsMandatory && string.IsNullOrWhiteSpace(VehicleRegistration) && SelectedVehicle == null)
             {
                 ShowSimpleAlert?.Invoke("Validation Error", "Please enter or select a vehicle.", "OK");

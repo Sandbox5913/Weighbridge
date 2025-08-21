@@ -95,10 +95,10 @@ namespace Weighbridge
             foreach (var button in allButtons)
             {
                 bool isSelected = button == selectedButton;
-                button.BackgroundColor = isSelected ? Color.FromHex("#00FF7F") : Color.FromHex("#2A2A2A");
+                button.BackgroundColor = isSelected ? Color.FromArgb("#00FF7F") : Color.FromArgb("#2A2A2A");
                 if (button.Content is Label label)
                 {
-                    label.TextColor = isSelected ? Color.FromHex("#0E0E0E") : Color.FromHex("#CCCCCC");
+                    label.TextColor = isSelected ? Color.FromArgb("#0E0E0E") : Color.FromArgb("#CCCCCC");
                 }
             }
         }

@@ -22,5 +22,13 @@ namespace Weighbridge.Services
                 await db.ExecuteAsync("INSERT INTO AuditLogs (Timestamp, UserId, Username, Action, EntityType, EntityId, Details) VALUES (@Timestamp, @UserId, @Username, @Action, @EntityType, @EntityId, @Details)", log);
             }
         }
+
+        public async Task<List<AuditLog>> GetAuditLogsAsync()
+        {
+            using (IDbConnection db = _connectionFactory.CreateConnection())
+            {
+                return (await db.QueryAsync<AuditLog>("SELECT * FROM AuditLogs ORDER BY Timestamp DESC")).AsList();
+            }
+        }
     }
 }
