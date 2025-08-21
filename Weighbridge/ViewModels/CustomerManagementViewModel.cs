@@ -58,7 +58,7 @@ namespace Weighbridge.ViewModels
             }
         }
 
-        private async Task LoadCustomers()
+        public async Task LoadCustomers()
         {
             Customers.Clear();
             var customers = await _databaseService.GetItemsAsync<Customer>();

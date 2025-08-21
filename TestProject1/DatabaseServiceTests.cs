@@ -16,20 +16,18 @@ namespace Weighbridge.Tests
     public class DatabaseServiceTests
     {
         private DatabaseService _databaseService;
-        private Mock<IDbConnectionFactory> _mockConnectionFactory;
+        
         private Mock<IAuditService> _mockAuditService;
         private Mock<IServiceProvider> _mockServiceProvider;
         private SqliteConnection _connection;
 
                 [SetUp]
+ 
         public async Task Setup()
         {
             var connectionString = "Data Source=:memory:";
             _connection = new SqliteConnection(connectionString);
             _connection.Open();
-
-            _mockConnectionFactory = new Mock<IDbConnectionFactory>();
-            _mockConnectionFactory.Setup(f => f.CreateConnection()).Returns(_connection);
 
             _mockAuditService = new Mock<IAuditService>();
             _mockServiceProvider = new Mock<IServiceProvider>();
@@ -38,7 +36,7 @@ namespace Weighbridge.Tests
                 .Setup(sp => sp.GetService(typeof(IAuditService)))
                 .Returns(_mockAuditService.Object);
 
-            _databaseService = new DatabaseService(_mockConnectionFactory.Object, _mockServiceProvider.Object);
+            _databaseService = new DatabaseService(_connection, _mockServiceProvider.Object);
             await _databaseService.InitializeAsync();
         }
 
@@ -151,7 +149,6 @@ namespace Weighbridge.Tests
         [Test]
         public async Task DeleteItemAsync_ShouldRemoveItem()
         {
-            await _databaseService.InitializeAsync();
             var vehicle = new Vehicle { LicenseNumber = "TEST-DELETE" };
             await _databaseService.SaveItemAsync(vehicle);
              NUnit.Framework.Assert.That(await _databaseService.GetItemAsync<Vehicle>(vehicle.Id), Is.Not.Null);

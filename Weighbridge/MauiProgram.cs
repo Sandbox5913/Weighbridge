@@ -4,6 +4,7 @@ using Microsoft.Maui.LifecycleEvents;
 using Microsoft.Maui.Storage;
 using SQLite; // Still needed for some models, but not for connection directly
 using System.Data; // Added for IDbConnection
+using Microsoft.Data.Sqlite; // Added for SqliteConnection
 using System.Diagnostics;
 using System.IO;
 using Weighbridge.Data;
@@ -32,17 +33,26 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
-        // Register IDbConnectionFactory
-        builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
-
         // Register services
         builder.Services.AddSingleton<WeightParserService>();
+
+        // Register a single IDbConnection for the application
+        builder.Services.AddSingleton<IDbConnection>(provider =>
+        {
+            // Use a file-based SQLite database for the main application
+            var databasePath = Path.Combine(FileSystem.AppDataDirectory, "weighbridge.db");
+            var connection = new SqliteConnection($"Data Source={databasePath}");
+            connection.Open(); // Open the connection once
+            return connection;
+        });
+
         builder.Services.AddSingleton<IDatabaseService>(provider =>
         {
-            var connectionFactory = provider.GetRequiredService<IDbConnectionFactory>();
-            return new DatabaseService(connectionFactory, provider); // Pass the provider itself
+            var dbConnection = provider.GetRequiredService<IDbConnection>();
+            return new DatabaseService(dbConnection, provider); // Pass the IDbConnection directly
         });
-        builder.Services.AddSingleton<IAuditLogRepository, AuditLogRepository>(); // DatabaseService now takes IDbConnectionFactory
+        builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>(); // Register IDbConnectionFactory
+        builder.Services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
         builder.Services.AddSingleton<IWeighbridgeService, WeighbridgeService>();
         builder.Services.AddSingleton<IDocketService, DocketService>();
         builder.Services.AddSingleton<IPreviewService, PreviewService>();

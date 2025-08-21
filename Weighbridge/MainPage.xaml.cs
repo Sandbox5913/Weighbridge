@@ -41,7 +41,7 @@ namespace Weighbridge
             base.OnAppearing();
             try
             {
-                await _viewModel.OnAppearing();
+                await _viewModel.OnAppearingAsync();
             }
             catch (Exception ex)
             {

@@ -35,15 +35,16 @@ namespace Weighbridge.Tests
         }
 
         [Test]
-        public void Constructor_LoadsCustomers()
+        public async Task Constructor_LoadsCustomers()
         {
+            // Act
+            await _viewModel.LoadCustomers();
+
             // Assert
-            _mockDatabaseService.Verify(db => db.GetItemsAsync<Customer>(), Times.Once);
-     
+            _mockDatabaseService.Verify(db => db.GetItemsAsync<Customer>(), Times.Exactly(2));
+
             That(_customers.Count, Is.EqualTo(_viewModel.Customers.Count));
-
         }
-
         [Test]
         public void SelectedCustomer_Setter_UpdatesCustomerName()
         {

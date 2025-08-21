@@ -4,55 +4,105 @@ using Weighbridge.Models;
 using System.Collections.Generic;
 using System;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace Weighbridge.Services
 {
-    public class WeighbridgeService : IWeighbridgeService
+    public class WeighbridgeService : IWeighbridgeService, IDisposable
     {
         private SerialPort _serialPort;
         private WeighbridgeConfig _config;
         private readonly WeightParserService _parserService;
         private StringBuilder _serialDataBuffer = new StringBuilder();
         private Timer _simulationTimer;
+        private bool _disposed = false;
+        private readonly object _lock = new object();
 
-        // --- Stability Detection ---
-        private List<double> recentWeights = new List<double>();
-        private const int windowSize = 10;
-        private const double tolerance = 0.5;
-        private DateTime stabilityStart;
-        private bool stableFlag = false;
+        // --- Stability Detection (Thread-Safe) ---
+        private readonly List<double> _recentWeights = new List<double>();
+        private const int WindowSize = 10;
+        private const double Tolerance = 0.5;
+        private DateTime? _stabilityStart = null;
+        private bool _isSimulationMode = false;
 
         public event EventHandler<WeightReading>? DataReceived;
         public event EventHandler<string>? RawDataReceived;
         public event EventHandler<bool>? StabilityChanged;
 
+        public bool IsSimulationMode => _isSimulationMode;
+
         public WeighbridgeService(WeightParserService parserService)
         {
-            _parserService = parserService;
-            _config = new WeighbridgeConfig();
+            _parserService = parserService ?? throw new ArgumentNullException(nameof(parserService));
+            _config = LoadConfiguration();
+            InitializeSerialPort();
+        }
 
-            // Load saved settings safely
-            _config.PortName = Preferences.Get("PortName", "COM1");
-            if (int.TryParse(Preferences.Get("BaudRate", "9600"), out int baudRate))
+        private WeighbridgeConfig LoadConfiguration()
+        {
+            try
             {
-                _config.BaudRate = baudRate;
-            }
-            else
-            {
-                _config.BaudRate = 9600; // Default value
-            }
-            _config.RegexString = Preferences.Get("RegexString", @"(?<sign>[+-])?(?<num>\d+(?:\.\d+)?)[ ]*(?<unit>[a-zA-Z]{1,4})");
-            _config.StabilityEnabled = Preferences.Get("StabilityEnabled", true);
-            if (double.TryParse(Preferences.Get("StableTime", "3.0"), out double stableTime))
-            {
-                _config.StableTime = stableTime;
-            }
-            else
-            {
-                _config.StableTime = 3.0; // Default value
-            }
-            _config.StabilityRegex = Preferences.Get("StabilityRegex", "");
+                var config = new WeighbridgeConfig
+                {
+                    PortName = Preferences.Get("PortName", "COM1"),
+                    BaudRate = ParseIntSafely(Preferences.Get("BaudRate", "9600"), 9600),
+                    RegexString = Preferences.Get("RegexString", @"(?<sign>[+-])?(?<num>\d+(?:\.\d+)?)[ ]*(?<unit>[a-zA-Z]{1,4})"),
+                    StabilityEnabled = Preferences.Get("StabilityEnabled", true),
+                    StableTime = ParseDoubleSafely(Preferences.Get("StableTime", "3.0"), 3.0),
+                    StabilityRegex = Preferences.Get("StabilityRegex", "")
+                };
 
+                ValidateConfiguration(config);
+                return config;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading configuration, using defaults: {ex.Message}");
+                return new WeighbridgeConfig(); // Return default configuration
+            }
+        }
+
+        private void ValidateConfiguration(WeighbridgeConfig config)
+        {
+            if (string.IsNullOrWhiteSpace(config.PortName))
+                throw new ArgumentException("Port name cannot be empty");
+
+            if (config.BaudRate <= 0)
+                throw new ArgumentException("Baud rate must be positive");
+
+            if (string.IsNullOrWhiteSpace(config.RegexString))
+                throw new ArgumentException("Regex string cannot be empty");
+
+            if (config.StableTime < 0)
+                throw new ArgumentException("Stable time cannot be negative");
+
+            // Test regex validity
+            try
+            {
+                _ = new Regex(config.RegexString);
+                if (!string.IsNullOrEmpty(config.StabilityRegex))
+                {
+                    _ = new Regex(config.StabilityRegex);
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                throw new ArgumentException($"Invalid regex pattern: {ex.Message}");
+            }
+        }
+
+        private int ParseIntSafely(string value, int defaultValue)
+        {
+            return int.TryParse(value, out int result) ? result : defaultValue;
+        }
+
+        private double ParseDoubleSafely(string value, double defaultValue)
+        {
+            return double.TryParse(value, out double result) ? result : defaultValue;
+        }
+
+        private void InitializeSerialPort()
+        {
             try
             {
                 _serialPort = new SerialPort(
@@ -66,88 +116,152 @@ namespace Weighbridge.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to create serial port: {ex.Message}");
+                // Don't throw here - allow the service to work in simulation mode
             }
         }
 
         public void Configure(WeighbridgeConfig config)
         {
-            bool wasOpen = _serialPort?.IsOpen == true;
-            if (wasOpen)
-            {
-                Close();
-            }
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
 
-            _config = config;
+            ValidateConfiguration(config);
 
-            try
+            lock (_lock)
             {
-                _serialPort = new SerialPort(
-                    _config.PortName,
-                    _config.BaudRate,
-                    _config.Parity,
-                    _config.DataBits,
-                    _config.StopBits
-                );
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to configure serial port: {ex.Message}");
-            }
+                if (_disposed)
+                    throw new ObjectDisposedException(nameof(WeighbridgeService));
 
-            if (wasOpen)
-            {
-                Open();
+                bool wasOpen = IsConnected();
+                if (wasOpen)
+                {
+                    Close();
+                }
+
+                _config = config;
+
+                // Dispose old serial port safely
+                if (_serialPort != null)
+                {
+                    try
+                    {
+                        if (_serialPort.IsOpen)
+                        {
+                            _serialPort.DataReceived -= OnDataReceived;
+                            _serialPort.Close();
+                        }
+                        _serialPort.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error disposing old serial port: {ex.Message}");
+                    }
+                }
+
+                InitializeSerialPort();
+
+                if (wasOpen)
+                {
+                    Open();
+                }
             }
         }
 
         public WeighbridgeConfig GetConfig()
         {
-            return _config;
+            lock (_lock)
+            {
+                return _config; // Consider returning a copy if immutability is needed
+            }
+        }
+
+        public bool IsConnected()
+        {
+            lock (_lock)
+            {
+                return _serialPort?.IsOpen == true || _isSimulationMode;
+            }
         }
 
         public void Open()
         {
-            try
+            lock (_lock)
             {
-                if (_serialPort != null && !_serialPort.IsOpen)
-                {
-                    _serialPort.DataReceived += OnDataReceived;
-                    _serialPort.Open();
-                    System.Diagnostics.Debug.WriteLine($"Serial port {_config.PortName} opened successfully");
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to open serial port {_config.PortName}: {ex.Message}");
+                if (_disposed)
+                    throw new ObjectDisposedException(nameof(WeighbridgeService));
 
-                // If serial port fails, start simulation for testing
-                StartSimulation();
+                try
+                {
+                    if (_serialPort != null && !_serialPort.IsOpen)
+                    {
+                        _serialPort.DataReceived += OnDataReceived;
+                        _serialPort.Open();
+                        _isSimulationMode = false;
+                        System.Diagnostics.Debug.WriteLine($"Serial port {_config.PortName} opened successfully");
+                    }
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Serial port {_config.PortName} is already in use: {ex.Message}");
+                    StartSimulation();
+                }
+                catch (ArgumentException ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Invalid serial port configuration: {ex.Message}");
+                    StartSimulation();
+                }
+                catch (System.IO.IOException ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Serial port {_config.PortName} not available: {ex.Message}");
+                    StartSimulation();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to open serial port {_config.PortName}: {ex.Message}");
+                    StartSimulation();
+                }
             }
         }
 
         public void Close()
         {
-            try
+            lock (_lock)
             {
-                StopSimulation();
-
-                if (_serialPort != null && _serialPort.IsOpen)
+                try
                 {
-                    _serialPort.DataReceived -= OnDataReceived;
-                    _serialPort.Close();
-                    System.Diagnostics.Debug.WriteLine($"Serial port {_config.PortName} closed");
+                    StopSimulation();
+
+                    if (_serialPort != null && _serialPort.IsOpen)
+                    {
+                        _serialPort.DataReceived -= OnDataReceived;
+                        _serialPort.Close();
+                        System.Diagnostics.Debug.WriteLine($"Serial port {_config.PortName} closed");
+                    }
+                    _isSimulationMode = false;
                 }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error closing serial port: {ex.Message}");
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error closing serial port: {ex.Message}");
+                }
             }
         }
 
         private void StartSimulation()
         {
+            if (_disposed) return;
+
             System.Diagnostics.Debug.WriteLine("Starting weight simulation for testing...");
-            _simulationTimer = new Timer(SimulateWeightReading, null, TimeSpan.Zero, TimeSpan.FromSeconds(2));
+            _isSimulationMode = true;
+
+            try
+            {
+                _simulationTimer = new Timer(SimulateWeightReading, null, TimeSpan.Zero, TimeSpan.FromSeconds(2));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to start simulation: {ex.Message}");
+                _isSimulationMode = false;
+            }
         }
 
         private void StopSimulation()
@@ -158,6 +272,8 @@ namespace Weighbridge.Services
 
         private void SimulateWeightReading(object state)
         {
+            if (_disposed) return;
+
             try
             {
                 var random = new Random();
@@ -184,31 +300,39 @@ namespace Weighbridge.Services
 
         private void OnDataReceived(object sender, SerialDataReceivedEventArgs e)
         {
+            if (_disposed) return;
+
             try
             {
-                SerialPort sp = (SerialPort)sender;
+                if (sender is not SerialPort sp) return;
+
                 string indata = sp.ReadExisting();
-                _serialDataBuffer.Append(indata);
 
-                string bufferString = _serialDataBuffer.ToString();
-                // Look for any newline character (\n) or carriage return (\r)
-                int newlineIndex;
-                while ((newlineIndex = bufferString.IndexOfAny(new char[] { '\r', '\n' })) >= 0)
+                lock (_lock)
                 {
-                    string line = bufferString.Substring(0, newlineIndex).Trim();
-                    bufferString = bufferString.Substring(newlineIndex + 1);
-                    // If the next character is also a newline character, remove it as well (to handle \r\n)
-                    if (bufferString.Length > 0 && (bufferString[0] == '\r' || bufferString[0] == '\n'))
-                    {
-                        bufferString = bufferString.Substring(1);
-                    }
+                    _serialDataBuffer.Append(indata);
 
-                    if (!string.IsNullOrWhiteSpace(line))
+                    string bufferString = _serialDataBuffer.ToString();
+                    // Look for any newline character (\n) or carriage return (\r)
+                    int newlineIndex;
+                    while ((newlineIndex = bufferString.IndexOfAny(new char[] { '\r', '\n' })) >= 0)
                     {
-                        ProcessWeightData(line);
+                        string line = bufferString.Substring(0, newlineIndex).Trim();
+                        bufferString = bufferString.Substring(newlineIndex + 1);
+
+                        // If the next character is also a newline character, remove it as well (to handle \r\n)
+                        if (bufferString.Length > 0 && (bufferString[0] == '\r' || bufferString[0] == '\n'))
+                        {
+                            bufferString = bufferString.Substring(1);
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(line))
+                        {
+                            ProcessWeightData(line);
+                        }
                     }
+                    _serialDataBuffer = new StringBuilder(bufferString);
                 }
-                _serialDataBuffer = new StringBuilder(bufferString);
             }
             catch (Exception ex)
             {
@@ -218,6 +342,8 @@ namespace Weighbridge.Services
 
         private void ProcessWeightData(string line)
         {
+            if (_disposed) return;
+
             try
             {
                 System.Diagnostics.Debug.WriteLine($"Processing weight data: '{line}'");
@@ -225,7 +351,13 @@ namespace Weighbridge.Services
                 // Fire the raw data event for the settings page preview
                 RawDataReceived?.Invoke(this, line);
 
-                var weightReading = _parserService.Parse(line, _config.RegexString);
+                WeighbridgeConfig configCopy;
+                lock (_lock)
+                {
+                    configCopy = _config; // Get a reference under lock
+                }
+
+                var weightReading = _parserService.Parse(line, configCopy.RegexString);
                 if (weightReading != null)
                 {
                     System.Diagnostics.Debug.WriteLine($"Parsed weight: {weightReading.Weight} {weightReading.Unit}");
@@ -235,23 +367,31 @@ namespace Weighbridge.Services
 
                     // Check for stability
                     bool isStable = false;
-                    if (_config.StabilityEnabled)
+                    if (configCopy.StabilityEnabled)
                     {
-                        if (!string.IsNullOrEmpty(_config.StabilityRegex))
+                        if (!string.IsNullOrEmpty(configCopy.StabilityRegex))
                         {
-                            isStable = Regex.IsMatch(line, _config.StabilityRegex);
+                            isStable = Regex.IsMatch(line, configCopy.StabilityRegex);
                         }
                         else
                         {
-                            isStable = IsWeightStable((double)weightReading.Weight);
+                            isStable = IsWeightStable((double)weightReading.Weight, configCopy.StableTime);
                         }
                     }
                     StabilityChanged?.Invoke(this, isStable);
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"Failed to parse weight from: '{line}' using regex: '{_config.RegexString}'");
+                    System.Diagnostics.Debug.WriteLine($"Failed to parse weight from: '{line}' using regex: '{configCopy.RegexString}'");
                 }
+            }
+            catch (RegexMatchTimeoutException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Regex timeout processing weight data: {ex.Message}");
+            }
+            catch (ArgumentException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Invalid regex processing weight data: {ex.Message}");
             }
             catch (Exception ex)
             {
@@ -259,51 +399,99 @@ namespace Weighbridge.Services
             }
         }
 
-        private bool IsWeightStable(double newWeight)
+        private bool IsWeightStable(double newWeight, double stableTime)
         {
-            recentWeights.Add(newWeight);
-            if (recentWeights.Count > windowSize)
-                recentWeights.RemoveAt(0);
-
-            if (recentWeights.Count < windowSize)
-                return false; // not enough data yet
-
-            double max = double.MinValue, min = double.MaxValue;
-            foreach (var w in recentWeights)
+            lock (_lock)
             {
-                if (w > max) max = w;
-                if (w < min) min = w;
+                _recentWeights.Add(newWeight);
+                if (_recentWeights.Count > WindowSize)
+                    _recentWeights.RemoveAt(0);
+
+                if (_recentWeights.Count < WindowSize)
+                    return false; // not enough data yet
+
+                double max = double.MinValue, min = double.MaxValue;
+                foreach (var w in _recentWeights)
+                {
+                    if (w > max) max = w;
+                    if (w < min) min = w;
+                }
+
+                bool inTolerance = (max - min) <= Tolerance;
+
+                if (inTolerance)
+                {
+                    if (_stabilityStart == null)
+                        _stabilityStart = DateTime.Now;
+
+                    if ((DateTime.Now - _stabilityStart.Value).TotalSeconds >= stableTime)
+                        return true;
+                }
+                else
+                {
+                    _stabilityStart = null; // reset timer if out of tolerance
+                }
+
+                return false;
             }
-
-            bool inTolerance = (max - min) <= tolerance;
-
-            if (inTolerance)
-            {
-                if (stabilityStart == DateTime.MinValue)
-                    stabilityStart = DateTime.Now;
-
-                if ((DateTime.Now - stabilityStart).TotalSeconds >= _config.StableTime)
-                    return true;
-            }
-            else
-            {
-                stabilityStart = DateTime.MinValue; // reset timer if out of tolerance
-            }
-
-            return false;
         }
 
         public string[] GetAvailablePorts()
         {
             try
             {
-                return SerialPort.GetPortNames();
+                var ports = SerialPort.GetPortNames();
+                return ports.Length > 0 ? ports : new string[] { "COM1", "COM2", "COM3", "COM4" };
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error getting available ports: {ex.Message}");
                 return new string[] { "COM1", "COM2", "COM3", "COM4" }; // Return some defaults
             }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed && disposing)
+            {
+                lock (_lock)
+                {
+                    try
+                    {
+                        StopSimulation();
+
+                        if (_serialPort != null)
+                        {
+                            if (_serialPort.IsOpen)
+                            {
+                                _serialPort.DataReceived -= OnDataReceived;
+                                _serialPort.Close();
+                            }
+                            _serialPort.Dispose();
+                            _serialPort = null;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error during disposal: {ex.Message}");
+                    }
+                    finally
+                    {
+                        _disposed = true;
+                    }
+                }
+            }
+        }
+
+        ~WeighbridgeService()
+        {
+            Dispose(false);
         }
     }
 }
