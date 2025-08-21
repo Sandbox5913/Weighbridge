@@ -36,7 +36,11 @@ public static class MauiProgram
 
         // Register services
         builder.Services.AddSingleton<WeightParserService>();
-        builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
+        builder.Services.AddSingleton<IDatabaseService>(provider =>
+        {
+            var connectionFactory = provider.GetRequiredService<IDbConnectionFactory>();
+            return new DatabaseService(connectionFactory, provider); // Pass the provider itself
+        });
         builder.Services.AddSingleton<IAuditLogRepository, AuditLogRepository>(); // DatabaseService now takes IDbConnectionFactory
         builder.Services.AddSingleton<IWeighbridgeService, WeighbridgeService>();
         builder.Services.AddSingleton<IDocketService, DocketService>();
@@ -47,7 +51,11 @@ public static class MauiProgram
             var userService = provider.GetRequiredService<IUserService>();
             return new AuditService(auditLogRepo, () => userService.CurrentUser);
         });
-        builder.Services.AddSingleton<IUserService, UserService>();
+        builder.Services.AddSingleton<IUserService, UserService>(provider =>
+        {
+            var dbService = provider.GetRequiredService<IDatabaseService>();
+            return new UserService(dbService, provider); // Pass the provider itself
+        });
         builder.Services.AddTransient<INavigationService, NavigationService>();
 
         // Register ViewModels

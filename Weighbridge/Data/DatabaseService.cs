@@ -7,17 +7,20 @@ using Dapper;
 using Weighbridge.Models;
 using Weighbridge.Services;
 using System.Diagnostics;
-
+using Microsoft.Extensions.DependencyInjection; // Add this using statement
+using System.Text.Json;
 namespace Weighbridge.Data
 {
+
     public class DatabaseService : IDatabaseService
     {
         private readonly IDbConnectionFactory _connectionFactory;
-        private readonly IAuditService _auditService;
+        private readonly IServiceProvider _serviceProvider; // Changed from IAuditService
 
-        public DatabaseService(IDbConnectionFactory connectionFactory)
+        public DatabaseService(IDbConnectionFactory connectionFactory, IServiceProvider serviceProvider) // Changed constructor
         {
             _connectionFactory = connectionFactory;
+            _serviceProvider = serviceProvider; // Changed assignment
         }
 
         public async Task InitializeAsync()
@@ -278,19 +281,37 @@ namespace Weighbridge.Data
 
         public async Task<int> SaveItemAsync<T>(T item) where T : IEntity
         {
+            var auditService = _serviceProvider.GetRequiredService<IAuditService>();
+
             using (IDbConnection db = _connectionFactory.CreateConnection())
             {
                 if (item.Id != 0)
                 {
                     // UPDATE
                     string tableName = GetTableName<T>();
+                    var originalItem = await db.QueryFirstOrDefaultAsync<T>($"SELECT * FROM {tableName} WHERE Id = @Id", new { Id = item.Id });
+
                     var properties = typeof(T).GetProperties().Where(p => p.Name != "Id" && p.CanWrite);
                     string setClause = string.Join(", ", properties.Select(p => $"{p.Name} = @{p.Name}"));
                     string sql = $"UPDATE {tableName} SET {setClause} WHERE Id = @Id;";
                     int rowsAffected = await db.ExecuteAsync(sql, item);
-                    if (rowsAffected > 0)
+
+                    if (rowsAffected > 0 && originalItem != null)
                     {
-                        await _auditService.LogActionAsync("Updated", typeof(T).Name, item.Id, $"{typeof(T).Name} with ID: {item.Id} updated.");
+                        var changes = new Dictionary<string, object>();
+                        foreach (var prop in properties)
+                        {
+                            var oldValue = prop.GetValue(originalItem);
+                            var newValue = prop.GetValue(item);
+                            if (!Equals(oldValue, newValue))
+                            {
+                                changes[prop.Name] = new { Old = oldValue, New = newValue };
+                            }
+                        }
+                        if (changes.Any())
+                        {
+                            await auditService.LogActionAsync("Updated", typeof(T).Name, item.Id, JsonSerializer.Serialize(changes));
+                        }
                     }
                     return rowsAffected;
                 }
@@ -304,17 +325,19 @@ namespace Weighbridge.Data
                     string sql = $"INSERT INTO {tableName} ({columns}) VALUES ({values}); SELECT last_insert_rowid();"; // For SQLite
                     int newId = await db.ExecuteScalarAsync<int>(sql, item);
                     item.Id = newId; // Set the ID on the item object
-                    await _auditService.LogActionAsync("Created", typeof(T).Name, item.Id, $"New {typeof(T).Name} created with ID: {item.Id}");
+                    await auditService.LogActionAsync("Created", typeof(T).Name, item.Id, $"New {typeof(T).Name} created with ID: {item.Id}");
                     return 1; // Return 1 for successful insert
                 }
             }
         }
+
         public async Task<int> DeleteItemAsync<T>(T item)
         {
+            var auditService = _serviceProvider.GetRequiredService<IAuditService>();
+
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
 
-            // Get the Id property value using reflection
             var idProperty = typeof(T).GetProperty("Id");
             if (idProperty == null)
                 throw new InvalidOperationException($"Type {typeof(T).Name} does not have an Id property");
@@ -325,17 +348,21 @@ namespace Weighbridge.Data
 
             using (IDbConnection db = _connectionFactory.CreateConnection())
             {
-                // Use square brackets to safely quote the table name
                 string tableName = GetTableName<T>();
-                int rowsAffected = await db.ExecuteAsync($"DELETE FROM [{tableName}] WHERE Id = @Id", new { Id = idValue });
-                if (rowsAffected > 0)
+                var itemToDelete = await db.QueryFirstOrDefaultAsync<T>($"SELECT * FROM {tableName} WHERE Id = @Id", new { Id = idValue });
+
+                if (itemToDelete != null)
                 {
-                    await _auditService.LogActionAsync("Deleted", typeof(T).Name, (int)idValue, $"{typeof(T).Name} with ID: {idValue} deleted.");
+                    int rowsAffected = await db.ExecuteAsync($"DELETE FROM [{tableName}] WHERE Id = @Id", new { Id = idValue });
+                    if (rowsAffected > 0)
+                    {
+                        await auditService.LogActionAsync("Deleted", typeof(T).Name, (int)idValue, JsonSerializer.Serialize(itemToDelete));
+                    }
+                    return rowsAffected;
                 }
-                return rowsAffected;
+                return 0; // Item not found
             }
         }
-  
 
         public async Task<Docket> GetInProgressDocketAsync(int vehicleId)
         {

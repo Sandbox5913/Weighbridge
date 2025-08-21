@@ -6,17 +6,18 @@ using System.Diagnostics;
 public class UserService : IUserService
 {
     private readonly IDatabaseService _databaseService;
-    private readonly IAuditService _auditService;
+    private readonly IServiceProvider _serviceProvider; // Changed from IAuditService
 
     public User CurrentUser { get; private set; }
     public event Action UserChanged;
 
 
-    public UserService(IDatabaseService databaseService, IAuditService auditService)
+    public UserService(IDatabaseService databaseService, IServiceProvider serviceProvider) // Changed constructor
     {
         _databaseService = databaseService;
-        _auditService = auditService;
+        _serviceProvider = serviceProvider; // Changed assignment
     }
+
 
     public async Task<User> LoginAsync(string username, string password)
     {
@@ -44,7 +45,9 @@ public class UserService : IUserService
 
         if (loggedOutUser != null)
         {
-            await _auditService.LogActionAsync("Logged Out", "User", loggedOutUser.Id, $"User {loggedOutUser.Username} logged out.");
+            // Resolve IAuditService here, only when needed
+            var auditService = _serviceProvider.GetRequiredService<IAuditService>();
+            await auditService.LogActionAsync("Logged Out", "User", loggedOutUser.Id, $"User {loggedOutUser.Username} logged out.");
         }
     }
 }
