@@ -217,12 +217,22 @@ namespace Weighbridge.ViewModels
             UpdateTareCommand = new Command(async () => await ExecuteSafelyAsync(OnUpdateTareClickedAsync));
             ZeroCommand = new AsyncRelayCommand(OnZeroCommandExecutedAsync, () => IsWeightStable);
         }
-
         private bool CanExecuteWeightCaptureCommands()
         {
-            System.Diagnostics.Debug.WriteLine($"CanExecuteWeightCaptureCommands: _weighbridgeService.IsScaleAtZero = {_weighbridgeService.IsScaleAtZero}, _isRegulatoryZeroConfirmed = {_isRegulatoryZeroConfirmed}, RequireManualZeroConfirmation = {_weighbridgeService.RequireManualZeroConfirmation}, BypassZeroRequirement = {_weighbridgeService.BypassZeroRequirement}");
-            // Allow if zero requirement is bypassed, OR (scale is at zero AND (manual zero confirmation is not required OR it is confirmed))
-            return _weighbridgeService.BypassZeroRequirement || (_weighbridgeService.IsScaleAtZero && (_weighbridgeService.RequireManualZeroConfirmation ? _isRegulatoryZeroConfirmed : true));
+            // To capture any weight, the scale must first be stable.
+            if (!IsWeightStable)
+            {
+                return false;
+            }
+
+            // If the zero requirement is bypassed in settings, being stable is sufficient.
+            if (_weighbridgeService.BypassZeroRequirement)
+            {
+                return true;
+            }
+
+            // Otherwise, we require that the "ZERO" button was successfully pressed for this transaction.
+            return _isRegulatoryZeroConfirmed;
         }
 
         private void OnScaleZeroStatusChanged(object? sender, bool isZero)
@@ -431,6 +441,8 @@ namespace Weighbridge.ViewModels
             }
         }
 
+
+
         private void OnDataReceived(object? sender, WeightReading weightReading)
         {
             if (_isDisposed) return;
@@ -466,7 +478,11 @@ namespace Weighbridge.ViewModels
                         StabilityStatus = isStable ? "STABLE" : "UNSTABLE";
                         StabilityColor = isStable ? Colors.Green : Colors.Red;
                         StabilityStatusColour = isStable ? Colors.Green : Colors.Red;
-                        (ZeroCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged(); // Update command status
+                        (ZeroCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+
+                        // Add these two lines to update the weigh-in and weigh-out buttons
+                        (ToYardCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+                        (SaveAndPrintCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
                     }
                 }
                 catch (Exception ex)
@@ -536,9 +552,10 @@ namespace Weighbridge.ViewModels
                     return;
                 }
 
+                // Add this check to prevent creating a new docket when one is already open
                 if (await HandleInProgressDocketWarningAsync(vehicle))
                 {
-                    return; // User chose to continue existing docket
+                    return; // User chose to continue with the existing docket, so we stop here.
                 }
 
                 await ProcessToYardActionAsync(vehicle);
@@ -759,6 +776,9 @@ namespace Weighbridge.ViewModels
                 var docket = await _databaseService.GetItemAsync<Docket>(LoadDocketId);
                 if (docket != null)
                 {
+                    // Re-fetch and assign the original entrance weight from the database
+                    EntranceWeight = docket.EntranceWeight.ToString("F2");
+
                     docket.ExitWeight = decimal.TryParse(LiveWeight, NumberStyles.Any, CultureInfo.InvariantCulture, out var exit) ? exit : 0;
                     docket.NetWeight = Math.Abs(docket.EntranceWeight - docket.ExitWeight);
                     docket.Timestamp = DateTime.Now;
@@ -772,6 +792,7 @@ namespace Weighbridge.ViewModels
                     docket.TransportId = SelectedTransport?.Id;
                     docket.DriverId = SelectedDriver?.Id;
                     docket.TransactionType = GetTransactionTypeFromCurrentMode();
+                    
 
                     await _databaseService.SaveItemAsync(docket);
                     await PrintDocketAsync(docket, vehicle);
@@ -912,6 +933,7 @@ namespace Weighbridge.ViewModels
             TareWeight = string.Empty;
             VehicleRegistration = string.Empty;
             SelectedVehicle = null;
+
             SelectedSourceSite = null;
             SelectedDestinationSite = null;
             SelectedItem = null;

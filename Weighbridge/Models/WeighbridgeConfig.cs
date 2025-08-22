@@ -17,7 +17,7 @@ namespace Weighbridge.Models
         public string? ZeroString { get; set; } = "ZERO";
         public double ZeroTolerance { get; set; } = 0.1; // Default value
         public double RegulatoryZeroTolerance { get; set; } = 0.01; // New regulatory zero tolerance
-        public bool RequireManualZeroConfirmation { get; set; } = true;
+        public bool RequireManualZeroConfirmation { get; set; } = false;
         public bool BypassZeroRequirement { get; set; } = true;
     }
 }
