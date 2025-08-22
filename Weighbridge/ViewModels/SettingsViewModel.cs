@@ -37,6 +37,15 @@ namespace Weighbridge.ViewModels
         private string _stabilityRegex;
 
         [ObservableProperty]
+        private bool _useZeroStringDetection;
+
+        [ObservableProperty]
+        private string _zeroString;
+
+        [ObservableProperty]
+        private double _zeroTolerance; // New property
+
+        [ObservableProperty]
         private string _serialOutput;
 
         public SettingsViewModel(IWeighbridgeService weighbridgeService, IUserService userService, INavigationService navigationService)
@@ -69,6 +78,9 @@ namespace Weighbridge.ViewModels
             StabilityEnabled = Preferences.Get("StabilityEnabled", true);
             StableTime = Preferences.Get("StableTime", "3");
             StabilityRegex = Preferences.Get("StabilityRegex", "");
+            UseZeroStringDetection = Preferences.Get("UseZeroStringDetection", false);
+            ZeroString = Preferences.Get("ZeroString", "ZERO");
+            ZeroTolerance = Preferences.Get("ZeroTolerance", 0.1); // Load new property
         }
 
         [RelayCommand]
@@ -93,7 +105,10 @@ namespace Weighbridge.ViewModels
                 RegexString = RegexString,
                 StabilityEnabled = StabilityEnabled,
                 StableTime = double.Parse(StableTime),
-                StabilityRegex = StabilityRegex
+                StabilityRegex = StabilityRegex,
+                UseZeroStringDetection = UseZeroStringDetection,
+                ZeroString = ZeroString,
+                ZeroTolerance = ZeroTolerance // Add this line
             };
 
             Preferences.Set("PortName", config.PortName);
@@ -102,6 +117,9 @@ namespace Weighbridge.ViewModels
             Preferences.Set("StabilityEnabled", config.StabilityEnabled);
             Preferences.Set("StableTime", config.StableTime.ToString());
             Preferences.Set("StabilityRegex", config.StabilityRegex);
+            Preferences.Set("UseZeroStringDetection", config.UseZeroStringDetection);
+            Preferences.Set("ZeroString", config.ZeroString);
+            Preferences.Set("ZeroTolerance", config.ZeroTolerance); // Add this line
 
             _weighbridgeService.Configure(config);
 

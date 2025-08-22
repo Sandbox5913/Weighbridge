@@ -12,6 +12,8 @@ using Weighbridge.Models;
 using Weighbridge.Pages;
 using Weighbridge.Services;
 using Weighbridge.ViewModels;
+using FluentValidation;
+using Weighbridge.Validation;
 
 namespace Weighbridge;
 
@@ -32,6 +34,17 @@ public static class MauiProgram
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
+
+        // Add FluentValidation
+        builder.Services.AddValidatorsFromAssemblyContaining<LoginValidator>();
+        builder.Services.AddTransient<IValidator<Customer>, CustomerValidator>();
+        builder.Services.AddTransient<IValidator<Driver>, DriverValidator>();
+        builder.Services.AddTransient<IValidator<User>, UserValidator>();
+        builder.Services.AddTransient<IValidator<Item>, ItemValidator>();
+        builder.Services.AddTransient<IValidator<Site>, SiteValidator>();
+        builder.Services.AddTransient<IValidator<Transport>, TransportValidator>();
+        builder.Services.AddTransient<IValidator<Vehicle>, VehicleValidator>();
+        builder.Services.AddTransient<IValidator<UserPageAccess>, UserPageAccessValidator>();
 
         // Register services
         builder.Services.AddSingleton<WeightParserService>();
@@ -75,11 +88,17 @@ public static class MauiProgram
         builder.Services.AddTransient<CustomerManagementViewModel>();
         builder.Services.AddTransient<DriverManagementViewModel>();
         builder.Services.AddTransient<LoginViewModel>();
+        builder.Services.AddTransient<IValidator<LoginViewModel>, LoginValidator>();
         builder.Services.AddTransient<MainFormSettingsViewModel>();
         builder.Services.AddTransient<UserManagementViewModel>();
         builder.Services.AddTransient<UserPageAccessManagementViewModel>();
         builder.Services.AddTransient<SettingsViewModel>();
         builder.Services.AddTransient<AuditLogViewModel>();
+        builder.Services.AddTransient<MaterialManagementViewModel>();
+        builder.Services.AddTransient<SiteManagementViewModel>();
+        builder.Services.AddTransient<TransportManagementViewModel>();
+        builder.Services.AddTransient<VehicleManagementViewModel>();
+        builder.Services.AddTransient<UserPageAccessManagementViewModel>();
 
         builder.Services.AddTransient<ReportsViewModel>();
 

@@ -1,61 +1,95 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Weighbridge.Models;
 using Weighbridge.Services;
+using FluentValidation;
+using FluentValidation.Results;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Weighbridge.ViewModels
 {
-    public class CustomerManagementViewModel : INotifyPropertyChanged
+    public partial class CustomerManagementViewModel : ObservableValidator
     {
         private readonly IDatabaseService _databaseService;
+        private readonly IValidator<Customer> _customerValidator;
+
+        [ObservableProperty]
         private Customer? _selectedCustomer;
-        private string _customerName;
+
+        [ObservableProperty]
+        private string _customerName = string.Empty;
+
+        [ObservableProperty]
+        private ValidationResult? _validationErrors;
 
         public ObservableCollection<Customer> Customers { get; } = new();
-        public ICommand AddCustomerCommand { get; }
-        public ICommand UpdateCustomerCommand { get; }
-        public ICommand DeleteCustomerCommand { get; }
-        public ICommand ClearSelectionCommand { get; }
 
-        public CustomerManagementViewModel(IDatabaseService databaseService)
+        public CustomerManagementViewModel(IDatabaseService databaseService, IValidator<Customer> customerValidator)
         {
             _databaseService = databaseService;
-            AddCustomerCommand = new Command(async () => await AddCustomer());
-            UpdateCustomerCommand = new Command(async () => await UpdateCustomer(), () => SelectedCustomer != null);
-            DeleteCustomerCommand = new Command<Customer>(async (customer) => await DeleteCustomer(customer));
-            ClearSelectionCommand = new Command(ClearSelection);
+            _customerValidator = customerValidator;
 
             LoadCustomers();
         }
 
-        public Customer? SelectedCustomer
+        [RelayCommand]
+        private async Task AddCustomer()
         {
-            get => _selectedCustomer;
-            set
+            var customer = new Customer { Name = CustomerName.Trim() };
+            _validationErrors = await _customerValidator.ValidateAsync(customer);
+
+            if (_validationErrors.IsValid)
             {
-                if (_selectedCustomer != value)
-                {
-                    _selectedCustomer = value;
-                    OnPropertyChanged();
-                    CustomerName = _selectedCustomer?.Name ?? string.Empty;
-                    (UpdateCustomerCommand as Command)?.ChangeCanExecute();
-                }
+                await _databaseService.SaveItemAsync(customer);
+                await LoadCustomers();
+                ClearSelection();
+            }
+            else
+            {
+                // Optionally, show an alert or log errors
             }
         }
 
-        public string CustomerName
+        [RelayCommand(CanExecute = nameof(CanUpdateCustomer))]
+        private async Task UpdateCustomer()
         {
-            get => _customerName;
-            set
+            if (SelectedCustomer == null) return;
+
+            SelectedCustomer.Name = CustomerName.Trim();
+            _validationErrors = await _customerValidator.ValidateAsync(SelectedCustomer);
+
+            if (_validationErrors.IsValid)
             {
-                if (_customerName != value)
-                {
-                    _customerName = value;
-                    OnPropertyChanged();
-                }
+                await _databaseService.SaveItemAsync(SelectedCustomer);
+                await LoadCustomers();
+                ClearSelection();
             }
+            else
+            {
+                // Optionally, show an alert or log errors
+            }
+        }
+
+        private bool CanUpdateCustomer() => SelectedCustomer != null;
+
+        [RelayCommand]
+        private async Task DeleteCustomer(Customer customer)
+        {
+            if (customer != null)
+            {
+                // Show confirmation alert
+                await _databaseService.DeleteItemAsync(customer);
+                await LoadCustomers();
+            }
+        }
+
+        [RelayCommand]
+        private void ClearSelection()
+        {
+            SelectedCustomer = null;
+            CustomerName = string.Empty;
+            _validationErrors = null; // Clear validation errors on clear
         }
 
         public async Task LoadCustomers()
@@ -68,53 +102,10 @@ namespace Weighbridge.ViewModels
             }
         }
 
-        public async Task AddCustomer()
+        partial void OnSelectedCustomerChanged(Customer? value)
         {
-            if (string.IsNullOrWhiteSpace(CustomerName))
-            {
-                // Show alert
-                return;
-            }
-
-            var customer = new Customer { Name = CustomerName.Trim() };
-            await _databaseService.SaveItemAsync(customer);
-            await LoadCustomers();
-            ClearSelection();
-        }
-
-        public async Task UpdateCustomer()
-        {
-            if (SelectedCustomer == null || string.IsNullOrWhiteSpace(CustomerName))
-            {
-                // Show alert
-                return;
-            }
-
-            SelectedCustomer.Name = CustomerName.Trim();
-            await _databaseService.SaveItemAsync(SelectedCustomer);
-            await LoadCustomers();
-            ClearSelection();
-        }
-
-        public async Task DeleteCustomer(Customer customer)
-        {
-            if (customer != null)
-            {
-                // Show confirmation alert
-                await _databaseService.DeleteItemAsync(customer);
-                await LoadCustomers();
-            }
-        }
-
-        public void ClearSelection()
-        {
-            SelectedCustomer = null;
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            CustomerName = value?.Name ?? string.Empty;
+            ClearErrors(); // Clear validation errors when selection changes
         }
     }
 }

@@ -87,6 +87,28 @@
                             </StackLayout>
                         </StackLayout>
                         <StackLayout Spacing="16">
+                            <Label Text="ZERO STRING DETECTION" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                            <StackLayout Orientation="Horizontal" Spacing="8">
+                                <Label Text="Enable Zero String Detection" TextColor="White" VerticalOptions="Center"/>
+                                <Switch IsToggled="{Binding UseZeroStringDetection}" />
+                            </StackLayout>
+                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <Entry Text="{Binding ZeroString}" Placeholder="Enter Zero String (e.g., ZERO)" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
+                            </Border>
+                            <StackLayout Spacing="8">
+                                <Label Text="ZERO TOLERANCE (NUMERIC)" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
+                                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
+                                    <Entry Text="{Binding ZeroTolerance}" Placeholder="0.1" Keyboard="Numeric" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
+                                </Border>
+                            </StackLayout>
+                        </StackLayout>
+                        <StackLayout Spacing="16">
                             <Label Text="STABILITY DETECTION" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
                             <StackLayout Orientation="Horizontal" Spacing="8">
                                 <Label Text="Enable Stability Detection" TextColor="White" VerticalOptions="Center"/>

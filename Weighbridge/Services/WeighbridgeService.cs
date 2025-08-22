@@ -24,10 +24,25 @@ namespace Weighbridge.Services
         private const double Tolerance = 0.5;
         private DateTime? _stabilityStart = null;
         private bool _isSimulationMode = false;
+        private bool _isScaleAtZero = true; // Assume true initially
+
+        public bool IsScaleAtZero
+        {
+            get => _isScaleAtZero;
+            private set
+            {
+                if (_isScaleAtZero != value)
+                {
+                    _isScaleAtZero = value;
+                    ScaleZeroStatusChanged?.Invoke(this, _isScaleAtZero);
+                }
+            }
+        }
 
         public event EventHandler<WeightReading>? DataReceived;
         public event EventHandler<string>? RawDataReceived;
         public event EventHandler<bool>? StabilityChanged;
+        public event EventHandler<bool>? ScaleZeroStatusChanged;
 
         public bool IsSimulationMode => _isSimulationMode;
 
@@ -49,7 +64,10 @@ namespace Weighbridge.Services
                     RegexString = Preferences.Get("RegexString", @"(?<sign>[+-])?(?<num>\d+(?:\.\d+)?)[ ]*(?<unit>[a-zA-Z]{1,4})"),
                     StabilityEnabled = Preferences.Get("StabilityEnabled", true),
                     StableTime = ParseDoubleSafely(Preferences.Get("StableTime", "3.0"), 3.0),
-                    StabilityRegex = Preferences.Get("StabilityRegex", "")
+                    StabilityRegex = Preferences.Get("StabilityRegex", ""),
+                    UseZeroStringDetection = Preferences.Get("UseZeroStringDetection", false),
+                    ZeroString = Preferences.Get("ZeroString", "ZERO"),
+                    ZeroTolerance = ParseDoubleSafely(Preferences.Get("ZeroTolerance", "0.1"), 0.1)
                 };
 
                 ValidateConfiguration(config);
@@ -99,6 +117,19 @@ namespace Weighbridge.Services
         private double ParseDoubleSafely(string value, double defaultValue)
         {
             return double.TryParse(value, out double result) ? result : defaultValue;
+        }
+
+        private double GetDefaultZeroTolerance(string unit)
+        {
+            // Define default zero tolerances based on unit
+            // These values can be adjusted based on typical weighbridge precision
+            return unit.ToUpperInvariant() switch
+            {
+                "KG" => 0.1,
+                "LB" => 0.2,
+                "T" => 0.0001, // 0.1 kg in tonnes
+                _ => 0.1 // Default for unknown units
+            };
         }
 
         private void InitializeSerialPort()
@@ -358,6 +389,19 @@ namespace Weighbridge.Services
                 }
 
                 var weightReading = _parserService.Parse(line, configCopy.RegexString);
+                bool currentIsZero = false;
+                bool isStable = false; // Initialize isStable here
+
+                if (configCopy.UseZeroStringDetection && !string.IsNullOrEmpty(configCopy.ZeroString))
+                {
+                    currentIsZero = line.Trim().Equals(configCopy.ZeroString.Trim(), StringComparison.OrdinalIgnoreCase);
+                    if (currentIsZero)
+                    {
+                        // If zero string is detected, consider it stable
+                        isStable = true;
+                    }
+                }
+
                 if (weightReading != null)
                 {
                     System.Diagnostics.Debug.WriteLine($"Parsed weight: {weightReading.Weight} {weightReading.Unit}");
@@ -365,9 +409,16 @@ namespace Weighbridge.Services
                     // Fire the parsed data event for the main page
                     DataReceived?.Invoke(this, weightReading);
 
-                    // Check for stability
-                    bool isStable = false;
-                    if (configCopy.StabilityEnabled)
+                    // If not using zero string detection, or if zero string detection didn't find zero,
+                    // then check numerical zero tolerance.
+                    if (!configCopy.UseZeroStringDetection || !currentIsZero)
+                    {
+                        double zeroTolerance = configCopy.ZeroTolerance > 0 ? configCopy.ZeroTolerance : GetDefaultZeroTolerance(weightReading.Unit);
+                        currentIsZero = Math.Abs((double)weightReading.Weight) < zeroTolerance;
+                    }
+
+                    // Check for stability (only if not already determined by zero string)
+                    if (!isStable && configCopy.StabilityEnabled) // Only check if not already stable due to zero string
                     {
                         if (!string.IsNullOrEmpty(configCopy.StabilityRegex))
                         {
@@ -378,12 +429,20 @@ namespace Weighbridge.Services
                             isStable = IsWeightStable((double)weightReading.Weight, configCopy.StableTime);
                         }
                     }
-                    StabilityChanged?.Invoke(this, isStable);
                 }
-                else
+                else // weightReading is null
                 {
-                    System.Diagnostics.Debug.WriteLine($"Failed to parse weight from: '{line}' using regex: '{configCopy.RegexString}'");
+                    // If weight reading is null, but zero string detection is enabled and found zero,
+                    // then currentIsZero is already true and isStable is true.
+                    // Otherwise, it's not stable and not zero.
+                    if (!currentIsZero) // If zero string was not detected
+                    {
+                        isStable = false; // Not stable if no valid weight and no zero string
+                    }
                 }
+
+                IsScaleAtZero = currentIsZero; // Update the property, which will raise the event if changed
+                StabilityChanged?.Invoke(this, isStable); // Always invoke StabilityChanged
             }
             catch (RegexMatchTimeoutException ex)
             {

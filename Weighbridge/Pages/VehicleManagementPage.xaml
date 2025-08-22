@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:Weighbridge.ViewModels"
+             xmlns:models="clr-namespace:Weighbridge.Models"
+             x:DataType="viewmodels:VehicleManagementViewModel"
              x:Class="Weighbridge.Pages.VehicleManagementPage"
              Title="Vehicles"
              BackgroundColor="#0E0E0E">
@@ -18,24 +21,26 @@
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="8" />
                         </Border.StrokeShape>
-                        <Entry x:Name="vehicleEntry" Placeholder="Enter license number" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
+                        <Entry Placeholder="Enter license number" Text="{Binding LicenseNumber}" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
                     </Border>
+                    <Label Text="{Binding ValidationErrors.Errors[0].ErrorMessage}" IsVisible="{Binding ValidationErrors.Errors.Count}" TextColor="Red" FontSize="12" Margin="0,-10,0,0" />
                     <Label Text="TARE WEIGHT (KG)" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
                     <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="8" />
                         </Border.StrokeShape>
-                        <Entry x:Name="tareWeightEntry" Placeholder="Enter tare weight" Keyboard="Numeric" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
+                        <Entry Placeholder="Enter tare weight" Text="{Binding TareWeight}" Keyboard="Numeric" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
                     </Border>
+                    <Label Text="{Binding ValidationErrors.Errors[0].ErrorMessage}" IsVisible="{Binding ValidationErrors.Errors.Count}" TextColor="Red" FontSize="12" Margin="0,-10,0,0" />
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
-                        <Button Grid.Column="0" x:Name="addVehicleButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddVehicleClicked" />
-                        <Button Grid.Column="1" x:Name="updateVehicleButton" Text="UPDATE" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnUpdateVehicleClicked" IsEnabled="False" />
-                        <Button Grid.Column="2" Text="CLEAR" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" Clicked="OnClearVehicleClicked" />
+                        <Button Grid.Column="0" Text="ADD" Command="{Binding AddVehicleCommand}" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" />
+                        <Button Grid.Column="1" Text="UPDATE" Command="{Binding UpdateVehicleCommand}" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" />
+                        <Button Grid.Column="2" Text="CLEAR" Command="{Binding ClearSelectionCommand}" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" />
                     </Grid>
                     <Label Text="VEHICLE LIST" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
-                    <CollectionView x:Name="vehicleListView" SelectionMode="Single" SelectionChanged="OnVehicleSelected">
+                    <CollectionView ItemsSource="{Binding Vehicles}" SelectionMode="Single" SelectedItem="{Binding SelectedItem}">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="models:Vehicle">
                                 <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444" Margin="0,4">
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="8" />
@@ -43,7 +48,7 @@
                                     <Grid Padding="16,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
                                         <Ellipse Grid.Column="0" Fill="#00FF7F" WidthRequest="8" HeightRequest="8" VerticalOptions="Center" />
                                         <Label Grid.Column="1" Text="{Binding LicenseNumber}" TextColor="White" VerticalOptions="Center" FontSize="16" />
-                                        <Button Grid.Column="2" Text="DELETE" BackgroundColor="#FF4D4D" TextColor="White" CornerRadius="6" FontSize="12" CommandParameter="{Binding .}" Clicked="OnDeleteVehicleClicked" />
+                                        <Button Grid.Column="2" Text="DELETE" BackgroundColor="#FF4D4D" TextColor="White" CornerRadius="6" FontSize="12" Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:VehicleManagementViewModel}}, Path=DeleteVehicleCommand}" CommandParameter="{Binding .}" />
                                     </Grid>
                                 </Border>
                             </DataTemplate>

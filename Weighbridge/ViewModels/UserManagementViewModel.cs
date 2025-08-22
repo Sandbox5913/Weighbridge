@@ -1,108 +1,65 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Weighbridge.Models;
 using Weighbridge.Services;
 using BCrypt.Net;
+using FluentValidation;
+using FluentValidation.Results;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Weighbridge.ViewModels
 {
-    public class UserManagementViewModel : INotifyPropertyChanged
+    public partial class UserManagementViewModel : ObservableValidator
     {
         private readonly IDatabaseService _databaseService;
-        private ObservableCollection<User> _users;
-        private User _selectedUser;
-        private string _newUsername;
-        private string _newPassword;
+        private readonly IValidator<User> _userValidator;
+
+        [ObservableProperty]
+        private ObservableCollection<User> _users = new();
+
+        [ObservableProperty]
+        private User? _selectedUser;
+
+        [ObservableProperty]
+        private string _newUsername = string.Empty;
+
+        [ObservableProperty]
+        private string _newPassword = string.Empty;
+
+        [ObservableProperty]
         private bool _canEditDockets;
+
+        [ObservableProperty]
         private bool _canDeleteDockets;
+
+        [ObservableProperty]
         private bool _isAdmin;
 
-        public ObservableCollection<User> Users
-        {
-            get => _users;
-            set => SetProperty(ref _users, value);
-        }
+        [ObservableProperty]
+        private ValidationResult? _validationErrors;
 
-        public User SelectedUser
-        {
-            get => _selectedUser;
-            set
-            {
-                SetProperty(ref _selectedUser, value);
-                if (_selectedUser != null)
-                {
-                    NewUsername = _selectedUser.Username;
-                    CanEditDockets = _selectedUser.CanEditDockets;
-                    CanDeleteDockets = _selectedUser.CanDeleteDockets;
-                    IsAdmin = _selectedUser.IsAdmin;
-                }
-            }
-        }
-
-        public string NewUsername
-        {
-            get => _newUsername;
-            set => SetProperty(ref _newUsername, value);
-        }
-
-        public string NewPassword
-        {
-            get => _newPassword;
-            set => SetProperty(ref _newPassword, value);
-        }
-
-        public bool CanEditDockets
-        {
-            get => _canEditDockets;
-            set => SetProperty(ref _canEditDockets, value);
-        }
-
-        public bool CanDeleteDockets
-        {
-            get => _canDeleteDockets;
-            set => SetProperty(ref _canDeleteDockets, value);
-        }
-
-        public bool IsAdmin
-        {
-            get => _isAdmin;
-            set => SetProperty(ref _isAdmin, value);
-        }
-
-        public ICommand AddUserCommand { get; }
-        public ICommand UpdateUserCommand { get; }
-        public ICommand DeleteUserCommand { get; }
-
-        public UserManagementViewModel(IDatabaseService databaseService)
+        public UserManagementViewModel(IDatabaseService databaseService, IValidator<User> userValidator)
         {
             _databaseService = databaseService;
-            Users = new ObservableCollection<User>();
-            AddUserCommand = new Command(AddUser);
-            UpdateUserCommand = new Command(UpdateUser, () => SelectedUser != null);
-            DeleteUserCommand = new Command(DeleteUser, () => SelectedUser != null);
+            _userValidator = userValidator;
+
             LoadUsers();
         }
 
         private async void LoadUsers()
         {
-            var users = await _databaseService.GetItemsAsync<User>();
             Users.Clear();
+            var users = await _databaseService.GetItemsAsync<User>();
             foreach (var user in users)
             {
                 Users.Add(user);
             }
         }
 
-        private async void AddUser()
+        [RelayCommand]
+        private async Task AddUser()
         {
-            if (string.IsNullOrWhiteSpace(NewUsername) || string.IsNullOrWhiteSpace(NewPassword))
-            {
-                // Show error message
-                return;
-            }
-
             var user = new User
             {
                 Username = NewUsername,
@@ -113,17 +70,24 @@ namespace Weighbridge.ViewModels
                 IsAdmin = IsAdmin
             };
 
-            await _databaseService.SaveItemAsync(user);
-            LoadUsers();
-            ClearForm();
+            _validationErrors = await _userValidator.ValidateAsync(user);
+
+            if (_validationErrors.IsValid)
+            {
+                await _databaseService.SaveItemAsync(user);
+                LoadUsers();
+                ClearForm();
+            }
+            else
+            {
+                // Optionally, show an alert or log errors
+            }
         }
 
-        private async void UpdateUser()
+        [RelayCommand(CanExecute = nameof(CanUpdateUser))]
+        private async Task UpdateUser()
         {
-            if (SelectedUser == null)
-            {
-                return;
-            }
+            if (SelectedUser == null) return;
 
             SelectedUser.Username = NewUsername;
             if (!string.IsNullOrWhiteSpace(NewPassword))
@@ -135,12 +99,24 @@ namespace Weighbridge.ViewModels
             SelectedUser.CanDeleteDockets = CanDeleteDockets;
             SelectedUser.IsAdmin = IsAdmin;
 
-            await _databaseService.SaveItemAsync(SelectedUser);
-            LoadUsers();
-            ClearForm();
+            _validationErrors = await _userValidator.ValidateAsync(SelectedUser);
+
+            if (_validationErrors.IsValid)
+            {
+                await _databaseService.SaveItemAsync(SelectedUser);
+                LoadUsers();
+                ClearForm();
+            }
+            else
+            {
+                // Optionally, show an alert or log errors
+            }
         }
 
-        private async void DeleteUser()
+        private bool CanUpdateUser() => SelectedUser != null;
+
+        [RelayCommand(CanExecute = nameof(CanDeleteUser))]
+        private async Task DeleteUser()
         {
             if (SelectedUser == null)
             {
@@ -152,6 +128,9 @@ namespace Weighbridge.ViewModels
             ClearForm();
         }
 
+        private bool CanDeleteUser() => SelectedUser != null;
+
+        [RelayCommand]
         private void ClearForm()
         {
             SelectedUser = null;
@@ -160,24 +139,23 @@ namespace Weighbridge.ViewModels
             CanEditDockets = false;
             CanDeleteDockets = false;
             IsAdmin = false;
+            _validationErrors = null; // Clear validation errors on clear
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        partial void OnSelectedUserChanged(User? value)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        protected bool SetProperty<T>(ref T backingStore, T value, [CallerMemberName] string propertyName = "", Action onChanged = null)
-        {
-            if (EqualityComparer<T>.Default.Equals(backingStore, value))
-                return false;
-
-            backingStore = value;
-            onChanged?.Invoke();
-            OnPropertyChanged(propertyName);
-            return true;
+            if (value != null)
+            {
+                NewUsername = value.Username;
+                CanEditDockets = value.CanEditDockets;
+                CanDeleteDockets = value.CanDeleteDockets;
+                IsAdmin = value.IsAdmin;
+            }
+            else
+            {
+                ClearForm(); // Clear form when selection is cleared
+            }
+            ClearErrors(); // Clear validation errors when selection changes
         }
     }
 }

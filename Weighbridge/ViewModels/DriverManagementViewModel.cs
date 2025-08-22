@@ -1,61 +1,95 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Weighbridge.Models;
 using Weighbridge.Services;
+using FluentValidation;
+using FluentValidation.Results;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Weighbridge.ViewModels
 {
-    public class DriverManagementViewModel : INotifyPropertyChanged
+    public partial class DriverManagementViewModel : ObservableValidator
     {
         private readonly IDatabaseService _databaseService;
+        private readonly IValidator<Driver> _driverValidator;
+
+        [ObservableProperty]
         private Driver? _selectedDriver;
-        private string _driverName;
+
+        [ObservableProperty]
+        private string _driverName = string.Empty;
+
+        [ObservableProperty]
+        private ValidationResult? _validationErrors;
 
         public ObservableCollection<Driver> Drivers { get; } = new();
-        public ICommand AddDriverCommand { get; }
-        public ICommand UpdateDriverCommand { get; }
-        public ICommand DeleteDriverCommand { get; }
-        public ICommand ClearSelectionCommand { get; }
 
-        public DriverManagementViewModel(IDatabaseService databaseService)
+        public DriverManagementViewModel(IDatabaseService databaseService, IValidator<Driver> driverValidator)
         {
             _databaseService = databaseService;
-            AddDriverCommand = new Command(async () => await AddDriver());
-            UpdateDriverCommand = new Command(async () => await UpdateDriver(), () => SelectedDriver != null);
-            DeleteDriverCommand = new Command<Driver>(async (driver) => await DeleteDriver(driver));
-            ClearSelectionCommand = new Command(ClearSelection);
+            _driverValidator = driverValidator;
 
             LoadDrivers();
         }
 
-        public Driver? SelectedDriver
+        [RelayCommand]
+        private async Task AddDriver()
         {
-            get => _selectedDriver;
-            set
+            var driver = new Driver { Name = DriverName.Trim() };
+            _validationErrors = await _driverValidator.ValidateAsync(driver);
+
+            if (_validationErrors.IsValid)
             {
-                if (_selectedDriver != value)
-                {
-                    _selectedDriver = value;
-                    OnPropertyChanged();
-                    DriverName = _selectedDriver?.Name ?? string.Empty;
-                    (UpdateDriverCommand as Command)?.ChangeCanExecute();
-                }
+                await _databaseService.SaveItemAsync(driver);
+                await LoadDrivers();
+                ClearSelection();
+            }
+            else
+            {
+                // Optionally, show an alert or log errors
             }
         }
 
-        public string DriverName
+        [RelayCommand(CanExecute = nameof(CanUpdateDriver))]
+        private async Task UpdateDriver()
         {
-            get => _driverName;
-            set
+            if (SelectedDriver == null) return;
+
+            SelectedDriver.Name = DriverName.Trim();
+            _validationErrors = await _driverValidator.ValidateAsync(SelectedDriver);
+
+            if (_validationErrors.IsValid)
             {
-                if (_driverName != value)
-                {
-                    _driverName = value;
-                    OnPropertyChanged();
-                }
+                await _databaseService.SaveItemAsync(SelectedDriver);
+                await LoadDrivers();
+                ClearSelection();
             }
+            else
+            {
+                // Optionally, show an alert or log errors
+            }
+        }
+
+        private bool CanUpdateDriver() => SelectedDriver != null;
+
+        [RelayCommand]
+        private async Task DeleteDriver(Driver driver)
+        {
+            if (driver != null)
+            {
+                // Show confirmation alert
+                await _databaseService.DeleteItemAsync(driver);
+                await LoadDrivers();
+            }
+        }
+
+        [RelayCommand]
+        private void ClearSelection()
+        {
+            SelectedDriver = null;
+            DriverName = string.Empty;
+            _validationErrors = null; // Clear validation errors on clear
         }
 
         public async Task LoadDrivers()
@@ -68,50 +102,10 @@ namespace Weighbridge.ViewModels
             }
         }
 
-        public async Task AddDriver()
+        partial void OnSelectedDriverChanged(Driver? value)
         {
-            if (string.IsNullOrWhiteSpace(DriverName))
-            {
-                return;
-            }
-
-            var driver = new Driver { Name = DriverName.Trim() };
-            await _databaseService.SaveItemAsync(driver);
-            await LoadDrivers();
-            ClearSelection();
-        }
-
-        public async Task UpdateDriver()
-        {
-            if (SelectedDriver == null || string.IsNullOrWhiteSpace(DriverName))
-            {
-                return;
-            }
-
-            SelectedDriver.Name = DriverName.Trim();
-            await _databaseService.SaveItemAsync(SelectedDriver);
-            await LoadDrivers();
-            ClearSelection();
-        }
-
-        public async Task DeleteDriver(Driver driver)
-        {
-            if (driver != null)
-            {
-                await _databaseService.DeleteItemAsync(driver);
-                await LoadDrivers();
-            }
-        }
-
-        public void ClearSelection()
-        {
-            SelectedDriver = null;
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            DriverName = value?.Name ?? string.Empty;
+            ClearErrors(); // Clear validation errors when selection changes
         }
     }
 }

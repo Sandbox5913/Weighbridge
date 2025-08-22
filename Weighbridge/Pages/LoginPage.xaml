@@ -112,6 +112,13 @@
                         </Border>
                     </StackLayout>
 
+                    <!-- Validation Errors -->
+                    <Label Text="{Binding ValidationErrors}"
+                           TextColor="#FF6347" 
+                           FontSize="14" 
+                           HorizontalOptions="Center"
+                           Margin="0,0,0,10" />
+
                     <!-- Login Button -->
                     <Button Text="Sign In" 
                             Command="{Binding LoginCommand}" 

@@ -38,15 +38,11 @@ namespace Weighbridge.Tests
                 .Returns(_mockAuditService.Object);
 
             _databaseService = new DatabaseService(_connection, _mockServiceProvider.Object);
-            await _databaseService.InitializeAsync();
         }
 
-        [OneTimeTearDown]
+        [TearDown]
         public void Teardown()
         {
-            _connection.Execute("DELETE FROM Docket");
-            _connection.Execute("DELETE FROM Vehicle");
-            _connection.Execute("DELETE FROM Customer");
             _connection.Close();
             _connection.Dispose();
         }
@@ -56,6 +52,32 @@ namespace Weighbridge.Tests
         [Test]
         public async Task SaveItemAsync_NewDocket_ShouldInsert()
         {
+            // Manually create tables for this test
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Vehicles (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                LicenseNumber TEXT NOT NULL UNIQUE,
+                TareWeight REAL NOT NULL DEFAULT 0
+            );");
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Dockets (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                EntranceWeight REAL NOT NULL,
+                ExitWeight REAL NOT NULL,
+                NetWeight REAL NOT NULL,
+                VehicleId INTEGER,
+                SourceSiteId INTEGER,
+                DestinationSiteId INTEGER,
+                ItemId INTEGER,
+                CustomerId INTEGER,
+                TransportId INTEGER,
+                DriverId INTEGER,
+                Remarks TEXT,
+                Timestamp TEXT NOT NULL,
+                Status TEXT NOT NULL,
+                UpdatedAt TEXT,
+                TransactionType INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id)
+            );");
+
             var vehicle = new Vehicle { LicenseNumber = "TEST_VEHICLE_NEW" };
             await _databaseService.SaveItemAsync(vehicle);
 
@@ -81,6 +103,32 @@ namespace Weighbridge.Tests
         [Test]
         public async Task SaveItemAsync_ExistingDocket_ShouldUpdate()
         {
+            // Manually create tables for this test
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Vehicles (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                LicenseNumber TEXT NOT NULL UNIQUE,
+                TareWeight REAL NOT NULL DEFAULT 0
+            );");
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Dockets (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                EntranceWeight REAL NOT NULL,
+                ExitWeight REAL NOT NULL,
+                NetWeight REAL NOT NULL,
+                VehicleId INTEGER,
+                SourceSiteId INTEGER,
+                DestinationSiteId INTEGER,
+                ItemId INTEGER,
+                CustomerId INTEGER,
+                TransportId INTEGER,
+                DriverId INTEGER,
+                Remarks TEXT,
+                Timestamp TEXT NOT NULL,
+                Status TEXT NOT NULL,
+                UpdatedAt TEXT,
+                TransactionType INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id)
+            );");
+
             var vehicle = new Vehicle { LicenseNumber = "TEST_VEHICLE_UPDATE" };
             await _databaseService.SaveItemAsync(vehicle);
 
@@ -108,6 +156,32 @@ namespace Weighbridge.Tests
         [Test]
         public async Task GetItemAsync_ShouldReturnCorrectItem()
         {
+            // Manually create tables for this test
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Vehicles (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                LicenseNumber TEXT NOT NULL UNIQUE,
+                TareWeight REAL NOT NULL DEFAULT 0
+            );");
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Dockets (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                EntranceWeight REAL NOT NULL,
+                ExitWeight REAL NOT NULL,
+                NetWeight REAL NOT NULL,
+                VehicleId INTEGER,
+                SourceSiteId INTEGER,
+                DestinationSiteId INTEGER,
+                ItemId INTEGER,
+                CustomerId INTEGER,
+                TransportId INTEGER,
+                DriverId INTEGER,
+                Remarks TEXT,
+                Timestamp TEXT NOT NULL,
+                Status TEXT NOT NULL,
+                UpdatedAt TEXT,
+                TransactionType INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id)
+            );");
+
             var vehicle = new Vehicle { LicenseNumber = "TEST_VEHICLE_GET" };
             await _databaseService.SaveItemAsync(vehicle);
 
@@ -130,6 +204,27 @@ namespace Weighbridge.Tests
         [Test]
         public async Task GetItemAsync_ShouldReturnNullForNonExistentItem()
         {
+            // Manually create tables for this test
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Dockets (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                EntranceWeight REAL NOT NULL,
+                ExitWeight REAL NOT NULL,
+                NetWeight REAL NOT NULL,
+                VehicleId INTEGER,
+                SourceSiteId INTEGER,
+                DestinationSiteId INTEGER,
+                ItemId INTEGER,
+                CustomerId INTEGER,
+                TransportId INTEGER,
+                DriverId INTEGER,
+                Remarks TEXT,
+                Timestamp TEXT NOT NULL,
+                Status TEXT NOT NULL,
+                UpdatedAt TEXT,
+                TransactionType INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id)
+            );");
+
             var retrievedDocket = await _databaseService.GetItemAsync<Docket>(999);
              NUnit.Framework.Assert.That(retrievedDocket, Is.Null);
         }
@@ -137,6 +232,13 @@ namespace Weighbridge.Tests
         [Test]
         public async Task GetItemsAsync_ShouldReturnAllItems()
         {
+            // Manually create the Vehicles table for this test
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Vehicles (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                LicenseNumber TEXT NOT NULL UNIQUE,
+                TareWeight REAL NOT NULL DEFAULT 0
+            );");
+
             var vehicle1 = new Vehicle { LicenseNumber = "TEST1" };
             var vehicle2 = new Vehicle { LicenseNumber = "TEST2" };
             await _databaseService.SaveItemAsync(vehicle1);
@@ -153,6 +255,13 @@ namespace Weighbridge.Tests
         [Test]
         public async Task DeleteItemAsync_ShouldRemoveItem()
         {
+            // Manually create the Vehicles table for this test
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Vehicles (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                LicenseNumber TEXT NOT NULL UNIQUE,
+                TareWeight REAL NOT NULL DEFAULT 0
+            );");
+
             var vehicle = new Vehicle { LicenseNumber = "TEST-DELETE" };
             await _databaseService.SaveItemAsync(vehicle);
              NUnit.Framework.Assert.That(await _databaseService.GetItemAsync<Vehicle>(vehicle.Id), Is.Not.Null);
@@ -165,6 +274,32 @@ namespace Weighbridge.Tests
         [Test]
         public async Task GetInProgressDocketAsync_ShouldReturnOpenDocket()
         {
+            // Manually create tables for this test
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Vehicles (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                LicenseNumber TEXT NOT NULL UNIQUE,
+                TareWeight REAL NOT NULL DEFAULT 0
+            );");
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Dockets (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                EntranceWeight REAL NOT NULL,
+                ExitWeight REAL NOT NULL,
+                NetWeight REAL NOT NULL,
+                VehicleId INTEGER,
+                SourceSiteId INTEGER,
+                DestinationSiteId INTEGER,
+                ItemId INTEGER,
+                CustomerId INTEGER,
+                TransportId INTEGER,
+                DriverId INTEGER,
+                Remarks TEXT,
+                Timestamp TEXT NOT NULL,
+                Status TEXT NOT NULL,
+                UpdatedAt TEXT,
+                TransactionType INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id)
+            );");
+
             var vehicle = new Vehicle { LicenseNumber = "TEST_VEHICLE_INPROGRESS" };
             await _databaseService.SaveItemAsync(vehicle);
 
@@ -186,6 +321,32 @@ namespace Weighbridge.Tests
         [Test]
         public async Task GetInProgressDocketAsync_ShouldNotReturnClosedDocket()
         {
+            // Manually create tables for this test
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Vehicles (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                LicenseNumber TEXT NOT NULL UNIQUE,
+                TareWeight REAL NOT NULL DEFAULT 0
+            );");
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Dockets (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                EntranceWeight REAL NOT NULL,
+                ExitWeight REAL NOT NULL,
+                NetWeight REAL NOT NULL,
+                VehicleId INTEGER,
+                SourceSiteId INTEGER,
+                DestinationSiteId INTEGER,
+                ItemId INTEGER,
+                CustomerId INTEGER,
+                TransportId INTEGER,
+                DriverId INTEGER,
+                Remarks TEXT,
+                Timestamp TEXT NOT NULL,
+                Status TEXT NOT NULL,
+                UpdatedAt TEXT,
+                TransactionType INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id)
+            );");
+
             var vehicle = new Vehicle { LicenseNumber = "TEST_VEHICLE_CLOSED" };
             await _databaseService.SaveItemAsync(vehicle);
 
@@ -207,6 +368,32 @@ namespace Weighbridge.Tests
         [Test]
         public async Task GetInProgressDocketAsync_ShouldNotReturnDocketOutsideTimeWindow()
         {
+            // Manually create tables for this test
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Vehicles (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                LicenseNumber TEXT NOT NULL UNIQUE,
+                TareWeight REAL NOT NULL DEFAULT 0
+            );");
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Dockets (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                EntranceWeight REAL NOT NULL,
+                ExitWeight REAL NOT NULL,
+                NetWeight REAL NOT NULL,
+                VehicleId INTEGER,
+                SourceSiteId INTEGER,
+                DestinationSiteId INTEGER,
+                ItemId INTEGER,
+                CustomerId INTEGER,
+                TransportId INTEGER,
+                DriverId INTEGER,
+                Remarks TEXT,
+                Timestamp TEXT NOT NULL,
+                Status TEXT NOT NULL,
+                UpdatedAt TEXT,
+                TransactionType INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id)
+            );");
+
             var vehicle = new Vehicle { LicenseNumber = "TEST_VEHICLE_OLD" };
             await _databaseService.SaveItemAsync(vehicle);
 
@@ -227,6 +414,32 @@ namespace Weighbridge.Tests
         [Test]
         public async Task GetInProgressDocketAsync_ShouldReturnLatestOpenDocket()
         {
+            // Manually create tables for this test
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Vehicles (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                LicenseNumber TEXT NOT NULL UNIQUE,
+                TareWeight REAL NOT NULL DEFAULT 0
+            );");
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Dockets (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                EntranceWeight REAL NOT NULL,
+                ExitWeight REAL NOT NULL,
+                NetWeight REAL NOT NULL,
+                VehicleId INTEGER,
+                SourceSiteId INTEGER,
+                DestinationSiteId INTEGER,
+                ItemId INTEGER,
+                CustomerId INTEGER,
+                TransportId INTEGER,
+                DriverId INTEGER,
+                Remarks TEXT,
+                Timestamp TEXT NOT NULL,
+                Status TEXT NOT NULL,
+                UpdatedAt TEXT,
+                TransactionType INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id)
+            );");
+
             var vehicle = new Vehicle { LicenseNumber = "TEST_VEHICLE_LATEST" };
             await _databaseService.SaveItemAsync(vehicle);
 
@@ -258,6 +471,50 @@ namespace Weighbridge.Tests
         [Test]
         public async Task GetDocketViewModelsAsync_ShouldReturnCorrectlyMappedModels()
         {
+            // Manually create tables for this test
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Vehicles (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                LicenseNumber TEXT NOT NULL UNIQUE,
+                TareWeight REAL NOT NULL DEFAULT 0
+            );");
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Customers (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name TEXT NOT NULL UNIQUE
+            );");
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Sites (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name TEXT NOT NULL UNIQUE
+            );");
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Items (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name TEXT NOT NULL UNIQUE
+            );");
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Dockets (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                EntranceWeight REAL NOT NULL,
+                ExitWeight REAL NOT NULL,
+                NetWeight REAL NOT NULL,
+                VehicleId INTEGER,
+                SourceSiteId INTEGER,
+                DestinationSiteId INTEGER,
+                ItemId INTEGER,
+                CustomerId INTEGER,
+                TransportId INTEGER,
+                DriverId INTEGER,
+                Remarks TEXT,
+                Timestamp TEXT NOT NULL,
+                Status TEXT NOT NULL,
+                UpdatedAt TEXT,
+                TransactionType INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id),
+                FOREIGN KEY (SourceSiteId) REFERENCES Sites(Id),
+                FOREIGN KEY (DestinationSiteId) REFERENCES Sites(Id),
+                FOREIGN KEY (ItemId) REFERENCES Items(Id),
+                FOREIGN KEY (CustomerId) REFERENCES Customers(Id),
+                FOREIGN KEY (TransportId) REFERENCES Transports(Id),
+                FOREIGN KEY (DriverId) REFERENCES Drivers(Id)
+            );");
+
             var vehicle = new Vehicle { LicenseNumber = "VIEWMODELTEST" };
             var customer = new Customer { Name = "Test Customer" };
             await _databaseService.SaveItemAsync(vehicle);
@@ -285,6 +542,13 @@ namespace Weighbridge.Tests
         [Test]
         public void SaveItemAsync_ShouldThrowOnUniqueConstraintViolation()
         {
+            // Manually create the Vehicles table for this test
+            _connection.Execute(@"CREATE TABLE IF NOT EXISTS Vehicles (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                LicenseNumber TEXT NOT NULL UNIQUE,
+                TareWeight REAL NOT NULL DEFAULT 0
+            );");
+
             var vehicle1 = new Vehicle { LicenseNumber = "DUPLICATE" };
             var vehicle2 = new Vehicle { LicenseNumber = "DUPLICATE" };
 

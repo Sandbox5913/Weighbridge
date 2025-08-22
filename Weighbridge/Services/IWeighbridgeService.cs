@@ -13,5 +13,7 @@ namespace Weighbridge.Services
         WeighbridgeConfig GetConfig();
         string[] GetAvailablePorts();
         void Configure(WeighbridgeConfig config);
+        bool IsScaleAtZero { get; }
+        event EventHandler<bool> ScaleZeroStatusChanged;
     }
 }

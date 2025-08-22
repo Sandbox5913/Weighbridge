@@ -1,52 +1,38 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Windows.Input;
+using System.Threading.Tasks;
 using Weighbridge.Models;
 using Weighbridge.Services;
 using Weighbridge.Pages;
 using System.Diagnostics;
+using FluentValidation;
+using FluentValidation.Results;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Weighbridge.ViewModels
 {
-    public class UserPageAccessManagementViewModel : INotifyPropertyChanged
+    public partial class UserPageAccessManagementViewModel : ObservableValidator
     {
         private readonly IDatabaseService _databaseService;
-        private ObservableCollection<User> _users;
-        private User _selectedUser;
-        private ObservableCollection<PageAccessViewModel> _pages;
+        private readonly IValidator<UserPageAccess> _userPageAccessValidator;
 
-        public ObservableCollection<User> Users
-        {
-            get => _users;
-            set => SetProperty(ref _users, value);
-        }
+        [ObservableProperty]
+        private ObservableCollection<User> _users = new();
 
-        public User SelectedUser
-        {
-            get => _selectedUser;
-            set
-            {
-                SetProperty(ref _selectedUser, value);
-                LoadPageAccess();
-            }
-        }
+        [ObservableProperty]
+        private User? _selectedUser;
 
-        public ObservableCollection<PageAccessViewModel> Pages
-        {
-            get => _pages;
-            set => SetProperty(ref _pages, value);
-        }
+        [ObservableProperty]
+        private ObservableCollection<PageAccessViewModel> _pages = new();
 
-        public ICommand SaveCommand { get; }
+        [ObservableProperty]
+        private ValidationResult? _validationErrors;
 
-        public UserPageAccessManagementViewModel(IDatabaseService databaseService)
+        public UserPageAccessManagementViewModel(IDatabaseService databaseService, IValidator<UserPageAccess> userPageAccessValidator)
         {
             _databaseService = databaseService;
-            Users = new ObservableCollection<User>();
-            Pages = new ObservableCollection<PageAccessViewModel>();
-            SaveCommand = new Command(SavePageAccess);
+            _userPageAccessValidator = userPageAccessValidator;
             LoadUsers();
         }
 
@@ -60,6 +46,12 @@ namespace Weighbridge.ViewModels
             }
         }
 
+        partial void OnSelectedUserChanged(User? value)
+        {
+            LoadPageAccess();
+            ClearErrors(); // Clear validation errors when selection changes
+        }
+
         private async void LoadPageAccess()
         {
             if (SelectedUser == null)
@@ -68,22 +60,22 @@ namespace Weighbridge.ViewModels
             }
 
             var allPages = new[] {
-        nameof(CustomerManagementPage),
-        nameof(DriverManagementPage),
-        nameof(EditLoadPage),
-        nameof(LoadsPage),
-        nameof(LoginPage),
-        nameof(MainFormSettingsPage),
-        nameof(MaterialManagementPage),
-        nameof(PrintSettingsPage),
-        nameof(SettingsPage),
-        nameof(SiteManagementPage),
-        nameof(TransportManagementPage),
-        nameof(UserManagementPage),
-        nameof(UserPageAccessManagementPage),
-        nameof(VehicleManagementPage),
-        nameof(MainPage) // Added MainPage
-    };
+                nameof(CustomerManagementPage),
+                nameof(DriverManagementPage),
+                nameof(EditLoadPage),
+                nameof(LoadsPage),
+                nameof(LoginPage),
+                nameof(MainFormSettingsPage),
+                nameof(MaterialManagementPage),
+                nameof(PrintSettingsPage),
+                nameof(SettingsPage),
+                nameof(SiteManagementPage),
+                nameof(TransportManagementPage),
+                nameof(UserManagementPage),
+                nameof(UserPageAccessManagementPage),
+                nameof(VehicleManagementPage),
+                nameof(MainPage)
+            };
 
             Pages.Clear();
 
@@ -96,7 +88,6 @@ namespace Weighbridge.ViewModels
                     {
                         PageName = pageName,
                         HasAccess = true,
-                      
                     });
                 }
             }
@@ -116,54 +107,65 @@ namespace Weighbridge.ViewModels
             }
         }
 
-        private async void SavePageAccess()
+        [RelayCommand]
+        private async Task SavePageAccess()
         {
             if (SelectedUser == null || SelectedUser.IsAdmin)
             {
                 // Don't save page access for Admin users - they always have full access
                 if (SelectedUser?.IsAdmin == true)
                 {
-                    await App.Current.MainPage.DisplayAlert("Info", "Admin users automatically have access to all pages.", "OK");
+                    // TODO: Replace with a proper alert service
+                    Console.WriteLine("Info: Admin users automatically have access to all pages.");
                 }
                 return;
             }
 
-            var userPageAccess = await _databaseService.GetUserPageAccessAsync(SelectedUser.Id);
+            var userPageAccessesToSave = new List<UserPageAccess>();
+            var userPageAccessesToDelete = new List<UserPageAccess>();
+
+            var existingUserPageAccess = await _databaseService.GetUserPageAccessAsync(SelectedUser.Id);
 
             foreach (var page in Pages)
             {
-                var hasAccess = userPageAccess.Any(pa => pa.PageName == page.PageName);
-                if (page.HasAccess && !hasAccess)
+                var existingAccess = existingUserPageAccess.FirstOrDefault(pa => pa.PageName == page.PageName);
+
+                if (page.HasAccess && existingAccess == null)
                 {
-                    Debug.WriteLine($"[UserPageAccessManagementViewModel] Saving access for: {page.PageName}");
-                    await _databaseService.SaveUserPageAccessAsync(new UserPageAccess { UserId = SelectedUser.Id, PageName = page.PageName });
+                    // Add new access
+                    var newAccess = new UserPageAccess { UserId = SelectedUser.Id, PageName = page.PageName };
+                    _validationErrors = await _userPageAccessValidator.ValidateAsync(newAccess);
+                    if (_validationErrors.IsValid)
+                    {
+                        userPageAccessesToSave.Add(newAccess);
+                    }
+                    else
+                    {
+                        // TODO: Handle validation errors for individual page access items
+                        Console.WriteLine($"Validation error for {page.PageName}: {_validationErrors.Errors.First().ErrorMessage}");
+                        return; // Stop saving if any validation fails
+                    }
                 }
-                else if (!page.HasAccess && hasAccess)
+                else if (!page.HasAccess && existingAccess != null)
                 {
-                    Debug.WriteLine($"[UserPageAccessManagementViewModel] Deleting access for: {page.PageName}");
-                    var pageAccessToDelete = userPageAccess.First(pa => pa.PageName == page.PageName);
-                    await _databaseService.DeleteItemAsync(pageAccessToDelete);
+                    // Remove existing access
+                    userPageAccessesToDelete.Add(existingAccess);
                 }
             }
 
-            await App.Current.MainPage.DisplayAlert("Success", "Page access permissions updated successfully.", "OK");
-        }
-        public event PropertyChangedEventHandler PropertyChanged;
+            foreach (var upa in userPageAccessesToSave)
+            {
+                await _databaseService.SaveUserPageAccessAsync(upa);
+            }
 
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+            foreach (var upa in userPageAccessesToDelete)
+            {
+                await _databaseService.DeleteItemAsync(upa);
+            }
 
-        protected bool SetProperty<T>(ref T backingStore, T value, [CallerMemberName] string propertyName = "", System.Action onChanged = null)
-        {
-            if (System.Collections.Generic.EqualityComparer<T>.Default.Equals(backingStore, value))
-                return false;
-
-            backingStore = value;
-            onChanged?.Invoke();
-            OnPropertyChanged(propertyName);
-            return true;
+            // TODO: Replace with a proper alert service
+            Console.WriteLine("Success: Page access permissions updated successfully.");
+            LoadPageAccess(); // Reload to reflect changes
         }
     }
 }

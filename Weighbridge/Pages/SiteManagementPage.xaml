@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:Weighbridge.ViewModels"
+             xmlns:models="clr-namespace:Weighbridge.Models"
+             x:DataType="viewmodels:SiteManagementViewModel"
              x:Class="Weighbridge.Pages.SiteManagementPage"
              Title="Sites"
              BackgroundColor="#0E0E0E">
@@ -18,17 +21,18 @@
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="8" />
                         </Border.StrokeShape>
-                        <Entry x:Name="siteEntry" Placeholder="Enter site name" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
+                        <Entry Placeholder="Enter site name" Text="{Binding SiteName}" PlaceholderColor="#888" TextColor="White" BackgroundColor="Transparent" Margin="16,16"/>
                     </Border>
+                    <Label Text="{Binding ValidationErrors.Errors[0].ErrorMessage}" IsVisible="{Binding ValidationErrors.Errors.Count}" TextColor="Red" FontSize="12" Margin="0,-10,0,0" />
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
-                        <Button Grid.Column="0" x:Name="addSiteButton" Text="ADD" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnAddSiteClicked" />
-                        <Button Grid.Column="1" x:Name="updateSiteButton" Text="UPDATE" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" Clicked="OnUpdateSiteClicked" IsEnabled="False" />
-                        <Button Grid.Column="2" Text="CLEAR" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" Clicked="OnClearSiteClicked" />
+                        <Button Grid.Column="0" Text="ADD" Command="{Binding AddSiteCommand}" BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" />
+                        <Button Grid.Column="1" Text="UPDATE" Command="{Binding UpdateSiteCommand}" BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" />
+                        <Button Grid.Column="2" Text="CLEAR" Command="{Binding ClearSelectionCommand}" BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8" />
                     </Grid>
                     <Label Text="SITE LIST" TextColor="#CCCCCC" FontSize="12" FontAttributes="Bold" />
-                    <CollectionView x:Name="siteListView" SelectionMode="Single" SelectionChanged="OnSiteSelected">
+                    <CollectionView ItemsSource="{Binding Sites}" SelectionMode="Single" SelectedItem="{Binding SelectedItem}">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="models:Site">
                                 <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444" Margin="0,4">
                                     <Border.StrokeShape>
                                         <RoundRectangle CornerRadius="8" />
@@ -36,7 +40,7 @@
                                     <Grid Padding="16,12" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
                                         <Ellipse Grid.Column="0" Fill="#00FF7F" WidthRequest="8" HeightRequest="8" VerticalOptions="Center" />
                                         <Label Grid.Column="1" Text="{Binding Name}" TextColor="White" VerticalOptions="Center" FontSize="16" />
-                                        <Button Grid.Column="2" Text="DELETE" BackgroundColor="#FF4D4D" TextColor="White" CornerRadius="6" FontSize="12" CommandParameter="{Binding .}" Clicked="OnDeleteSiteClicked" />
+                                        <Button Grid.Column="2" Text="DELETE" BackgroundColor="#FF4D4D" TextColor="White" CornerRadius="6" FontSize="12" Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:SiteManagementViewModel}}, Path=DeleteSiteCommand}" CommandParameter="{Binding .}" />
                                     </Grid>
                                 </Border>
                             </DataTemplate>

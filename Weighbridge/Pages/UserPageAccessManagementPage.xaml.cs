@@ -1,12 +1,14 @@
+using Microsoft.Maui.Controls;
 using Weighbridge.ViewModels;
 
-namespace Weighbridge.Pages;
-
-public partial class UserPageAccessManagementPage : ContentPage
+namespace Weighbridge.Pages
 {
-    public UserPageAccessManagementPage(UserPageAccessManagementViewModel viewModel)
+    public partial class UserPageAccessManagementPage : ContentPage
     {
-        InitializeComponent();
-        BindingContext = viewModel;
+        public UserPageAccessManagementPage(UserPageAccessManagementViewModel viewModel)
+        {
+            InitializeComponent();
+            BindingContext = viewModel;
+        }
     }
 }

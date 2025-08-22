@@ -13,5 +13,8 @@ namespace Weighbridge.Models
         public bool StabilityEnabled { get; set; } = true;
         public double StableTime { get; set; } = 3.0;
         public string? StabilityRegex { get; set; }
+        public bool UseZeroStringDetection { get; set; } = false;
+        public string? ZeroString { get; set; } = "ZERO";
+        public double ZeroTolerance { get; set; } = 0.1; // Default value
     }
 }

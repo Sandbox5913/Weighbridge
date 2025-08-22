@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using Weighbridge.Models;
 using Weighbridge.Services;
 using Weighbridge.Pages;
+using CommunityToolkit.Mvvm.Input; // Added
 
 namespace Weighbridge.ViewModels
 {
@@ -196,8 +197,8 @@ namespace Weighbridge.ViewModels
         private void InitializeCommands()
         {
             SetWeighingModeCommand = new Command<WeighingMode>(SetWeighingMode);
-            ToYardCommand = new Command(async () => await ExecuteSafelyAsync(OnToYardClickedAsync));
-            SaveAndPrintCommand = new Command(async () => await ExecuteSafelyAsync(OnSaveAndPrintClickedAsync));
+            ToYardCommand = new AsyncRelayCommand(OnToYardClickedAsync, CanExecuteWeightCaptureCommands);
+            SaveAndPrintCommand = new AsyncRelayCommand(OnSaveAndPrintClickedAsync, CanExecuteWeightCaptureCommands);
             CancelDocketCommand = new Command(async () => await ExecuteSafelyAsync(OnCancelDocketClickedAsync));
             LoadVehiclesCommand = new Command(async () => await ExecuteSafelyAsync(() => LoadReferenceDataAsync<Vehicle>(Vehicles, _databaseService.GetItemsAsync<Vehicle>)));
             LoadSitesCommand = new Command(async () => await ExecuteSafelyAsync(() => LoadReferenceDataAsync<Site>(Sites, _databaseService.GetItemsAsync<Site>)));
@@ -207,6 +208,24 @@ namespace Weighbridge.ViewModels
             LoadDriversCommand = new Command(async () => await ExecuteSafelyAsync(() => LoadReferenceDataAsync<Driver>(Drivers, _databaseService.GetItemsAsync<Driver>)));
             SimulateDocketsCommand = new Command(async () => await ExecuteSafelyAsync(SimulateDocketsAsync));
             UpdateTareCommand = new Command(async () => await ExecuteSafelyAsync(OnUpdateTareClickedAsync));
+        }
+
+        private bool CanExecuteWeightCaptureCommands()
+        {
+            System.Diagnostics.Debug.WriteLine($"CanExecuteWeightCaptureCommands: _weighbridgeService.IsScaleAtZero = {_weighbridgeService.IsScaleAtZero}");
+            // Only allow if scale is at zero
+            return _weighbridgeService.IsScaleAtZero;
+        }
+
+        private void OnScaleZeroStatusChanged(object? sender, bool isZero)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                System.Diagnostics.Debug.WriteLine($"Scale zero status changed to: {isZero}. Updating command CanExecute.");
+                // Update the CanExecute state of relevant commands
+                (ToYardCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+                (SaveAndPrintCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+            });
         }
 
         private void InitializeDefaultValues()
@@ -224,12 +243,14 @@ namespace Weighbridge.ViewModels
         {
             _weighbridgeService.DataReceived += OnDataReceived;
             _weighbridgeService.StabilityChanged += OnStabilityChanged;
+            _weighbridgeService.ScaleZeroStatusChanged += OnScaleZeroStatusChanged;
         }
 
         private void UnsubscribeFromWeighbridgeEvents()
         {
             _weighbridgeService.DataReceived -= OnDataReceived;
             _weighbridgeService.StabilityChanged -= OnStabilityChanged;
+            _weighbridgeService.ScaleZeroStatusChanged -= OnScaleZeroStatusChanged;
         }
 
         public async Task OnAppearingAsync()
@@ -492,6 +513,7 @@ namespace Weighbridge.ViewModels
 
         private async Task OnToYardClickedAsync()
         {
+            System.Diagnostics.Debug.WriteLine("OnToYardClickedAsync: Command executed.");
             if (!ValidateDocket()) return;
 
             IsLoading = true;
@@ -689,6 +711,7 @@ namespace Weighbridge.ViewModels
 
         private async Task OnSaveAndPrintClickedAsync()
         {
+            System.Diagnostics.Debug.WriteLine("OnSaveAndPrintClickedAsync: Command executed.");
             if (!ValidateDocket()) return;
             if (CurrentMode != WeighingMode.TwoWeights) return;
 
