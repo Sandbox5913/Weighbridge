@@ -1,3 +1,4 @@
+using Dapper;
 using NUnit.Framework;
 using Moq;
 using System.Data;
@@ -40,9 +41,12 @@ namespace Weighbridge.Tests
             await _databaseService.InitializeAsync();
         }
 
-        [TearDown]
+        [OneTimeTearDown]
         public void Teardown()
         {
+            _connection.Execute("DELETE FROM Docket");
+            _connection.Execute("DELETE FROM Vehicle");
+            _connection.Execute("DELETE FROM Customer");
             _connection.Close();
             _connection.Dispose();
         }

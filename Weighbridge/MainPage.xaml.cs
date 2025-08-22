@@ -129,20 +129,9 @@ namespace Weighbridge
             }
         }
 
-        private void OnUpdateTareClicked(object sender, EventArgs e)
-        {
-            // TODO: Implement tare update logic
-        }
+        
 
-        private void OnCertificatesClicked(object sender, EventArgs e)
-        {
-            // TODO: Implement certificate navigation
-        }
-
-        private void OnReportsClicked(object sender, EventArgs e)
-        {
-            // TODO: Implement report navigation
-        }
+        
 
         // Add this for testing - you can add a button in your XAML or call this from somewhere for testing
         private void OnTestWeightClicked(object sender, EventArgs e)

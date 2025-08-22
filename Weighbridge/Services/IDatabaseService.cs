@@ -18,5 +18,6 @@ namespace Weighbridge.Services
         Task<List<UserPageAccess>> GetUserPageAccessAsync(int userId);
         Task<int> SaveUserPageAccessAsync(UserPageAccess userPageAccess);
         Task<int> DeleteUserPageAccessAsync(UserPageAccess userPageAccess);
+        Task<List<Docket>> GetDocketsByDateRangeAsync(DateTime startDate, DateTime endDate);
     }
 }

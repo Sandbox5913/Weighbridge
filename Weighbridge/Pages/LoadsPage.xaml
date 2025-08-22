@@ -259,6 +259,9 @@
                                             <Label Text="{Binding TransportName, StringFormat='Transport: {0}'}" 
                                                    TextColor="#CCCCCC" FontSize="{StaticResource ItemDetailFontSize}"
                                                    LineBreakMode="TailTruncation" />
+                                            <Label Text="{Binding TransactionType, StringFormat='Type: {0}'}" 
+                                                   TextColor="#CCCCCC" FontSize="{StaticResource ItemDetailFontSize}"
+                                                   LineBreakMode="TailTruncation" />
                                         </StackLayout>
 
                                         <StackLayout Grid.Column="1" Spacing="4">

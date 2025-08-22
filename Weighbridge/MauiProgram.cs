@@ -55,6 +55,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
         builder.Services.AddSingleton<IWeighbridgeService, WeighbridgeService>();
         builder.Services.AddSingleton<IDocketService, DocketService>();
+        builder.Services.AddSingleton<IReportsService, ReportsService>();
         builder.Services.AddSingleton<IPreviewService, PreviewService>();
         builder.Services.AddSingleton<IAuditService, AuditService>(provider =>
         {
@@ -80,6 +81,8 @@ public static class MauiProgram
         builder.Services.AddTransient<SettingsViewModel>();
         builder.Services.AddTransient<AuditLogViewModel>();
 
+        builder.Services.AddTransient<ReportsViewModel>();
+
         // Register Pages and inject ViewModels
         builder.Services.AddSingleton<MainPage>();
         builder.Services.AddSingleton<LoadsPage>();
@@ -92,6 +95,8 @@ public static class MauiProgram
         builder.Services.AddTransient<UserManagementPage>();
         builder.Services.AddTransient<UserPageAccessManagementPage>();
         builder.Services.AddTransient<AuditLogPage>();
+
+        builder.Services.AddTransient<ReportsPage>();
 
         // Register Data Management Pages
         builder.Services.AddTransient<CustomerManagementPage>();
@@ -122,6 +127,9 @@ public static class MauiProgram
          });
 #endif
      });
+        var serviceProvider = builder.Services.BuildServiceProvider();
+        var databaseService = serviceProvider.GetRequiredService<IDatabaseService>();
+        databaseService.InitializeAsync().Wait(); // Blocking call to ensure initialization completes
         var app = builder.Build();
         
     

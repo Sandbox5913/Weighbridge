@@ -22,7 +22,7 @@ namespace Weighbridge.Data
 
             _dbConnection = dbConnection;
             _serviceProvider = serviceProvider;
-            InitializeAsync().Wait();
+            
 
         }
 
@@ -34,7 +34,54 @@ namespace Weighbridge.Data
             {
                 _dbConnection.Open();
             }
-            // Create tables if they don't exist
+
+            // Create Users table first as other tables might reference it
+            await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Users (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Username TEXT NOT NULL UNIQUE,
+                PasswordHash TEXT NOT NULL,
+                Role TEXT NOT NULL,
+                CanEditDockets BOOLEAN NOT NULL DEFAULT 0,
+                CanDeleteDockets BOOLEAN NOT NULL DEFAULT 0,
+                IsAdmin BOOLEAN NOT NULL DEFAULT 0
+            );");
+
+            // Migration: Add CanEditDockets, CanDeleteDockets, and IsAdmin columns to Users table if they don't exist
+            var tableInfoUsers = await _dbConnection.QueryAsync<dynamic>("PRAGMA table_info(Users);");
+            if (!tableInfoUsers.Any(c => c.name == "CanEditDockets"))
+            {
+                await _dbConnection.ExecuteAsync("ALTER TABLE Users ADD COLUMN CanEditDockets BOOLEAN NOT NULL DEFAULT 0;");
+            }
+            if (!tableInfoUsers.Any(c => c.name == "CanDeleteDockets"))
+            {
+                await _dbConnection.ExecuteAsync("ALTER TABLE Users ADD COLUMN CanDeleteDockets BOOLEAN NOT NULL DEFAULT 0;");
+            }
+            if (!tableInfoUsers.Any(c => c.name == "IsAdmin"))
+            {
+                await _dbConnection.ExecuteAsync("ALTER TABLE Users ADD COLUMN IsAdmin BOOLEAN NOT NULL DEFAULT 0;");
+            }
+
+            // Create AuditLogs table early as it's used during initialization/login
+            await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS AuditLogs (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Timestamp TEXT NOT NULL,
+                UserId INTEGER,
+                Username TEXT,
+                Action TEXT NOT NULL,
+                EntityType TEXT,
+                EntityId INTEGER,
+                Details TEXT
+            );");
+
+            // Create UserPageAccesses table
+            await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS UserPageAccesses (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                UserId INTEGER NOT NULL,
+                PageName TEXT NOT NULL,
+                FOREIGN KEY (UserId) REFERENCES Users(Id)
+            );");
+
+            // Now create other tables
             Debug.WriteLine("[DatabaseService] Creating Vehicles table...");
             await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Vehicles (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -105,118 +152,79 @@ namespace Weighbridge.Data
             );");
             Debug.WriteLine("[DatabaseService] Dockets table created.");
 
-                // Create indexes for performance
-                await _dbConnection.ExecuteAsync("CREATE INDEX IF NOT EXISTS IX_Dockets_Timestamp ON Dockets (Timestamp);");
-                await _dbConnection.ExecuteAsync("CREATE INDEX IF NOT EXISTS IX_Dockets_VehicleId ON Dockets (VehicleId);");
+            // Create indexes for performance
+            await _dbConnection.ExecuteAsync("CREATE INDEX IF NOT EXISTS IX_Dockets_Timestamp ON Dockets (Timestamp);");
+            await _dbConnection.ExecuteAsync("CREATE INDEX IF NOT EXISTS IX_Dockets_VehicleId ON Dockets (VehicleId);");
 
-                await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS UserPageAccesses (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    UserId INTEGER NOT NULL,
-                    PageName TEXT NOT NULL,
-                    FOREIGN KEY (UserId) REFERENCES Users(Id)
-                );");
-
-                await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS AuditLogs (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Timestamp TEXT NOT NULL,
-                    UserId INTEGER,
-                    Username TEXT,
-                    Action TEXT NOT NULL,
-                    EntityType TEXT,
-                    EntityId INTEGER,
-                    Details TEXT
-                );");
-
-                // Migration: Add UpdatedAt column to Dockets table if it doesn't exist
-                var tableInfo = await _dbConnection.QueryAsync<dynamic>("PRAGMA table_info(Dockets);");
-                if (!tableInfo.Any(c => c.name == "UpdatedAt"))
-                {
-                    await _dbConnection.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN UpdatedAt TEXT;");
-                }
-
-                                await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Users (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Username TEXT NOT NULL UNIQUE,
-                    PasswordHash TEXT NOT NULL,
-                    Role TEXT NOT NULL,
-                    CanEditDockets BOOLEAN NOT NULL DEFAULT 0,
-                    CanDeleteDockets BOOLEAN NOT NULL DEFAULT 0,
-                    IsAdmin BOOLEAN NOT NULL DEFAULT 0
-                );");
-
-                // Migration: Add CanEditDockets, CanDeleteDockets, and IsAdmin columns to Users table if they don't exist
-                var tableInfoUsers = await _dbConnection.QueryAsync<dynamic>("PRAGMA table_info(Users);");
-                if (!tableInfoUsers.Any(c => c.name == "CanEditDockets"))
-                {
-                    await _dbConnection.ExecuteAsync("ALTER TABLE Users ADD COLUMN CanEditDockets BOOLEAN NOT NULL DEFAULT 0;");
-                }
-                if (!tableInfoUsers.Any(c => c.name == "CanDeleteDockets"))
-                {
-                    await _dbConnection.ExecuteAsync("ALTER TABLE Users ADD COLUMN CanDeleteDockets BOOLEAN NOT NULL DEFAULT 0;");
-                }
-                if (!tableInfoUsers.Any(c => c.name == "IsAdmin"))
-                {
-                    await _dbConnection.ExecuteAsync("ALTER TABLE Users ADD COLUMN IsAdmin BOOLEAN NOT NULL DEFAULT 0;");
-                }
-
-
-                // Add sample users if none exist
-                var userCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Users;");
-                if (userCount == 0)
-                {
-                    await _dbConnection.ExecuteAsync("INSERT INTO Users (Username, PasswordHash, Role, CanEditDockets, CanDeleteDockets, IsAdmin) VALUES (@Username, @PasswordHash, @Role, @CanEditDockets, @CanDeleteDockets, @IsAdmin);", new { Username = "admin", PasswordHash = "admin", Role = "Admin", CanEditDockets = true, CanDeleteDockets = true, IsAdmin = true });
-                    await _dbConnection.ExecuteAsync("INSERT INTO Users (Username, PasswordHash, Role, CanEditDockets, CanDeleteDockets, IsAdmin) VALUES (@Username, @PasswordHash, @Role, @CanEditDockets, @CanDeleteDockets, @IsAdmin);", new { Username = "operator", PasswordHash = "operator", Role = "Operator", CanEditDockets = false, CanDeleteDockets = false, IsAdmin = false });
-                }
-
-
-                // Add sample Vehicles if none exist
-                var vehicleCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Vehicles;");
-                if (vehicleCount == 0)
-                {
-                    await _dbConnection.ExecuteAsync("INSERT INTO Vehicles (LicenseNumber, TareWeight) VALUES ('ABC-123', 5000);");
-                    await _dbConnection.ExecuteAsync("INSERT INTO Vehicles (LicenseNumber, TareWeight) VALUES ('XYZ-789', 6500); ");
-                }
-
-                // Add sample Sites if none exist
-                var siteCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Sites;");
-                if (siteCount == 0)
-                {
-                    await _dbConnection.ExecuteAsync("INSERT INTO Sites (Name) VALUES ('Site A');");
-                    await _dbConnection.ExecuteAsync("INSERT INTO Sites (Name) VALUES ('Site B');");
-                }
-
-                // Add sample Items if none exist
-                var itemCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Items;");
-                if (itemCount == 0)
-                {
-                    await _dbConnection.ExecuteAsync("INSERT INTO Items (Name) VALUES ('Sand');");
-                    await _dbConnection.ExecuteAsync("INSERT INTO Items (Name) VALUES ('Gravel');");
-                }
-
-                // Add sample Customers if none exist
-                var customerCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Customers;");
-                if (customerCount == 0)
-                {
-                    await _dbConnection.ExecuteAsync("INSERT INTO Customers (Name) VALUES ('Customer 1');");
-                    await _dbConnection.ExecuteAsync("INSERT INTO Customers (Name) VALUES ('Customer 2');");
-                }
-
-                // Add sample Transports if none exist
-                var transportCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Transports;");
-                if (transportCount == 0)
-                {
-                    await _dbConnection.ExecuteAsync("INSERT INTO Transports (Name) VALUES ('Transport Co A');");
-                    await _dbConnection.ExecuteAsync("INSERT INTO Transports (Name) VALUES ('Transport Co B');");
-                }
-
-                // Add sample Drivers if none exist
-                var driverCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Drivers;");
-                if (driverCount == 0)
-                {
-                    await _dbConnection.ExecuteAsync("INSERT INTO Drivers (Name) VALUES ('John Doe');");
-                    await _dbConnection.ExecuteAsync("INSERT INTO Drivers (Name) VALUES ('Jane Smith');");
-                }
+            // Migration: Add UpdatedAt column to Dockets table if it doesn't exist
+            var tableInfo = await _dbConnection.QueryAsync<dynamic>("PRAGMA table_info(Dockets);");
+            if (!tableInfo.Any(c => c.name == "UpdatedAt"))
+            {
+                await _dbConnection.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN UpdatedAt TEXT;");
             }
+
+            if (!tableInfo.Any(c => c.name == "TransactionType"))
+            {
+                await _dbConnection.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN TransactionType INTEGER NOT NULL DEFAULT 0;");
+            }
+
+            // Add sample users if none exist
+            var userCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Users;");
+            if (userCount == 0)
+            {
+                await _dbConnection.ExecuteAsync("INSERT INTO Users (Username, PasswordHash, Role, CanEditDockets, CanDeleteDockets, IsAdmin) VALUES (@Username, @PasswordHash, @Role, @CanEditDockets, @CanDeleteDockets, @IsAdmin);", new { Username = "admin", PasswordHash = "admin", Role = "Admin", CanEditDockets = true, CanDeleteDockets = true, IsAdmin = true });
+                await _dbConnection.ExecuteAsync("INSERT INTO Users (Username, PasswordHash, Role, CanEditDockets, CanDeleteDockets, IsAdmin) VALUES (@Username, @PasswordHash, @Role, @CanEditDockets, @CanDeleteDockets, @IsAdmin);", new { Username = "operator", PasswordHash = "operator", Role = "Operator", CanEditDockets = false, CanDeleteDockets = false, IsAdmin = false });
+            }
+
+
+            // Add sample Vehicles if none exist
+            var vehicleCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Vehicles;");
+            if (vehicleCount == 0)
+            {
+                await _dbConnection.ExecuteAsync("INSERT INTO Vehicles (LicenseNumber, TareWeight) VALUES ('ABC-123', 5000);");
+                await _dbConnection.ExecuteAsync("INSERT INTO Vehicles (LicenseNumber, TareWeight) VALUES ('XYZ-789', 6500); ");
+            }
+
+            // Add sample Sites if none exist
+            var siteCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Sites;");
+            if (siteCount == 0)
+            {
+                await _dbConnection.ExecuteAsync("INSERT INTO Sites (Name) VALUES ('Site A');");
+                await _dbConnection.ExecuteAsync("INSERT INTO Sites (Name) VALUES ('Site B');");
+            }
+
+            // Add sample Items if none exist
+            var itemCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Items;");
+            if (itemCount == 0)
+            {
+                await _dbConnection.ExecuteAsync("INSERT INTO Items (Name) VALUES ('Sand');");
+                await _dbConnection.ExecuteAsync("INSERT INTO Items (Name) VALUES ('Gravel');");
+            }
+
+            // Add sample Customers if none exist
+            var customerCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Customers;");
+            if (customerCount == 0)
+            {
+                await _dbConnection.ExecuteAsync("INSERT INTO Customers (Name) VALUES ('Customer 1');");
+                await _dbConnection.ExecuteAsync("INSERT INTO Customers (Name) VALUES ('Customer 2');");
+            }
+
+            // Add sample Transports if none exist
+            var transportCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Transports;");
+            if (transportCount == 0)
+            {
+                await _dbConnection.ExecuteAsync("INSERT INTO Transports (Name) VALUES ('Transport Co A');");
+                await _dbConnection.ExecuteAsync("INSERT INTO Transports (Name) VALUES ('Transport Co B');");
+            }
+
+            // Add sample Drivers if none exist
+            var driverCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Drivers;");
+            if (driverCount == 0)
+            {
+                await _dbConnection.ExecuteAsync("INSERT INTO Drivers (Name) VALUES ('John Doe');");
+                await _dbConnection.ExecuteAsync("INSERT INTO Drivers (Name) VALUES ('Jane Smith');");
+            }
+        }
 
         public async Task<List<T>> GetItemsAsync<T>()
         {
@@ -413,6 +421,16 @@ namespace Weighbridge.Data
         public async Task<int> DeleteUserPageAccessAsync(UserPageAccess userPageAccess)
         {
             return await _dbConnection.ExecuteAsync("DELETE FROM UserPageAccesses WHERE Id = @Id", new { userPageAccess.Id });
+        }
+
+        public async Task<List<Docket>> GetDocketsByDateRangeAsync(DateTime startDate, DateTime endDate)
+        {
+            string sql = @"SELECT * FROM Dockets 
+                           WHERE Timestamp >= @StartDate AND Timestamp <= @EndDate 
+                           ORDER BY Timestamp DESC;";
+            var parameters = new { StartDate = startDate.ToString("yyyy-MM-dd HH:mm:ss"), EndDate = endDate.ToString("yyyy-MM-dd HH:mm:ss") };
+            var dockets = await _dbConnection.QueryAsync<Docket>(sql, parameters);
+            return dockets.ToList();
         }
 
         // Helper method to get table name from [Table] attribute or use default pluralization

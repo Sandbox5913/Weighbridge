@@ -430,17 +430,11 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
 
                                 <Button Grid.Column="0" Text="UPDATE TARE" BackgroundColor="#2A2A2A" TextColor="White" 
-                                          CornerRadius="8" HeightRequest="35" FontSize="9" Clicked="OnUpdateTareClicked" />
-                                <Button Grid.Column="1" Text="CERTIFICATES" BackgroundColor="#2A2A2A" TextColor="White" 
-                                        CornerRadius="8" HeightRequest="35" FontSize="9" Clicked="OnCertificatesClicked" />
-                                <Button Grid.Column="2" Text="REPORTS" BackgroundColor="#2A2A2A" TextColor="White" 
-                                        CornerRadius="8" HeightRequest="35" FontSize="9" Clicked="OnReportsClicked" />
-                                <Button Grid.Column="3" x:Name="CancelDocketButton" Text="CANCEL DOCKET" 
+                                          CornerRadius="8" HeightRequest="35" FontSize="9" Command="{Binding UpdateTareCommand}" />
+                                <Button Grid.Column="1" x:Name="CancelDocketButton" Text="CANCEL DOCKET" 
                                         BackgroundColor="#FF4500" TextColor="White" CornerRadius="8" HeightRequest="35"
                                         FontSize="9" Command="{Binding CancelDocketCommand}" IsEnabled="{Binding IsDocketLoaded}" />
                             </Grid>

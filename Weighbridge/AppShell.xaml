@@ -25,6 +25,11 @@
             ContentTemplate="{DataTemplate pages:LoadsPage}"
             Route="LoadsPage"
             IsVisible="{Binding CanAccessLoads}" />
+        <ShellContent
+            Title="Reports"
+            ContentTemplate="{DataTemplate pages:ReportsPage}"
+            Route="ReportsPage"
+            IsVisible="{Binding CanAccessReportsPage}" />
         <Tab Title="Settings"
              Icon="settings_icon.png"
              IsVisible="{Binding CanAccessSettings}">

@@ -176,6 +176,7 @@ namespace Weighbridge.ViewModels
         public ICommand LoadTransportsCommand { get; private set; }
         public ICommand LoadDriversCommand { get; private set; }
         public ICommand SimulateDocketsCommand { get; private set; }
+        public ICommand UpdateTareCommand { get; private set; }
 
         public MainPageViewModel(IWeighbridgeService weighbridgeService, IDatabaseService databaseService, IDocketService docketService)
         {
@@ -205,6 +206,7 @@ namespace Weighbridge.ViewModels
             LoadTransportsCommand = new Command(async () => await ExecuteSafelyAsync(() => LoadReferenceDataAsync<Transport>(Transports, _databaseService.GetItemsAsync<Transport>)));
             LoadDriversCommand = new Command(async () => await ExecuteSafelyAsync(() => LoadReferenceDataAsync<Driver>(Drivers, _databaseService.GetItemsAsync<Driver>)));
             SimulateDocketsCommand = new Command(async () => await ExecuteSafelyAsync(SimulateDocketsAsync));
+            UpdateTareCommand = new Command(async () => await ExecuteSafelyAsync(OnUpdateTareClickedAsync));
         }
 
         private void InitializeDefaultValues()
@@ -546,7 +548,8 @@ namespace Weighbridge.ViewModels
                     DriverId = SelectedDriver?.Id,
                     Remarks = Remarks,
                     Timestamp = DateTime.Now,
-                    Status = "OPEN"
+                    Status = "OPEN",
+                    TransactionType = GetTransactionTypeFromCurrentMode()
                 };
 
                 await _databaseService.SaveItemAsync(docket);
@@ -623,7 +626,8 @@ namespace Weighbridge.ViewModels
                     DriverId = SelectedDriver?.Id,
                     Remarks = Remarks,
                     Timestamp = DateTime.Now,
-                    Status = "CLOSED"
+                    Status = "CLOSED",
+                    TransactionType = GetTransactionTypeFromCurrentMode()
                 };
 
                 await _databaseService.SaveItemAsync(docket);
@@ -734,6 +738,7 @@ namespace Weighbridge.ViewModels
                     docket.CustomerId = SelectedCustomer?.Id;
                     docket.TransportId = SelectedTransport?.Id;
                     docket.DriverId = SelectedDriver?.Id;
+                    docket.TransactionType = GetTransactionTypeFromCurrentMode();
 
                     await _databaseService.SaveItemAsync(docket);
                     await PrintDocketAsync(docket, vehicle);
@@ -807,6 +812,25 @@ namespace Weighbridge.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        private async Task OnUpdateTareClickedAsync()
+        {
+            if (SelectedVehicle == null)
+            {
+                await ShowErrorAsync("Error", "Please select a vehicle first.");
+                return;
+            }
+
+            if (!decimal.TryParse(TareWeight, out decimal newTareWeight))
+            {
+                await ShowErrorAsync("Error", "Invalid tare weight.");
+                return;
+            }
+
+            SelectedVehicle.TareWeight = newTareWeight;
+            await _databaseService.SaveItemAsync(SelectedVehicle);
+            await ShowInfoAsync("Success", "Tare weight updated successfully.");
         }
 
         private async Task LoadDocketAsync(int docketId)
@@ -1120,6 +1144,18 @@ namespace Weighbridge.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine($"Error in SimulateWeightData: {ex}");
             }
+        }
+
+        private TransactionType GetTransactionTypeFromCurrentMode()
+        {
+            return CurrentMode switch
+            {
+                WeighingMode.TwoWeights => TransactionType.GrossAndTare,
+                WeighingMode.EntryAndTare => TransactionType.StoredTare,
+                WeighingMode.TareAndExit => TransactionType.StoredTare,
+                WeighingMode.SingleWeight => TransactionType.SingleWeight,
+                _ => TransactionType.GrossAndTare, // Default or error case
+            };
         }
 
         #region Compatibility Methods for Tests
