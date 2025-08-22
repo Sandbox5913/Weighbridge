@@ -8,7 +8,7 @@ namespace Weighbridge.Services
     {
         public IDbConnection CreateConnection()
         {
-            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "weighbridge.db3");
+            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "weighbridge.db");
             return new SqliteConnection($"Filename={dbPath}");
         }
     }
