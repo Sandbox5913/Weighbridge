@@ -16,5 +16,8 @@ namespace Weighbridge.Models
         public bool UseZeroStringDetection { get; set; } = false;
         public string? ZeroString { get; set; } = "ZERO";
         public double ZeroTolerance { get; set; } = 0.1; // Default value
+        public double RegulatoryZeroTolerance { get; set; } = 0.01; // New regulatory zero tolerance
+        public bool RequireManualZeroConfirmation { get; set; } = true;
+        public bool BypassZeroRequirement { get; set; } = true;
     }
 }

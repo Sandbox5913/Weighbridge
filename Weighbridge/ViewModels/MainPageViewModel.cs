@@ -17,6 +17,7 @@ namespace Weighbridge.ViewModels
         private readonly IWeighbridgeService _weighbridgeService;
         private readonly IDatabaseService _databaseService;
         private readonly IDocketService _docketService;
+        private readonly IAuditService _auditService; // Injected Audit Service
         private readonly SemaphoreSlim _initializationSemaphore = new(1, 1);
         private readonly CancellationTokenSource _cancellationTokenSource = new();
 
@@ -56,6 +57,8 @@ namespace Weighbridge.ViewModels
         private Driver? _selectedDriver;
         private int _loadDocketId;
         private bool _isLoading;
+        private string _zeroStatusMessage = string.Empty;
+        private bool _isRegulatoryZeroConfirmed = false;
 
         // Properties
         public WeighingMode CurrentMode
@@ -63,6 +66,8 @@ namespace Weighbridge.ViewModels
             get => _currentMode;
             set => SetProperty(ref _currentMode, value);
         }
+
+        public string ZeroStatusMessage { get => _zeroStatusMessage; set => SetProperty(ref _zeroStatusMessage, value); }
 
         public string? EntranceWeight { get => _entranceWeight; set => SetProperty(ref _entranceWeight, value); }
         public string? ExitWeight { get => _exitWeight; set => SetProperty(ref _exitWeight, value); }
@@ -178,12 +183,14 @@ namespace Weighbridge.ViewModels
         public ICommand LoadDriversCommand { get; private set; }
         public ICommand SimulateDocketsCommand { get; private set; }
         public ICommand UpdateTareCommand { get; private set; }
+        public ICommand ZeroCommand { get; private set; }
 
-        public MainPageViewModel(IWeighbridgeService weighbridgeService, IDatabaseService databaseService, IDocketService docketService)
+        public MainPageViewModel(IWeighbridgeService weighbridgeService, IDatabaseService databaseService, IDocketService docketService, IAuditService auditService)
         {
             _weighbridgeService = weighbridgeService ?? throw new ArgumentNullException(nameof(weighbridgeService));
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
             _docketService = docketService ?? throw new ArgumentNullException(nameof(docketService));
+            _auditService = auditService ?? throw new ArgumentNullException(nameof(auditService));
 
             LoadFormConfig();
             InitializeCommands();
@@ -208,13 +215,14 @@ namespace Weighbridge.ViewModels
             LoadDriversCommand = new Command(async () => await ExecuteSafelyAsync(() => LoadReferenceDataAsync<Driver>(Drivers, _databaseService.GetItemsAsync<Driver>)));
             SimulateDocketsCommand = new Command(async () => await ExecuteSafelyAsync(SimulateDocketsAsync));
             UpdateTareCommand = new Command(async () => await ExecuteSafelyAsync(OnUpdateTareClickedAsync));
+            ZeroCommand = new AsyncRelayCommand(OnZeroCommandExecutedAsync, () => IsWeightStable);
         }
 
         private bool CanExecuteWeightCaptureCommands()
         {
-            System.Diagnostics.Debug.WriteLine($"CanExecuteWeightCaptureCommands: _weighbridgeService.IsScaleAtZero = {_weighbridgeService.IsScaleAtZero}");
-            // Only allow if scale is at zero
-            return _weighbridgeService.IsScaleAtZero;
+            System.Diagnostics.Debug.WriteLine($"CanExecuteWeightCaptureCommands: _weighbridgeService.IsScaleAtZero = {_weighbridgeService.IsScaleAtZero}, _isRegulatoryZeroConfirmed = {_isRegulatoryZeroConfirmed}, RequireManualZeroConfirmation = {_weighbridgeService.RequireManualZeroConfirmation}, BypassZeroRequirement = {_weighbridgeService.BypassZeroRequirement}");
+            // Allow if zero requirement is bypassed, OR (scale is at zero AND (manual zero confirmation is not required OR it is confirmed))
+            return _weighbridgeService.BypassZeroRequirement || (_weighbridgeService.IsScaleAtZero && (_weighbridgeService.RequireManualZeroConfirmation ? _isRegulatoryZeroConfirmed : true));
         }
 
         private void OnScaleZeroStatusChanged(object? sender, bool isZero)
@@ -454,9 +462,11 @@ namespace Weighbridge.ViewModels
                     if (!_isDisposed)
                     {
                         IsWeightStable = isStable;
+                        System.Diagnostics.Debug.WriteLine($"OnStabilityChanged: isStable={isStable}, IsWeightStable={IsWeightStable}");
                         StabilityStatus = isStable ? "STABLE" : "UNSTABLE";
                         StabilityColor = isStable ? Colors.Green : Colors.Red;
                         StabilityStatusColour = isStable ? Colors.Green : Colors.Red;
+                        (ZeroCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged(); // Update command status
                     }
                 }
                 catch (Exception ex)
@@ -910,6 +920,9 @@ namespace Weighbridge.ViewModels
             SelectedDriver = null;
             IsInProgressWarningVisible = false;
             InProgressWarningText = string.Empty;
+            _isRegulatoryZeroConfirmed = false; // Reset regulatory zero confirmation
+            (ToYardCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged(); // Update command status
+            (SaveAndPrintCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged(); // Update command status
         }
 
         private async Task SimulateDocketsAsync()
@@ -1041,11 +1054,12 @@ namespace Weighbridge.ViewModels
         {
             try
             {
-                if (!decimal.TryParse(LiveWeight, NumberStyles.Any, CultureInfo.InvariantCulture, out var liveWeight) || liveWeight <= 0)
+                if (!decimal.TryParse(LiveWeight, NumberStyles.Any, CultureInfo.InvariantCulture, out var liveWeight) || liveWeight < 0)
                 {
-                    _ = ShowErrorAsync("Validation Error", "Live weight must be a valid number greater than zero.");
+                    _ = ShowErrorAsync("Validation Error", "Live weight must be a valid number.");
                     return false;
                 }
+
 
                 var validationErrors = new List<string>();
 
@@ -1179,6 +1193,41 @@ namespace Weighbridge.ViewModels
                 WeighingMode.SingleWeight => TransactionType.SingleWeight,
                 _ => TransactionType.GrossAndTare, // Default or error case
             };
+        }
+
+        private async Task OnZeroCommandExecutedAsync()
+        {
+            IsLoading = true;
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"OnZeroCommandExecutedAsync: IsWeightStable={IsWeightStable}");
+                bool success = _weighbridgeService.PerformZeroOperation();
+                if (success)
+                {
+                    ZeroStatusMessage = "Zero operation successful.";
+                    _isRegulatoryZeroConfirmed = true; // Set to true on successful zero
+                    (ToYardCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged(); // Update command status
+                    (SaveAndPrintCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged(); // Update command status
+                    await _auditService.LogActionAsync("Zero Operation", details: "Scale successfully zeroed.");
+                    await ShowInfoAsync("Zero", "Scale successfully zeroed.");
+                }
+                else
+                {
+                    ZeroStatusMessage = "Zero operation failed. Scale not stable or not near zero.";
+                    await _auditService.LogActionAsync("Zero Operation", details: "Scale zeroing failed: not stable or not near zero.");
+                    await ShowErrorAsync("Zero", "Scale zeroing failed: not stable or not near zero.");
+                }
+            }
+            catch (Exception ex)
+            {
+                ZeroStatusMessage = $"Zero operation error: {ex.Message}";
+                await _auditService.LogActionAsync("Zero Operation", details: $"Scale zeroing error: {ex.Message}");
+                await ShowErrorAsync("Zero Error", $"An error occurred during zeroing: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         #region Compatibility Methods for Tests

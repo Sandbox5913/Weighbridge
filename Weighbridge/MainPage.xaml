@@ -11,6 +11,7 @@
     <ContentPage.Resources>
         <ResourceDictionary>
             <converters:BoolToStringConverter x:Key="BoolToStringConverter" />
+            <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
 
             <DataTrigger x:Key="MobileLayoutTrigger" TargetType="Grid" Binding="{Binding Source={x:Reference MainGrid}, Path=Width}" Value="600">
                 <Setter Property="ColumnDefinitions" Value="*" />
@@ -122,12 +123,17 @@
                                 <Label x:Name="LiveWeightLabel" Text="{Binding LiveWeight, FallbackValue='0.00'}" 
                                        TextColor="White" HorizontalOptions="Center" 
                                        FontSize="{StaticResource WeightFontSize}" FontAttributes="Bold" />
+                                <Label Text="{Binding IsScaleAtZero, StringFormat='ZERO: {0}'}" 
+                                       TextColor="{Binding IsScaleAtZero, Converter={StaticResource BoolToColorConverter}}" 
+                                       HorizontalOptions="Center" FontSize="20" FontAttributes="Bold" Margin="0, -10, 0, 0" />
                                 <Label Text="KG" TextColor="#CCCCCC" HorizontalOptions="Center" FontSize="14" />
-                                <Label Text="{Binding IsScaleAtZero}" TextColor="White" HorizontalOptions="Center" FontSize="12" FontAttributes="Bold" />
                                 <Button x:Name="TestButton" Text="TEST" BackgroundColor="Orange" TextColor="Black" 
                                         Clicked="OnTestWeightClicked" FontSize="10" HeightRequest="30" Margin="0,4,0,0"/>
                                 <Button x:Name="SimulateDocketsButton" Text="SIMULATE 100" BackgroundColor="Purple" TextColor="White" 
                                         Clicked="OnSimulateDocketsClicked" FontSize="10" HeightRequest="30" Margin="0,4,0,0"/>
+                                <Button Text="ZERO" BackgroundColor="#007BFF" TextColor="White"
+                                        Command="{Binding ZeroCommand}" FontSize="10" HeightRequest="30" Margin="0,4,0,0"/>
+                                <Label Text="{Binding ZeroStatusMessage}" TextColor="White" HorizontalOptions="Center" FontSize="10" Margin="0,4,0,0"/>
                             </VerticalStackLayout>
                         </Border>
 

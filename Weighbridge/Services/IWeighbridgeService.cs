@@ -15,5 +15,8 @@ namespace Weighbridge.Services
         void Configure(WeighbridgeConfig config);
         bool IsScaleAtZero { get; }
         event EventHandler<bool> ScaleZeroStatusChanged;
+        bool PerformZeroOperation();
+        bool RequireManualZeroConfirmation { get; }
+        bool BypassZeroRequirement { get; }
     }
 }

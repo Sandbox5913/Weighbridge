@@ -25,6 +25,8 @@ namespace Weighbridge.Services
         private DateTime? _stabilityStart = null;
         private bool _isSimulationMode = false;
         private bool _isScaleAtZero = true; // Assume true initially
+        private WeightReading? _lastWeightReading;
+        private bool _currentStabilityStatus = false;
 
         public bool IsScaleAtZero
         {
@@ -46,8 +48,14 @@ namespace Weighbridge.Services
 
         public bool IsSimulationMode => _isSimulationMode;
 
+        public bool RequireManualZeroConfirmation => _config.RequireManualZeroConfirmation;
+
+        public bool BypassZeroRequirement => _config.BypassZeroRequirement;
+
         public WeighbridgeService(WeightParserService parserService)
         {
+            System.Diagnostics.Debug.WriteLine("WeighbridgeService: Constructor called.");
+            System.Diagnostics.Debug.WriteLine($"WeighbridgeService Instance HashCode: {this.GetHashCode()}");
             _parserService = parserService ?? throw new ArgumentNullException(nameof(parserService));
             _config = LoadConfiguration();
             InitializeSerialPort();
@@ -65,9 +73,11 @@ namespace Weighbridge.Services
                     StabilityEnabled = Preferences.Get("StabilityEnabled", true),
                     StableTime = ParseDoubleSafely(Preferences.Get("StableTime", "3.0"), 3.0),
                     StabilityRegex = Preferences.Get("StabilityRegex", ""),
-                    UseZeroStringDetection = Preferences.Get("UseZeroStringDetection", false),
-                    ZeroString = Preferences.Get("ZeroString", "ZERO"),
-                    ZeroTolerance = ParseDoubleSafely(Preferences.Get("ZeroTolerance", "0.1"), 0.1)
+                    
+                    ZeroTolerance = ParseDoubleSafely(Preferences.Get("ZeroTolerance", "0.1"), 0.1),
+                    RegulatoryZeroTolerance = ParseDoubleSafely(Preferences.Get("RegulatoryZeroTolerance", "0.01"), 0.01),
+                    RequireManualZeroConfirmation = Preferences.Get("RequireManualZeroConfirmation", true),
+                    BypassZeroRequirement = Preferences.Get("BypassZeroRequirement", false)
                 };
 
                 ValidateConfiguration(config);
@@ -373,6 +383,7 @@ namespace Weighbridge.Services
 
         private void ProcessWeightData(string line)
         {
+            System.Diagnostics.Debug.WriteLine($"ProcessWeightData: Instance HashCode: {this.GetHashCode()}");
             if (_disposed) return;
 
             try
@@ -392,33 +403,22 @@ namespace Weighbridge.Services
                 bool currentIsZero = false;
                 bool isStable = false; // Initialize isStable here
 
-                if (configCopy.UseZeroStringDetection && !string.IsNullOrEmpty(configCopy.ZeroString))
-                {
-                    currentIsZero = line.Trim().Equals(configCopy.ZeroString.Trim(), StringComparison.OrdinalIgnoreCase);
-                    if (currentIsZero)
-                    {
-                        // If zero string is detected, consider it stable
-                        isStable = true;
-                    }
-                }
-
                 if (weightReading != null)
                 {
                     System.Diagnostics.Debug.WriteLine($"Parsed weight: {weightReading.Weight} {weightReading.Unit}");
 
                     // Fire the parsed data event for the main page
                     DataReceived?.Invoke(this, weightReading);
+                    _lastWeightReading = weightReading; // Store the last valid weight reading
 
-                    // If not using zero string detection, or if zero string detection didn't find zero,
-                    // then check numerical zero tolerance.
-                    if (!configCopy.UseZeroStringDetection || !currentIsZero)
+                    // Then check numerical zero tolerance.
                     {
                         double zeroTolerance = configCopy.ZeroTolerance > 0 ? configCopy.ZeroTolerance : GetDefaultZeroTolerance(weightReading.Unit);
                         currentIsZero = Math.Abs((double)weightReading.Weight) < zeroTolerance;
                     }
 
-                    // Check for stability (only if not already determined by zero string)
-                    if (!isStable && configCopy.StabilityEnabled) // Only check if not already stable due to zero string
+                    // Check for stability
+                    if (configCopy.StabilityEnabled) 
                     {
                         if (!string.IsNullOrEmpty(configCopy.StabilityRegex))
                         {
@@ -432,16 +432,11 @@ namespace Weighbridge.Services
                 }
                 else // weightReading is null
                 {
-                    // If weight reading is null, but zero string detection is enabled and found zero,
-                    // then currentIsZero is already true and isStable is true.
-                    // Otherwise, it's not stable and not zero.
-                    if (!currentIsZero) // If zero string was not detected
-                    {
-                        isStable = false; // Not stable if no valid weight and no zero string
-                    }
+                    isStable = false; // Not stable if no valid weight
                 }
 
                 IsScaleAtZero = currentIsZero; // Update the property, which will raise the event if changed
+                _currentStabilityStatus = isStable; // Update internal stability status
                 StabilityChanged?.Invoke(this, isStable); // Always invoke StabilityChanged
             }
             catch (RegexMatchTimeoutException ex)
@@ -462,12 +457,17 @@ namespace Weighbridge.Services
         {
             lock (_lock)
             {
+                System.Diagnostics.Debug.WriteLine($"IsWeightStable: Before Add - newWeight={newWeight}, _recentWeights.Count={_recentWeights.Count}");
                 _recentWeights.Add(newWeight);
                 if (_recentWeights.Count > WindowSize)
                     _recentWeights.RemoveAt(0);
 
+                System.Diagnostics.Debug.WriteLine($"IsWeightStable: Current _recentWeights count: {_recentWeights.Count}");
                 if (_recentWeights.Count < WindowSize)
+                {
+                    System.Diagnostics.Debug.WriteLine($"IsWeightStable: Not enough data yet. Need {WindowSize}, have {_recentWeights.Count}.");
                     return false; // not enough data yet
+                }
 
                 double max = double.MinValue, min = double.MaxValue;
                 foreach (var w in _recentWeights)
@@ -477,20 +477,35 @@ namespace Weighbridge.Services
                 }
 
                 bool inTolerance = (max - min) <= Tolerance;
+                System.Diagnostics.Debug.WriteLine($"IsWeightStable: Max: {max}, Min: {min}, Difference: {max - min}, Tolerance: {Tolerance}, InTolerance: {inTolerance}");
 
                 if (inTolerance)
                 {
                     if (_stabilityStart == null)
+                    {
                         _stabilityStart = DateTime.Now;
+                        System.Diagnostics.Debug.WriteLine($"IsWeightStable: Stability timer started at {_stabilityStart.Value}.");
+                    }
 
-                    if ((DateTime.Now - _stabilityStart.Value).TotalSeconds >= stableTime)
+                    double elapsedTime = (DateTime.Now - _stabilityStart.Value).TotalSeconds;
+                    System.Diagnostics.Debug.WriteLine($"IsWeightStable: Elapsed time: {elapsedTime}s, Required stable time: {stableTime}s.");
+
+                    if (elapsedTime >= stableTime)
+                    {
+                        System.Diagnostics.Debug.WriteLine("IsWeightStable: Scale is stable.");
                         return true;
+                    }
                 }
                 else
                 {
+                    if (_stabilityStart != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine("IsWeightStable: Scale became unstable, resetting timer.");
+                    }
                     _stabilityStart = null; // reset timer if out of tolerance
                 }
 
+                System.Diagnostics.Debug.WriteLine("IsWeightStable: Scale is not stable yet.");
                 return false;
             }
         }
@@ -544,6 +559,57 @@ namespace Weighbridge.Services
                     {
                         _disposed = true;
                     }
+                }
+            }
+        }
+
+        public bool PerformZeroOperation()
+        {
+            lock (_lock)
+            {
+                System.Diagnostics.Debug.WriteLine($"PerformZeroOperation: Instance HashCode: {this.GetHashCode()}");
+                if (_disposed)
+                    throw new ObjectDisposedException(nameof(WeighbridgeService));
+
+                if (_lastWeightReading == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("Zero operation failed: No weight reading available.");
+                    return false;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"PerformZeroOperation: Last Weight Reading: {_lastWeightReading.Weight} {_lastWeightReading.Unit}");
+
+                // Check for stability
+                // We need to ensure the scale has been stable for the configured StableTime
+                // The IsWeightStable method already handles the time component.
+                bool isStable = _currentStabilityStatus;
+                System.Diagnostics.Debug.WriteLine($"PerformZeroOperation: Is Stable: {isStable}");
+
+                if (!isStable)
+                {
+                    System.Diagnostics.Debug.WriteLine("Zero operation failed: Scale is not stable.");
+                    return false;
+                }
+
+                // Check if the current weight is within the regulatory zero tolerance
+                double currentWeight = (double)_lastWeightReading.Weight;
+                double regulatoryZeroTolerance = _config.RegulatoryZeroTolerance > 0 ? _config.RegulatoryZeroTolerance : GetDefaultZeroTolerance(_lastWeightReading.Unit);
+                System.Diagnostics.Debug.WriteLine($"PerformZeroOperation: Regulatory Zero Tolerance: {regulatoryZeroTolerance}");
+                System.Diagnostics.Debug.WriteLine($"PerformZeroOperation: Math.Abs(currentWeight) ({Math.Abs(currentWeight)}) < regulatoryZeroTolerance ({regulatoryZeroTolerance}): {Math.Abs(currentWeight) < regulatoryZeroTolerance}");
+
+                if (Math.Abs(currentWeight) < regulatoryZeroTolerance)
+                {
+                    // Scale is stable and within regulatory zero tolerance
+                    System.Diagnostics.Debug.WriteLine($"Zero operation successful. Current weight: {currentWeight} {(_lastWeightReading.Unit ?? "")} within tolerance {regulatoryZeroTolerance}.");
+                    // In a real weighbridge, this might trigger a command to the scale to set zero.
+                    // For now, we just confirm it conceptually.
+                    IsScaleAtZero = true; // Explicitly set to true after successful zero operation
+                    return true;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"Zero operation failed: Weight {currentWeight} {(_lastWeightReading.Unit ?? "")} is not within regulatory zero tolerance {regulatoryZeroTolerance}.");
+                    return false;
                 }
             }
         }
