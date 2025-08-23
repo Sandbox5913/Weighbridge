@@ -13,6 +13,8 @@ namespace Weighbridge.Pages
     {
         private readonly IDatabaseService _databaseService;
         private readonly IDocketService _docketService;
+        private readonly IExportService _exportService;
+        private readonly IWeighbridgeService _weighbridgeService;
 
         // Private fields for property backing
         private string _selectedStatusFilter = "All";
@@ -77,11 +79,13 @@ namespace Weighbridge.Pages
         public ICommand ApplyFiltersCommand { get; private set; }
         public ICommand ClearFiltersCommand { get; private set; }
 
-        public LoadsPage(IDatabaseService databaseService, IDocketService docketService)
+        public LoadsPage(IDatabaseService databaseService, IDocketService docketService, IExportService exportService, IWeighbridgeService weighbridgeService)
         {
             InitializeComponent();
             _databaseService = databaseService;
             _docketService = docketService;
+            _exportService = exportService;
+            _weighbridgeService = weighbridgeService;
 
             // Initialize commands
             RefreshCommand = new Command(async () => await LoadLoads());
@@ -354,6 +358,49 @@ namespace Weighbridge.Pages
                 {
                     button.IsEnabled = true;
                     button.Text = "CLEAR";
+                }
+            }
+        }
+
+        private async void OnRetransmitClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                if (sender is Button button && button.CommandParameter is DocketViewModel docketVM)
+                {
+                    button.IsEnabled = false;
+                    button.Text = "SENDING...";
+
+                    var docket = await _databaseService.GetItemAsync<Docket>(docketVM.Id);
+                    if (docket != null)
+                    {
+                        var config = _weighbridgeService.GetConfig();
+                        if (config.ExportEnabled && !string.IsNullOrEmpty(config.ExportFolderPath))
+                        {
+                            await _exportService.ExportDocketAsync(docket, config);
+                            await DisplayAlert("Success", "Docket retransmitted successfully.", "OK");
+                        }
+                        else
+                        {
+                            await DisplayAlert("Error", "Export is not enabled or folder path is not set.", "OK");
+                        }
+                    }
+                    else
+                    {
+                        await DisplayAlert("Error", "Could not find the docket to retransmit.", "OK");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Failed to retransmit docket: {ex.Message}", "OK");
+            }
+            finally
+            {
+                if (sender is Button button)
+                {
+                    button.IsEnabled = true;
+                    button.Text = "RETRANSMIT";
                 }
             }
         }

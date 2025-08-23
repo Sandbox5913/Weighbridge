@@ -133,30 +133,6 @@ namespace Weighbridge
 
         
 
-        // Add this for testing - you can add a button in your XAML or call this from somewhere for testing
-        private void OnTestWeightClicked(object sender, EventArgs e)
-        {
-            System.Diagnostics.Debug.WriteLine("Test button clicked");
-            _viewModel.SimulateWeightData();
-
-            // Also directly test the UI binding by updating a label
-            if (LiveWeightLabel != null)
-            {
-                System.Diagnostics.Debug.WriteLine($"Current LiveWeight binding: {_viewModel.LiveWeight}");
-                System.Diagnostics.Debug.WriteLine($"LiveWeightLabel.Text: {LiveWeightLabel.Text}");
-            }
-        }
-
-        private async void OnSimulateDocketsClicked(object sender, EventArgs e)
-        {
-            try
-            {
-                _viewModel.SimulateDocketsCommand.Execute(null);
-            }
-            catch (Exception ex)
-            {
-                await DisplayAlert("Error", $"Failed to simulate dockets: {ex.Message}", "OK");
-            }
-        }
+        
     }
 }

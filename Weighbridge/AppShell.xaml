@@ -40,7 +40,7 @@
                 IsVisible="{Binding CanAccessSettingsPage}" />
             <ShellContent
                 Title="Print Settings"
-                ContentTemplate="{DataTemplate pages:PrintSettingsPage}"
+                ContentTemplate="{DataTemplate pages:OutputSettingsPage}"
                 Route="PrintSettingsPage"
                 IsVisible="{Binding CanAccessPrintSettingsPage}" />
             <ShellContent

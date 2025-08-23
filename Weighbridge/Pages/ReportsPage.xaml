@@ -27,14 +27,14 @@
         <CollectionView ItemsSource="{Binding Dockets}">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Frame Padding="10" Margin="0,5" BorderColor="LightGray" CornerRadius="5">
+                    <Frame Padding="10" Margin="0,5" BorderColor="LightGray" CornerRadius="5" BackgroundColor="Red">
                         <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,*">
-                            <Label Grid.Row="0" Grid.Column="0" Text="{Binding DocketId, StringFormat='Docket ID: {0}'}" FontAttributes="Bold" />
-                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding VehicleRego, StringFormat='Vehicle: {0}'}" />
-                            <Label Grid.Row="1" Grid.Column="0" Text="{Binding FirstWeightTime, StringFormat='In: {0:g}'}" />
-                            <Label Grid.Row="1" Grid.Column="1" Text="{Binding SecondWeightTime, StringFormat='Out: {0:g}'}" />
-                            <Label Grid.Row="2" Grid.Column="0" Text="{Binding NetWeight, StringFormat='Net: {0} kg'}" />
-                            <Label Grid.Row="3" Grid.Column="0" Text="{Binding TransactionType, StringFormat='Type: {0}'}" />
+                            <Label Grid.Row="0" Grid.Column="0" Text="{Binding DocketId, StringFormat='Docket ID: {0}'}" FontAttributes="Bold" TextColor="Yellow" />
+                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding VehicleRego, StringFormat='Vehicle: {0}'}" TextColor="Yellow" />
+                            <Label Grid.Row="1" Grid.Column="0" Text="{Binding FirstWeightTime, StringFormat='In: {0:g}'}" TextColor="Yellow" />
+                            <Label Grid.Row="1" Grid.Column="1" Text="{Binding SecondWeightTime, StringFormat='Out: {0:g}'}" TextColor="Yellow" />
+                            <Label Grid.Row="2" Grid.Column="0" Text="{Binding NetWeight, StringFormat='Net: {0} kg'}" TextColor="Yellow" />
+                            <Label Grid.Row="3" Grid.Column="0" Text="{Binding TransactionType, StringFormat='Type: {0}'}" TextColor="Yellow" />
                         </Grid>
                     </Frame>
                 </DataTemplate>

@@ -176,7 +176,7 @@ namespace Weighbridge.ViewModels
         [RelayCommand]
         private async Task NavigateToPrintSettings()
         {
-            await Shell.Current.GoToAsync(nameof(PrintSettingsPage));
+            await Shell.Current.GoToAsync(nameof(OutputSettingsPage));
         }
 
         [RelayCommand]

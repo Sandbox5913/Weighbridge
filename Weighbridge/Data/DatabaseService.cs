@@ -428,7 +428,7 @@ namespace Weighbridge.Data
             string sql = @"SELECT * FROM Dockets 
                            WHERE Timestamp >= @StartDate AND Timestamp <= @EndDate 
                            ORDER BY Timestamp DESC;";
-            var parameters = new { StartDate = startDate.ToString("yyyy-MM-dd HH:mm:ss"), EndDate = endDate.ToString("yyyy-MM-dd HH:mm:ss") };
+            var parameters = new { StartDate = startDate.ToString("yyyy-MM-dd HH:mm:ss"), EndDate = endDate.Date.AddDays(1).ToString("yyyy-MM-dd HH:mm:ss") };
             var dockets = await _dbConnection.QueryAsync<Docket>(sql, parameters);
             return dockets.ToList();
         }

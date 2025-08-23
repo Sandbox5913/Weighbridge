@@ -82,9 +82,19 @@ public static class MauiProgram
             return new UserService(dbService, provider); // Pass the provider itself
         });
         builder.Services.AddTransient<INavigationService, NavigationService>();
+        builder.Services.AddSingleton<IExportService, ExportService>();
 
         // Register ViewModels
-        builder.Services.AddSingleton<MainPageViewModel>();
+        builder.Services.AddSingleton<MainPageViewModel>(provider =>
+        {
+            return new MainPageViewModel(
+                provider.GetRequiredService<IWeighbridgeService>(),
+                provider.GetRequiredService<IDatabaseService>(),
+                provider.GetRequiredService<IDocketService>(),
+                provider.GetRequiredService<IAuditService>(),
+                provider.GetRequiredService<IExportService>()
+            );
+        });
         builder.Services.AddTransient<CustomerManagementViewModel>();
         builder.Services.AddTransient<DriverManagementViewModel>();
         builder.Services.AddTransient<LoginViewModel>();
@@ -104,9 +114,17 @@ public static class MauiProgram
 
         // Register Pages and inject ViewModels
         builder.Services.AddSingleton<MainPage>();
-        builder.Services.AddSingleton<LoadsPage>();
+        builder.Services.AddSingleton<LoadsPage>(provider =>
+        {
+            return new LoadsPage(
+                provider.GetRequiredService<IDatabaseService>(),
+                provider.GetRequiredService<IDocketService>(),
+                provider.GetRequiredService<IExportService>(),
+                provider.GetRequiredService<IWeighbridgeService>()
+            );
+        });
         builder.Services.AddSingleton<SettingsPage>();
-        builder.Services.AddSingleton<PrintSettingsPage>();
+        builder.Services.AddSingleton<OutputSettingsPage>();
         builder.Services.AddTransient<EditLoadPage>();
         builder.Services.AddTransient<LoginPage>();
         builder.Services.AddSingleton<AppShell>();

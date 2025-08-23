@@ -289,6 +289,7 @@
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
 
                                         <Button Grid.Column="0" Text="EDIT" BackgroundColor="#FFD700" 
@@ -298,6 +299,10 @@
                                         <Button Grid.Column="1" Text="REPRINT" BackgroundColor="#00FF7F" 
                                                 TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" 
                                                 CommandParameter="{Binding .}" Clicked="OnReprintClicked"
+                                                FontSize="{StaticResource ButtonFontSize}" HeightRequest="40" />
+                                        <Button Grid.Column="2" Text="RETRANSMIT" BackgroundColor="#00BFFF" 
+                                                TextColor="#0E0E0E" CornerRadius="8" FontAttributes="Bold" 
+                                                CommandParameter="{Binding .}" Clicked="OnRetransmitClicked"
                                                 FontSize="{StaticResource ButtonFontSize}" HeightRequest="40" />
                                     </Grid>
                                 </Grid>

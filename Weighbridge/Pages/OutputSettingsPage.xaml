@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Weighbridge.Pages.PrintSettingsPage"
-             Title="Print Settings"
+             x:Class="Weighbridge.Pages.OutputSettingsPage"
+             Title="Output Settings"
              BackgroundColor="#0E0E0E">
     <ScrollView>
         <VerticalStackLayout Spacing="20" Padding="30">
@@ -55,6 +55,31 @@
                 <Switch x:Name="ShowTimestampSwitch" Grid.Row="11" Grid.Column="1" />
             </Grid>
             <Button Text="Show Print Preview" Clicked="OnShowPrintPreviewClicked" />
+
+            <Label 
+                Text="Export Settings"
+                FontSize="24"
+                FontAttributes="Bold"
+                TextColor="White"
+                HorizontalOptions="Center" />
+
+            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="10">
+                <Label Text="Enable Export" Grid.Row="0" Grid.Column="0" TextColor="White" VerticalOptions="Center"/>
+                <Switch x:Name="ExportEnabledSwitch" Grid.Row="0" Grid.Column="1" />
+            </Grid>
+            <Grid ColumnDefinitions="*,Auto">
+                <Entry x:Name="ExportFolderPathEntry" Placeholder="Enter folder path" TextColor="White" />
+                <Button Text="Browse" Clicked="OnBrowseFolderClicked" Grid.Column="1" />
+            </Grid>
+            <Picker x:Name="ExportFormatPicker" Title="Export Format" TextColor="White">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Csv</x:String>
+                        <x:String>Xml</x:String>
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+
             <Button Text="Save Settings" Clicked="OnSaveClicked" />
         </VerticalStackLayout>
     </ScrollView>

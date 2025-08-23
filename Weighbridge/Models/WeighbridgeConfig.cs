@@ -19,5 +19,8 @@ namespace Weighbridge.Models
         public double RegulatoryZeroTolerance { get; set; } = 0.01; // New regulatory zero tolerance
         public bool RequireManualZeroConfirmation { get; set; } = false;
         public bool BypassZeroRequirement { get; set; } = true;
+        public bool ExportEnabled { get; set; } = false;
+        public string ExportFolderPath { get; set; } = string.Empty;
+        public string ExportFormat { get; set; } = "Csv";
     }
 }

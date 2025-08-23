@@ -77,7 +77,10 @@ namespace Weighbridge.Services
                     ZeroTolerance = ParseDoubleSafely(Preferences.Get("ZeroTolerance", "0.1"), 0.1),
                     RegulatoryZeroTolerance = ParseDoubleSafely(Preferences.Get("RegulatoryZeroTolerance", "0.01"), 0.01),
                     RequireManualZeroConfirmation = Preferences.Get("RequireManualZeroConfirmation", true),
-                    BypassZeroRequirement = Preferences.Get("BypassZeroRequirement", false)
+                    BypassZeroRequirement = Preferences.Get("BypassZeroRequirement", false),
+                    ExportEnabled = Preferences.Get("ExportEnabled", false),
+                    ExportFolderPath = Preferences.Get("ExportFolderPath", string.Empty),
+                    ExportFormat = Preferences.Get("ExportFormat", "Csv")
                 };
 
                 ValidateConfiguration(config);

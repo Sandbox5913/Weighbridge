@@ -67,7 +67,7 @@ namespace Weighbridge.ViewModels
                 nameof(LoginPage),
                 nameof(MainFormSettingsPage),
                 nameof(MaterialManagementPage),
-                nameof(PrintSettingsPage),
+                nameof(OutputSettingsPage),
                 nameof(SettingsPage),
                 nameof(SiteManagementPage),
                 nameof(TransportManagementPage),

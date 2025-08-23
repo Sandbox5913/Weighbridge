@@ -1,23 +1,23 @@
 
 using Weighbridge.Models;
 using System.Text.Json;
-using Weighbridge.Services; // Ensure this is using the Services namespace
+using Weighbridge.Services;
 
 namespace Weighbridge.Pages
+{
+    public partial class OutputSettingsPage : ContentPage
     {
-        public partial class PrintSettingsPage : ContentPage
+        private DocketTemplate _template = new();
+        private readonly IDocketService _docketService;
+
+        public OutputSettingsPage(IDocketService docketService)
         {
-                    private DocketTemplate _template = new();
+            InitializeComponent();
+            _docketService = docketService;
+            LoadSettings();
+        }
 
-            private readonly IDocketService _docketService; // Change this to the interface
-
-            public PrintSettingsPage(IDocketService docketService) // Change the constructor parameter to the interface
-            {
-                InitializeComponent();
-                _docketService = docketService;
-                LoadSettings();
-            }
-            private void LoadSettings()
+        private void LoadSettings()
         {
             var templateJson = Preferences.Get("DocketTemplate", string.Empty);
             if (!string.IsNullOrEmpty(templateJson))
@@ -48,6 +48,10 @@ namespace Weighbridge.Pages
             {
                 LogoImage.Source = ImageSource.FromFile(_template.LogoPath);
             }
+
+            ExportEnabledSwitch.IsToggled = Preferences.Get("ExportEnabled", false);
+            ExportFolderPathEntry.Text = Preferences.Get("ExportFolderPath", string.Empty);
+            ExportFormatPicker.SelectedItem = Preferences.Get("ExportFormat", "Csv");
         }
 
         private async void OnSelectLogoClicked(object sender, EventArgs e)
@@ -101,7 +105,14 @@ namespace Weighbridge.Pages
             var templateJson = JsonSerializer.Serialize(_template);
             Preferences.Set("DocketTemplate", templateJson);
 
-            DisplayAlert("Success", "Print settings saved.", "OK");
+            Preferences.Set("ExportEnabled", ExportEnabledSwitch.IsToggled);
+            Preferences.Set("ExportFolderPath", ExportFolderPathEntry.Text);
+            if (ExportFormatPicker.SelectedItem != null)
+            {
+                Preferences.Set("ExportFormat", ExportFormatPicker.SelectedItem.ToString());
+            }
+
+            DisplayAlert("Success", "Settings saved.", "OK");
         }
 
         private async void OnShowPrintPreviewClicked(object sender, EventArgs e)
@@ -149,6 +160,17 @@ namespace Weighbridge.Pages
             {
                 File = new ReadOnlyFile(filePath)
             });
+        }
+
+        private async void OnBrowseFolderClicked(object sender, EventArgs e)
+        {
+            // This is a placeholder for a folder picker. MAUI does not have a built-in folder picker.
+            // You might need to use a third-party library or implement a platform-specific solution.
+            var folderPath = await DisplayPromptAsync("Folder Path", "Enter the full path to the export folder.");
+            if (!string.IsNullOrWhiteSpace(folderPath))
+            {
+                ExportFolderPathEntry.Text = folderPath;
+            }
         }
     }
 }

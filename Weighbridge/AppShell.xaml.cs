@@ -28,7 +28,7 @@ namespace Weighbridge
         public bool CanAccessLoginPage { get; private set; }
         public bool CanAccessMainFormSettingsPage { get; private set; }
         public bool CanAccessMaterialManagementPage { get; private set; }
-        public bool CanAccessPrintSettingsPage { get; private set; }
+        public bool CanAccessOutputSettingsPage { get; private set; }
         public bool CanAccessSettingsPage { get; private set; }
         public bool CanAccessSiteManagementPage { get; private set; }
         public bool CanAccessTransportManagementPage { get; private set; }
@@ -138,8 +138,8 @@ namespace Weighbridge
                 CanAccessMaterialManagementPage = await _navigationService.HasAccessAsync(nameof(MaterialManagementPage));
                 OnPropertyChanged(nameof(CanAccessMaterialManagementPage));
 
-                CanAccessPrintSettingsPage = await _navigationService.HasAccessAsync(nameof(PrintSettingsPage));
-                OnPropertyChanged(nameof(CanAccessPrintSettingsPage));
+                CanAccessOutputSettingsPage = await _navigationService.HasAccessAsync(nameof(OutputSettingsPage));
+                OnPropertyChanged(nameof(CanAccessOutputSettingsPage));
 
                 CanAccessSettingsPage = await _navigationService.HasAccessAsync(nameof(SettingsPage));
                 OnPropertyChanged(nameof(CanAccessSettingsPage));
@@ -220,7 +220,7 @@ namespace Weighbridge
             string[] settingsPages = new string[]
             {
                 nameof(SettingsPage),
-                nameof(PrintSettingsPage),
+                nameof(OutputSettingsPage),
                 nameof(MainFormSettingsPage),
                 nameof(UserManagementPage),
                 nameof(UserPageAccessManagementPage)
@@ -254,7 +254,7 @@ namespace Weighbridge
             Routing.RegisterRoute(nameof(TransportManagementPage), typeof(TransportManagementPage));
             Routing.RegisterRoute(nameof(VehicleManagementPage), typeof(VehicleManagementPage));
             Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage));
-            Routing.RegisterRoute(nameof(PrintSettingsPage), typeof(PrintSettingsPage));
+            Routing.RegisterRoute(nameof(OutputSettingsPage), typeof(OutputSettingsPage));
             Routing.RegisterRoute(nameof(LoadsPage), typeof(LoadsPage));
             Routing.RegisterRoute(nameof(EditLoadPage), typeof(EditLoadPage));
             Routing.RegisterRoute(nameof(MainFormSettingsPage), typeof(MainFormSettingsPage));

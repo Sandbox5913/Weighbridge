@@ -18,6 +18,7 @@ namespace Weighbridge.ViewModels
         private readonly IDatabaseService _databaseService;
         private readonly IDocketService _docketService;
         private readonly IAuditService _auditService; // Injected Audit Service
+        private readonly IExportService _exportService; // Injected Export Service
         private readonly SemaphoreSlim _initializationSemaphore = new(1, 1);
         private readonly CancellationTokenSource _cancellationTokenSource = new();
 
@@ -57,8 +58,6 @@ namespace Weighbridge.ViewModels
         private Driver? _selectedDriver;
         private int _loadDocketId;
         private bool _isLoading;
-        private string _zeroStatusMessage = string.Empty;
-        private bool _isRegulatoryZeroConfirmed = false;
 
         // Properties
         public WeighingMode CurrentMode
@@ -66,8 +65,6 @@ namespace Weighbridge.ViewModels
             get => _currentMode;
             set => SetProperty(ref _currentMode, value);
         }
-
-        public string ZeroStatusMessage { get => _zeroStatusMessage; set => SetProperty(ref _zeroStatusMessage, value); }
 
         public string? EntranceWeight { get => _entranceWeight; set => SetProperty(ref _entranceWeight, value); }
         public string? ExitWeight { get => _exitWeight; set => SetProperty(ref _exitWeight, value); }
@@ -185,12 +182,13 @@ namespace Weighbridge.ViewModels
         public ICommand UpdateTareCommand { get; private set; }
         public ICommand ZeroCommand { get; private set; }
 
-        public MainPageViewModel(IWeighbridgeService weighbridgeService, IDatabaseService databaseService, IDocketService docketService, IAuditService auditService)
+        public MainPageViewModel(IWeighbridgeService weighbridgeService, IDatabaseService databaseService, IDocketService docketService, IAuditService auditService, IExportService exportService)
         {
             _weighbridgeService = weighbridgeService ?? throw new ArgumentNullException(nameof(weighbridgeService));
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
             _docketService = docketService ?? throw new ArgumentNullException(nameof(docketService));
             _auditService = auditService ?? throw new ArgumentNullException(nameof(auditService));
+            _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
 
             LoadFormConfig();
             InitializeCommands();
@@ -213,38 +211,15 @@ namespace Weighbridge.ViewModels
             LoadCustomersCommand = new Command(async () => await ExecuteSafelyAsync(() => LoadReferenceDataAsync<Customer>(Customers, _databaseService.GetItemsAsync<Customer>)));
             LoadTransportsCommand = new Command(async () => await ExecuteSafelyAsync(() => LoadReferenceDataAsync<Transport>(Transports, _databaseService.GetItemsAsync<Transport>)));
             LoadDriversCommand = new Command(async () => await ExecuteSafelyAsync(() => LoadReferenceDataAsync<Driver>(Drivers, _databaseService.GetItemsAsync<Driver>)));
-            SimulateDocketsCommand = new Command(async () => await ExecuteSafelyAsync(SimulateDocketsAsync));
             UpdateTareCommand = new Command(async () => await ExecuteSafelyAsync(OnUpdateTareClickedAsync));
-            ZeroCommand = new AsyncRelayCommand(OnZeroCommandExecutedAsync, () => IsWeightStable);
         }
         private bool CanExecuteWeightCaptureCommands()
         {
             // To capture any weight, the scale must first be stable.
-            if (!IsWeightStable)
-            {
-                return false;
-            }
-
-            // If the zero requirement is bypassed in settings, being stable is sufficient.
-            if (_weighbridgeService.BypassZeroRequirement)
-            {
-                return true;
-            }
-
-            // Otherwise, we require that the "ZERO" button was successfully pressed for this transaction.
-            return _isRegulatoryZeroConfirmed;
+            return IsWeightStable;
         }
 
-        private void OnScaleZeroStatusChanged(object? sender, bool isZero)
-        {
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                System.Diagnostics.Debug.WriteLine($"Scale zero status changed to: {isZero}. Updating command CanExecute.");
-                // Update the CanExecute state of relevant commands
-                (ToYardCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
-                (SaveAndPrintCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
-            });
-        }
+        
 
         private void InitializeDefaultValues()
         {
@@ -261,14 +236,12 @@ namespace Weighbridge.ViewModels
         {
             _weighbridgeService.DataReceived += OnDataReceived;
             _weighbridgeService.StabilityChanged += OnStabilityChanged;
-            _weighbridgeService.ScaleZeroStatusChanged += OnScaleZeroStatusChanged;
         }
 
         private void UnsubscribeFromWeighbridgeEvents()
         {
             _weighbridgeService.DataReceived -= OnDataReceived;
             _weighbridgeService.StabilityChanged -= OnStabilityChanged;
-            _weighbridgeService.ScaleZeroStatusChanged -= OnScaleZeroStatusChanged;
         }
 
         public async Task OnAppearingAsync()
@@ -682,6 +655,7 @@ namespace Weighbridge.ViewModels
                 await _databaseService.SaveItemAsync(docket);
                 await ShowInfoAsync("Success", "Docket saved successfully.");
                 await PrintDocketAsync(docket, vehicle);
+                await ExportDocketAsync(docket);
                 ResetForm();
             }
             catch (Exception ex)
@@ -796,6 +770,7 @@ namespace Weighbridge.ViewModels
 
                     await _databaseService.SaveItemAsync(docket);
                     await PrintDocketAsync(docket, vehicle);
+                    await ExportDocketAsync(docket);
                     ResetForm();
                 }
             }
@@ -887,6 +862,23 @@ namespace Weighbridge.ViewModels
             await ShowInfoAsync("Success", "Tare weight updated successfully.");
         }
 
+        private async Task ExportDocketAsync(Docket docket)
+        {
+            try
+            {
+                var config = _weighbridgeService.GetConfig();
+                if (config.ExportEnabled && !string.IsNullOrEmpty(config.ExportFolderPath))
+                {
+                    await _exportService.ExportDocketAsync(docket, config);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error exporting docket: {ex.Message}");
+                await ShowErrorAsync("Export Error", $"Failed to export docket: {ex.Message}");
+            }
+        }
+
         private async Task LoadDocketAsync(int docketId)
         {
             try
@@ -942,113 +934,11 @@ namespace Weighbridge.ViewModels
             SelectedDriver = null;
             IsInProgressWarningVisible = false;
             InProgressWarningText = string.Empty;
-            _isRegulatoryZeroConfirmed = false; // Reset regulatory zero confirmation
             (ToYardCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged(); // Update command status
             (SaveAndPrintCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged(); // Update command status
         }
 
-        private async Task SimulateDocketsAsync()
-        {
-            try
-            {
-                await ShowInfoAsync("Simulating Dockets", "Generating 100 dockets... This may take a moment.");
-
-                // Ensure all reference data is loaded
-                await LoadAllReferenceDataAsync();
-
-                if (!Vehicles.Any() || !Sites.Any() || !Items.Any() ||
-                    !Customers.Any() || !Transports.Any() || !Drivers.Any())
-                {
-                    await ShowErrorAsync("Simulation Error",
-                        "Cannot simulate dockets: Missing reference data. Please ensure all reference tables have data.");
-                    return;
-                }
-
-                var random = new Random();
-                var tasks = new List<Task>();
-
-                for (int i = 0; i < 100; i++)
-                {
-                    tasks.Add(CreateSimulatedDocketAsync(random, i));
-
-                    // Process in batches to avoid overwhelming the database
-                    if (tasks.Count >= 10)
-                    {
-                        await Task.WhenAll(tasks);
-                        tasks.Clear();
-                    }
-                }
-
-                if (tasks.Any())
-                {
-                    await Task.WhenAll(tasks);
-                }
-
-                await ShowInfoAsync("Simulation Complete", "100 dockets simulated successfully!");
-            }
-            catch (Exception ex)
-            {
-                await ShowErrorAsync("Simulation Error", $"An error occurred during simulation: {ex.Message}");
-            }
-        }
-
-        private async Task CreateSimulatedDocketAsync(Random random, int index)
-        {
-            try
-            {
-                var vehicle = Vehicles[random.Next(Vehicles.Count)];
-                var sourceSite = Sites[random.Next(Sites.Count)];
-                var destinationSite = Sites[random.Next(Sites.Count)];
-                var item = Items[random.Next(Items.Count)];
-                var customer = Customers[random.Next(Customers.Count)];
-                var transport = Transports[random.Next(Transports.Count)];
-                var driver = Drivers[random.Next(Drivers.Count)];
-
-                decimal entranceWeight = random.Next(1000, 10000);
-                decimal exitWeight = random.Next(1000, 10000);
-                decimal netWeight = Math.Abs(entranceWeight - exitWeight);
-
-                DateTime timestamp = DateTime.Now
-                    .AddHours(-random.Next(0, 24))
-                    .AddMinutes(-random.Next(0, 60))
-                    .AddSeconds(-random.Next(0, 60));
-
-                string status;
-                if (random.Next(0, 10) < 2) // 20% chance to be open
-                {
-                    exitWeight = 0;
-                    netWeight = 0;
-                    status = "OPEN";
-                }
-                else
-                {
-                    status = "CLOSED";
-                }
-
-                var docket = new Docket
-                {
-                    EntranceWeight = entranceWeight,
-                    ExitWeight = exitWeight,
-                    NetWeight = netWeight,
-                    VehicleId = vehicle.Id,
-                    SourceSiteId = sourceSite.Id,
-                    DestinationSiteId = destinationSite.Id,
-                    ItemId = item.Id,
-                    CustomerId = customer.Id,
-                    TransportId = transport.Id,
-                    DriverId = driver.Id,
-                    Remarks = $"Simulated docket {index + 1}",
-                    Timestamp = timestamp,
-                    Status = status
-                };
-
-                await _databaseService.SaveItemAsync(docket);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error creating simulated docket {index}: {ex}");
-            }
-        }
+        
 
         private void LoadFormConfig()
         {
@@ -1217,40 +1107,7 @@ namespace Weighbridge.ViewModels
             };
         }
 
-        private async Task OnZeroCommandExecutedAsync()
-        {
-            IsLoading = true;
-            try
-            {
-                System.Diagnostics.Debug.WriteLine($"OnZeroCommandExecutedAsync: IsWeightStable={IsWeightStable}");
-                bool success = _weighbridgeService.PerformZeroOperation();
-                if (success)
-                {
-                    ZeroStatusMessage = "Zero operation successful.";
-                    _isRegulatoryZeroConfirmed = true; // Set to true on successful zero
-                    (ToYardCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged(); // Update command status
-                    (SaveAndPrintCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged(); // Update command status
-                    await _auditService.LogActionAsync("Zero Operation", details: "Scale successfully zeroed.");
-                    await ShowInfoAsync("Zero", "Scale successfully zeroed.");
-                }
-                else
-                {
-                    ZeroStatusMessage = "Zero operation failed. Scale not stable or not near zero.";
-                    await _auditService.LogActionAsync("Zero Operation", details: "Scale zeroing failed: not stable or not near zero.");
-                    await ShowErrorAsync("Zero", "Scale zeroing failed: not stable or not near zero.");
-                }
-            }
-            catch (Exception ex)
-            {
-                ZeroStatusMessage = $"Zero operation error: {ex.Message}";
-                await _auditService.LogActionAsync("Zero Operation", details: $"Scale zeroing error: {ex.Message}");
-                await ShowErrorAsync("Zero Error", $"An error occurred during zeroing: {ex.Message}");
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
+        
 
         #region Compatibility Methods for Tests
         // These methods maintain backward compatibility with existing test code

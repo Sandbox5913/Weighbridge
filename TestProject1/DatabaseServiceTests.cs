@@ -489,6 +489,14 @@ namespace Weighbridge.Tests
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name TEXT NOT NULL UNIQUE
             );");
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Transports (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name TEXT NOT NULL UNIQUE
+            );");
+            await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Drivers (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name TEXT NOT NULL UNIQUE
+            );");
             await _connection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Dockets (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 EntranceWeight REAL NOT NULL,
