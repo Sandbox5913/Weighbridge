@@ -32,7 +32,7 @@ namespace Weighbridge.Tests
             };
 
             _mockDatabaseService.Setup(db => db.GetItemsAsync<Driver>()).ReturnsAsync(_drivers);
-            _mockDriverValidator.Setup(v => v.ValidateAsync(It.IsAny<Driver>(), default)).ReturnsAsync(new ValidationResult());
+            _mockDriverValidator.Setup(v => v.ValidateAsync(It.IsAny<Driver>(), default)).ReturnsAsync(new FluentValidation.Results.ValidationResult());
             
             _viewModel = new DriverManagementViewModel(_mockDatabaseService.Object, _mockDriverValidator.Object);
         }

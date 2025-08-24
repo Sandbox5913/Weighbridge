@@ -33,7 +33,7 @@ namespace Weighbridge.Tests
             };
 
             _mockDatabaseService.Setup(db => db.GetItemsAsync<User>()).ReturnsAsync(_users);
-            _mockUserValidator.Setup(v => v.ValidateAsync(It.IsAny<User>(), default)).ReturnsAsync(new ValidationResult());
+            _mockUserValidator.Setup(v => v.ValidateAsync(It.IsAny<User>(), default)).ReturnsAsync(new FluentValidation.Results.ValidationResult());
             
             _viewModel = new UserManagementViewModel(_mockDatabaseService.Object, _mockUserValidator.Object);
         }

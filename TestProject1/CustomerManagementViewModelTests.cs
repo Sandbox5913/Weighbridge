@@ -32,7 +32,7 @@ namespace Weighbridge.Tests
             };
 
             _mockDatabaseService.Setup(db => db.GetItemsAsync<Customer>()).ReturnsAsync(_customers);
-            _mockCustomerValidator.Setup(v => v.ValidateAsync(It.IsAny<Customer>(), default)).ReturnsAsync(new ValidationResult());
+            _mockCustomerValidator.Setup(v => v.ValidateAsync(It.IsAny<Customer>(), default)).ReturnsAsync(new FluentValidation.Results.ValidationResult());
             
             _viewModel = new CustomerManagementViewModel(_mockDatabaseService.Object, _mockCustomerValidator.Object);
         }
