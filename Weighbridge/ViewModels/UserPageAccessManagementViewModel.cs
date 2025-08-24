@@ -43,9 +43,10 @@ namespace Weighbridge.ViewModels
         private async void LoadUsers()
         {
             var users = await _databaseService.GetItemsAsync<User>();
-            Users.Clear();
+            System.Diagnostics.Debug.WriteLine($"[UserPageAccessManagementViewModel] Loaded {users.Count} users.");
             foreach (var user in users)
             {
+                System.Diagnostics.Debug.WriteLine($"[UserPageAccessManagementViewModel] User: Username={user.Username}, Id={user.Id}");
                 Users.Add(user);
             }
         }

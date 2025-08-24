@@ -174,7 +174,10 @@ namespace Weighbridge.Data
             {
                 await _dbConnection.ExecuteAsync("INSERT INTO Users (Username, PasswordHash, Role, CanEditDockets, CanDeleteDockets, IsAdmin) VALUES (@Username, @PasswordHash, @Role, @CanEditDockets, @CanDeleteDockets, @IsAdmin);", new { Username = "admin", PasswordHash = "admin", Role = "Admin", CanEditDockets = true, CanDeleteDockets = true, IsAdmin = true });
                 await _dbConnection.ExecuteAsync("INSERT INTO Users (Username, PasswordHash, Role, CanEditDockets, CanDeleteDockets, IsAdmin) VALUES (@Username, @PasswordHash, @Role, @CanEditDockets, @CanDeleteDockets, @IsAdmin);", new { Username = "operator", PasswordHash = "operator", Role = "Operator", CanEditDockets = false, CanDeleteDockets = false, IsAdmin = false });
+                Debug.WriteLine("[DatabaseService] Added default admin and operator users.");
             }
+            userCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Users;");
+            Debug.WriteLine($"[DatabaseService] Current user count: {userCount}");
 
 
             // Add sample Vehicles if none exist
@@ -410,17 +413,26 @@ namespace Weighbridge.Data
         {
             if (userPageAccess.Id != 0)
             {
-                return await _dbConnection.ExecuteAsync("UPDATE UserPageAccesses SET UserId = @UserId, PageName = @PageName WHERE Id = @Id", userPageAccess);
+                Debug.WriteLine($"[DatabaseService] Updating UserPageAccess: Id={userPageAccess.Id}, UserId={userPageAccess.UserId}, PageName={userPageAccess.PageName}");
+                var rowsAffected = await _dbConnection.ExecuteAsync("UPDATE UserPageAccesses SET UserId = @UserId, PageName = @PageName WHERE Id = @Id", userPageAccess);
+                Debug.WriteLine($"[DatabaseService] Updated UserPageAccess rows affected: {rowsAffected}");
+                return rowsAffected;
             }
             else
             {
-                return await _dbConnection.ExecuteAsync("INSERT INTO UserPageAccesses (UserId, PageName) VALUES (@UserId, @PageName)", userPageAccess);
+                Debug.WriteLine($"[DatabaseService] Inserting UserPageAccess: UserId={userPageAccess.UserId}, PageName={userPageAccess.PageName}");
+                var rowsAffected = await _dbConnection.ExecuteAsync("INSERT INTO UserPageAccesses (UserId, PageName) VALUES (@UserId, @PageName)", userPageAccess);
+                Debug.WriteLine($"[DatabaseService] Inserted UserPageAccess rows affected: {rowsAffected}");
+                return rowsAffected;
             }
         }
 
         public async Task<int> DeleteUserPageAccessAsync(UserPageAccess userPageAccess)
         {
-            return await _dbConnection.ExecuteAsync("DELETE FROM UserPageAccesses WHERE Id = @Id", new { userPageAccess.Id });
+            Debug.WriteLine($"[DatabaseService] Deleting UserPageAccess: Id={userPageAccess.Id}, UserId={userPageAccess.UserId}, PageName={userPageAccess.PageName}");
+            var rowsAffected = await _dbConnection.ExecuteAsync("DELETE FROM UserPageAccesses WHERE Id = @Id", new { userPageAccess.Id });
+            Debug.WriteLine($"[DatabaseService] Deleted UserPageAccess rows affected: {rowsAffected}");
+            return rowsAffected;
         }
 
         public async Task<List<Docket>> GetDocketsByDateRangeAsync(DateTime startDate, DateTime endDate)
