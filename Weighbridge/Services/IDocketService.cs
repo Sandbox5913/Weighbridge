@@ -6,5 +6,6 @@ namespace Weighbridge.Services
     public interface IDocketService
     {
         Task<string> GeneratePdfAsync(DocketData data, DocketTemplate template);
+        Task CancelDocket(int docketId);
     }
 }

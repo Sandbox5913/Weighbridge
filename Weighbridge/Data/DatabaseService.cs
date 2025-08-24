@@ -137,14 +137,15 @@ namespace Weighbridge.Data
                 Timestamp TEXT NOT NULL,
                 Status TEXT NOT NULL,
                 UpdatedAt TEXT,
+                WeighingMode TEXT,
                 FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id),
                 FOREIGN KEY (SourceSiteId) REFERENCES Sites(Id),
                 FOREIGN KEY (DestinationSiteId) REFERENCES Sites(Id),
                 FOREIGN KEY (ItemId) REFERENCES Items(Id),
                 FOREIGN KEY (CustomerId) REFERENCES Customers(Id),
                 FOREIGN KEY (TransportId) REFERENCES Transports(Id),
-                FOREIGN KEY (DriverId) REFERENCES Drivers(Id),
-                WeighingMode TEXT
+                FOREIGN KEY (DriverId) REFERENCES Drivers(Id)
+      
             );"));
             Debug.WriteLine("[DatabaseService] Dockets table created.");
 
@@ -172,7 +173,6 @@ namespace Weighbridge.Data
                 {
                     // Attempt to add the column directly
                     await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN WeighingMode TEXT DEFAULT NULL;"));
-                    Debug.WriteLine("[DatabaseService] Successfully added WeighingMode column to Dockets table.");
                 }
                 catch (Exception ex)
                 {
@@ -198,7 +198,7 @@ namespace Weighbridge.Data
                         Timestamp TEXT NOT NULL,
                         Status TEXT NOT NULL,
                         UpdatedAt TEXT,
-                        WeighingMode TEXT DEFAULT NULL,
+                        ""WeighingMode"" TEXT DEFAULT NULL,
                         FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id),
                         FOREIGN KEY (SourceSiteId) REFERENCES Sites(Id),
                         FOREIGN KEY (DestinationSiteId) REFERENCES Sites(Id),
@@ -211,7 +211,7 @@ namespace Weighbridge.Data
 
                     await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"INSERT INTO Dockets (
                         Id, EntranceWeight, ExitWeight, NetWeight, VehicleId, SourceSiteId, DestinationSiteId,
-                        ItemId, CustomerId, TransportId, DriverId, Remarks, Timestamp, Status, UpdatedAt, WeighingMode
+                        ItemId, CustomerId, TransportId, DriverId, Remarks, Timestamp, Status, UpdatedAt, ""WeighingMode""
                     )
                     SELECT
                         Id, EntranceWeight, ExitWeight, NetWeight, VehicleId, SourceSiteId, DestinationSiteId,
@@ -408,7 +408,7 @@ namespace Weighbridge.Data
             }
         }
 
-        public async Task<int> DeleteItemAsync<T>(T item)
+        public async Task<int> DeleteItemAsync<T>(T item) where T : IEntity
         {
             var auditService = _serviceProvider.GetRequiredService<IAuditService>();
 

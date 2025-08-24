@@ -14,7 +14,7 @@
                 <CollectionView ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}" SelectionMode="Single">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Label Text="{Binding Username}" Padding="10" BackgroundColor="Red" TextColor="White" FontFamily="Arial" />
+                            <Label Text="{Binding Username}" Padding="10" />
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>

@@ -32,5 +32,19 @@ namespace Weighbridge.Services
 
             await _auditLogRepository.SaveAuditLogAsync(auditLog);
         }
+
+        public async Task LogEventAsync(string eventType, string details)
+        {
+            var currentUser = _getCurrentUserFunc();
+            var auditLog = new AuditLog
+            {
+                Timestamp = DateTime.UtcNow,
+                UserId = currentUser?.Id,
+                Username = currentUser?.Username ?? "System",
+                Action = eventType, // Using eventType as action
+                Details = details
+            };
+            await _auditLogRepository.SaveAuditLogAsync(auditLog);
+        }
     }
 }

@@ -4,6 +4,7 @@ using Weighbridge.Models;
 using Weighbridge.Services;
 using FluentValidation;
 using FluentValidation.Results;
+using FluentValidationResult = FluentValidation.Results.ValidationResult;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -21,7 +22,7 @@ namespace Weighbridge.ViewModels
         private string _customerName = string.Empty;
 
         [ObservableProperty]
-        private ValidationResult? _validationErrors;
+        private FluentValidationResult? _validationErrors;
 
         public ObservableCollection<Customer> Customers { get; } = new();
 

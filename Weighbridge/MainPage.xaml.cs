@@ -106,114 +106,98 @@ namespace Weighbridge
 
         private void OnVehicleSearchEntryFocused(object sender, FocusEventArgs e)
         {
-            if (_viewModel.OnVehicleSearchEntryFocusedCommand.CanExecute(null))
+            if (sender is Entry entry)
             {
-                _viewModel.OnVehicleSearchEntryFocusedCommand.Execute(null);
+                // Force refresh the Entry display
+                entry.TextColor = Colors.White;
+                entry.BackgroundColor = Color.FromArgb("#3A3A3A");
             }
         }
 
         private void OnVehicleSearchEntryUnfocused(object sender, FocusEventArgs e)
         {
-            if (_viewModel.OnVehicleSearchEntryUnfocusedCommand.CanExecute(null))
+            if (sender is Entry entry)
             {
-                _viewModel.OnVehicleSearchEntryUnfocusedCommand.Execute(null);
+                entry.BackgroundColor = Color.FromArgb("#2A2A2A");
             }
         }
 
         private void OnSourceSiteSearchEntryFocused(object sender, FocusEventArgs e)
         {
-            if (_viewModel.OnSourceSiteSearchEntryFocusedCommand.CanExecute(null))
-            {
-                _viewModel.OnSourceSiteSearchEntryFocusedCommand.Execute(null);
-            }
         }
 
         private void OnSourceSiteSearchEntryUnfocused(object sender, FocusEventArgs e)
         {
-            if (_viewModel.OnSourceSiteSearchEntryUnfocusedCommand.CanExecute(null))
-            {
-                _viewModel.OnSourceSiteSearchEntryUnfocusedCommand.Execute(null);
-            }
+        }
+
+        private void OnSourceSiteSearchTextChanged(object sender, TextChangedEventArgs e)
+        {
+            _viewModel.SourceSiteSearchText = e.NewTextValue;
         }
 
         private void OnDestinationSiteSearchEntryFocused(object sender, FocusEventArgs e)
         {
-            if (_viewModel.OnDestinationSiteSearchEntryFocusedCommand.CanExecute(null))
-            {
-                _viewModel.OnDestinationSiteSearchEntryFocusedCommand.Execute(null);
-            }
         }
 
         private void OnDestinationSiteSearchEntryUnfocused(object sender, FocusEventArgs e)
         {
-            if (_viewModel.OnDestinationSiteSearchEntryUnfocusedCommand.CanExecute(null))
-            {
-                _viewModel.OnDestinationSiteSearchEntryUnfocusedCommand.Execute(null);
-            }
+        }
+
+        private void OnDestinationSiteSearchTextChanged(object sender, TextChangedEventArgs e)
+        {
+            _viewModel.DestinationSiteSearchText = e.NewTextValue;
         }
 
         private void OnCustomerSearchEntryFocused(object sender, FocusEventArgs e)
         {
-            if (_viewModel.OnCustomerSearchEntryFocusedCommand.CanExecute(null))
-            {
-                _viewModel.OnCustomerSearchEntryFocusedCommand.Execute(null);
-            }
         }
 
         private void OnCustomerSearchEntryUnfocused(object sender, FocusEventArgs e)
         {
-            if (_viewModel.OnCustomerSearchEntryUnfocusedCommand.CanExecute(null))
-            {
-                _viewModel.OnCustomerSearchEntryUnfocusedCommand.Execute(null);
-            }
+        }
+
+        private void OnCustomerSearchTextChanged(object sender, TextChangedEventArgs e)
+        {
+            _viewModel.CustomerSearchText = e.NewTextValue;
         }
 
         private void OnMaterialSearchEntryFocused(object sender, FocusEventArgs e)
         {
-            if (_viewModel.OnMaterialSearchEntryFocusedCommand.CanExecute(null))
-            {
-                _viewModel.OnMaterialSearchEntryFocusedCommand.Execute(null);
-            }
         }
 
         private void OnMaterialSearchEntryUnfocused(object sender, FocusEventArgs e)
         {
-            if (_viewModel.OnMaterialSearchEntryUnfocusedCommand.CanExecute(null))
-            {
-                _viewModel.OnMaterialSearchEntryUnfocusedCommand.Execute(null);
-            }
+        }
+
+        private void OnMaterialSearchTextChanged(object sender, TextChangedEventArgs e)
+        {
+            _viewModel.MaterialSearchText = e.NewTextValue;
         }
 
         private void OnTransportSearchEntryFocused(object sender, FocusEventArgs e)
         {
-            if (_viewModel.OnTransportSearchEntryFocusedCommand.CanExecute(null))
-            {
-                _viewModel.OnTransportSearchEntryFocusedCommand.Execute(null);
-            }
         }
 
         private void OnTransportSearchEntryUnfocused(object sender, FocusEventArgs e)
         {
-            if (_viewModel.OnTransportSearchEntryUnfocusedCommand.CanExecute(null))
-            {
-                _viewModel.OnTransportSearchEntryUnfocusedCommand.Execute(null);
-            }
+        }
+
+        private void OnTransportSearchTextChanged(object sender, TextChangedEventArgs e)
+        {
+            _viewModel.TransportSearchText = e.NewTextValue;
         }
 
         private void OnDriverSearchEntryFocused(object sender, FocusEventArgs e)
         {
-            if (_viewModel.OnDriverSearchEntryFocusedCommand.CanExecute(null))
-            {
-                _viewModel.OnDriverSearchEntryFocusedCommand.Execute(null);
-            }
         }
 
         private void OnDriverSearchEntryUnfocused(object sender, FocusEventArgs e)
         {
-            if (_viewModel.OnDriverSearchEntryUnfocusedCommand.CanExecute(null))
-            {
-                _viewModel.OnDriverSearchEntryUnfocusedCommand.Execute(null);
-            }
+        }
+
+        private void OnDriverSearchTextChanged(object sender, TextChangedEventArgs e)
+        {
+            _viewModel.DriverSearchText = e.NewTextValue;
         }
 
         private async void OnToYardClicked(object sender, EventArgs e)
@@ -240,6 +224,12 @@ namespace Weighbridge
             {
                 await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
             }
+        }
+
+        private void OnVehicleSearchTextChanged(object sender, TextChangedEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine($"VehicleSearchEntry TextChanged: {e.NewTextValue}");
+            _viewModel.VehicleSearchText = e.NewTextValue;
         }
 
         

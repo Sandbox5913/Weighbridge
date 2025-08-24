@@ -7,8 +7,10 @@ using Weighbridge.Pages;
 using System.Diagnostics;
 using FluentValidation;
 using FluentValidation.Results;
+using FluentValidationResult = FluentValidation.Results.ValidationResult;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.Controls;
 
 namespace Weighbridge.ViewModels
 {
@@ -29,7 +31,7 @@ namespace Weighbridge.ViewModels
         private ObservableCollection<PageAccessViewModel> _pages = new();
 
         [ObservableProperty]
-        private ValidationResult? _validationErrors;
+        private FluentValidationResult? _validationErrors;
 
         public UserPageAccessManagementViewModel(IDatabaseService databaseService, IValidator<UserPageAccess> userPageAccessValidator, ILoggingService loggingService, IAlertService alertService)
         {
@@ -120,7 +122,10 @@ namespace Weighbridge.ViewModels
                 // Don't save page access for Admin users - they always have full access
                 if (SelectedUser?.IsAdmin == true)
                 {
-                    _alertService.DisplayAlert("Info", "Admin users automatically have access to all pages.", "OK");
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        _alertService.DisplayAlert("Info", "Admin users automatically have access to all pages.", "OK");
+                    });
                     _loggingService.LogInformation("Admin users automatically have access to all pages.");
                 }
                 return;
@@ -147,7 +152,10 @@ namespace Weighbridge.ViewModels
                     else
                     {
                         _loggingService.LogError($"Validation error for {page.PageName}: {_validationErrors.Errors.First().ErrorMessage}");
-                        _alertService.DisplayAlert("Validation Error", $"Validation error for {page.PageName}: {_validationErrors.Errors.First().ErrorMessage}", "OK");
+                        MainThread.BeginInvokeOnMainThread(() =>
+                        {
+                            _alertService.DisplayAlert("Validation Error", $"Validation error for {page.PageName}: {_validationErrors.Errors.First().ErrorMessage}", "OK");
+                        });
                         return; // Stop saving if any validation fails
                     }
                 }
@@ -168,7 +176,10 @@ namespace Weighbridge.ViewModels
                 await _databaseService.DeleteItemAsync(upa);
             }
 
-            _alertService.DisplayAlert("Success", "Page access permissions updated successfully.", "OK");
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                _alertService.DisplayAlert("Success", "Page access permissions updated successfully.", "OK");
+            });
             _loggingService.LogInformation("Page access permissions updated successfully.");
             LoadPageAccess(); // Reload to reflect changes
         }

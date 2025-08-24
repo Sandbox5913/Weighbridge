@@ -268,7 +268,7 @@ namespace Weighbridge.Tests
 
             var result = await _databaseService.DeleteItemAsync(vehicle);
              NUnit.Framework.Assert.That(result, Is.EqualTo(1));
-             NUnit.Framework.Assert.That(await _databaseService.GetItemAsync<Vehicle>(vehicle.Id), Is.Null);
+             NUnit.Framework.Assert.That(await _databaseService.GetItemAsync<IEntity>(vehicle.Id), Is.Null);
         }
 
         [Test]

@@ -491,19 +491,8 @@ namespace Weighbridge.Services
 
             try
             {
-                var docket = await _databaseService.GetItemAsync<Docket>(loadDocketId);
-                if (docket != null)
-                {
-                    if (!TryTransitionDocketState(docket, "CANCELLED", showErrorAsync))
-                    {
-                        _loggingService.LogError($"Failed to transition docket state to CANCELLED for docket {docket.Id}.");
-                        return; // Return immediately if state transition fails
-                    }
-                    await _databaseService.SaveItemAsync(docket); // Save the status change
-                    // Optionally delete the docket if "CANCELLED" means removal from DB
-                    // await _databaseService.DeleteItemAsync(docket);
-                    resetForm();
-                }
+                await _docketService.CancelDocket(loadDocketId);
+                resetForm();
             }
             catch (Exception ex)
             {

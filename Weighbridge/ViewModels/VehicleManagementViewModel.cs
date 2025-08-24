@@ -4,6 +4,7 @@ using Weighbridge.Models;
 using Weighbridge.Services;
 using FluentValidation;
 using FluentValidation.Results;
+using FluentValidationResult = FluentValidation.Results.ValidationResult;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -29,7 +30,7 @@ namespace Weighbridge.ViewModels
         private ObservableCollection<Vehicle> _vehicles = new();
 
         [ObservableProperty]
-        private ValidationResult? _validationErrors;
+        private FluentValidationResult? _validationErrors;
 
         public VehicleManagementViewModel(IDatabaseService databaseService, IValidator<Vehicle> vehicleValidator, ILoggingService loggingService, IAlertService alertService)
         {

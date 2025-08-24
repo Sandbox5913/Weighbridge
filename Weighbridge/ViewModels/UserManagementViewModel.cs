@@ -5,6 +5,7 @@ using Weighbridge.Services;
 using BCrypt.Net;
 using FluentValidation;
 using FluentValidation.Results;
+using FluentValidationResult = FluentValidation.Results.ValidationResult;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -37,7 +38,7 @@ namespace Weighbridge.ViewModels
         private bool _isAdmin;
 
         [ObservableProperty]
-        private ValidationResult? _validationErrors;
+        private FluentValidationResult? _validationErrors;
 
         public UserManagementViewModel(IDatabaseService databaseService, IValidator<User> userValidator)
         {

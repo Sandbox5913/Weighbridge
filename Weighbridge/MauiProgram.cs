@@ -14,6 +14,7 @@ using Weighbridge.Services;
 using Weighbridge.ViewModels;
 using FluentValidation;
 using Weighbridge.Validation;
+using CommunityToolkit.Maui;
 
 namespace Weighbridge;
 
@@ -25,6 +26,7 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -49,25 +51,24 @@ public static class MauiProgram
         // Register services
         builder.Services.AddSingleton<ILoggingService, LoggingService>();
         builder.Services.AddSingleton<IAlertService, AlertService>();
+        builder.Services.AddSingleton<MainFormConfig>(); // Added
         builder.Services.AddSingleton<WeightParserService>();
 
-        // Register a single IDbConnection for the application
-        builder.Services.AddSingleton<IDbConnection>(provider =>
-        {
-            // Use a file-based SQLite database for the main application
-            var databasePath = Path.Combine(FileSystem.AppDataDirectory, "weighbridge.db");
-            var connection = new SqliteConnection($"Data Source={databasePath}");
-            connection.Open(); // Open the connection once
-            return connection;
-        });
-
-        builder.Services.AddSingleton<IDatabaseService>(provider =>
-        {
-            var dbConnection = provider.GetRequiredService<IDbConnection>();
-            return new DatabaseService(dbConnection, provider); // Pass the IDbConnection directly
-        });
+        // Register Unit of Work and related services
+        builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
         builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>(); // Register IDbConnectionFactory
-        builder.Services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
+
+        builder.Services.AddScoped<IDatabaseService>(provider =>
+        {
+            // DatabaseService now gets its connection from the current UnitOfWork scope
+            var unitOfWork = provider.GetRequiredService<IUnitOfWork>();
+            return new DatabaseService(unitOfWork.Connection, provider);
+        });
+        builder.Services.AddScoped<IAuditLogRepository>(provider =>
+        {
+            var unitOfWork = provider.GetRequiredService<IUnitOfWork>();
+            return new AuditLogRepository(unitOfWork.Connection);
+        });
         builder.Services.AddSingleton<IWeighbridgeService, WeighbridgeService>();
         builder.Services.AddSingleton<IDocketService, DocketService>();
         builder.Services.AddSingleton<IReportsService, ReportsService>();
@@ -83,8 +84,22 @@ public static class MauiProgram
             var dbService = provider.GetRequiredService<IDatabaseService>();
             return new UserService(dbService, provider); // Pass the provider itself
         });
-        builder.Services.AddTransient<INavigationService, NavigationService>();
+        builder.Services.AddSingleton<INavigationService, NavigationService>();
         builder.Services.AddSingleton<IExportService, ExportService>();
+        builder.Services.AddScoped<IDocketValidationService, DocketValidationService>(); // Added
+                builder.Services.AddScoped<IWeighingOperationService>(provider =>
+        {
+            return new WeighingOperationService(
+                provider.GetRequiredService<IDatabaseService>(),
+                provider.GetRequiredService<ILoggingService>(),
+                provider.GetRequiredService<IAuditService>(),
+                provider.GetRequiredService<IExportService>(),
+                provider.GetRequiredService<IDocketService>(),
+                provider.GetRequiredService<IWeighbridgeService>(),
+                provider.GetRequiredService<IUnitOfWork>(),
+                provider.GetRequiredService<IDocketValidationService>() // Added
+            );
+        });
 
         // Register ViewModels
         builder.Services.AddSingleton<MainPageViewModel>(provider =>
@@ -96,7 +111,8 @@ public static class MauiProgram
                 provider.GetRequiredService<IAuditService>(),
                 provider.GetRequiredService<IExportService>(),
                 provider.GetRequiredService<ILoggingService>(),
-                provider.GetRequiredService<IAlertService>()
+                provider.GetRequiredService<IAlertService>(),
+                provider.GetRequiredService<IWeighingOperationService>()
             );
         });
         builder.Services.AddTransient<CustomerManagementViewModel>();
@@ -150,24 +166,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<App>();
 
         Debug.WriteLine("[MauiProgram] CreateMauiApp: Building app.");
-         builder.UseMauiApp<App>()
-     .ConfigureLifecycleEvents(events =>
-     {
-#if WINDOWS
-         events.AddWindows(windows =>
-         {
-             windows.OnWindowCreated((window) =>
-             {
-                 var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
-
-                 var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
-                 var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
-
-                 appWindow.SetPresenter(Microsoft.UI.Windowing.AppWindowPresenterKind.Default);
-             });
-         });
-#endif
-     });
+         
         var serviceProvider = builder.Services.BuildServiceProvider();
         var databaseService = serviceProvider.GetRequiredService<IDatabaseService>();
         databaseService.InitializeAsync().Wait(); // Blocking call to ensure initialization completes
