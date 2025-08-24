@@ -137,13 +137,6 @@ namespace Weighbridge.Data
                 Timestamp TEXT NOT NULL,
                 Status TEXT NOT NULL,
                 UpdatedAt TEXT,
-                FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id),
-                FOREIGN KEY (SourceSiteId) REFERENCES Sites(Id),
-                FOREIGN KEY (DestinationSiteId) REFERENCES Sites(Id),
-                FOREIGN KEY (ItemId) REFERENCES Items(Id),
-                FOREIGN KEY (CustomerId) REFERENCES Customers(Id),
-                FOREIGN KEY (TransportId) REFERENCES Transports(Id),
-                FOREIGN KEY (DriverId) REFERENCES Drivers(Id),
                 WeighingMode TEXT
             );"));
             Debug.WriteLine("[DatabaseService] Dockets table created.");
@@ -183,30 +176,32 @@ namespace Weighbridge.Data
                     Debug.WriteLine("[DatabaseService] Renamed Dockets to Dockets_old.");
 
                     await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"CREATE TABLE Dockets (
-                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        EntranceWeight REAL NOT NULL,
-                        ExitWeight REAL NOT NULL,
-                        NetWeight REAL NOT NULL,
-                        VehicleId INTEGER,
-                        SourceSiteId INTEGER,
-                        DestinationSiteId INTEGER,
-                        ItemId INTEGER,
-                        CustomerId INTEGER,
-                        TransportId INTEGER,
-                        DriverId INTEGER,
-                        Remarks TEXT,
-                        Timestamp TEXT NOT NULL,
-                        Status TEXT NOT NULL,
-                        UpdatedAt TEXT,
-                        WeighingMode TEXT DEFAULT NULL,
-                        FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id),
-                        FOREIGN KEY (SourceSiteId) REFERENCES Sites(Id),
-                        FOREIGN KEY (DestinationSiteId) REFERENCES Sites(Id),
-                        FOREIGN KEY (ItemId) REFERENCES Items(Id),
-                        FOREIGN KEY (CustomerId) REFERENCES Customers(Id),
-                        FOREIGN KEY (TransportId) REFERENCES Transports(Id),
-                        FOREIGN KEY (DriverId) REFERENCES Drivers(Id)
-                    );"));
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    EntranceWeight REAL NOT NULL,
+    ExitWeight REAL NOT NULL,
+    NetWeight REAL NOT NULL,
+    VehicleId INTEGER,
+    SourceSiteId INTEGER,
+    DestinationSiteId INTEGER,
+    ItemId INTEGER,
+    CustomerId INTEGER,
+    TransportId INTEGER,
+    DriverId INTEGER,
+    Remarks TEXT,
+    Timestamp TEXT NOT NULL,
+    Status TEXT NOT NULL,
+    UpdatedAt TEXT,
+    TransactionType INTEGER NOT NULL DEFAULT 0,
+    WeighingMode TEXT DEFAULT NULL,
+    FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id),
+    FOREIGN KEY (SourceSiteId) REFERENCES Sites(Id),
+    FOREIGN KEY (DestinationSiteId) REFERENCES Sites(Id),
+    FOREIGN KEY (ItemId) REFERENCES Items(Id),
+    FOREIGN KEY (CustomerId) REFERENCES Customers(Id),
+    FOREIGN KEY (TransportId) REFERENCES Transports(Id),
+    FOREIGN KEY (DriverId) REFERENCES Drivers(Id)
+);
+"));
                     Debug.WriteLine("[DatabaseService] Created new Dockets table.");
 
                     await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"INSERT INTO Dockets (
@@ -215,7 +210,7 @@ namespace Weighbridge.Data
                     )
                     SELECT
                         Id, EntranceWeight, ExitWeight, NetWeight, VehicleId, SourceSiteId, DestinationSiteId,
-                        ItemId, CustomerId, TransportId, DriverId, Remarks, Timestamp, Status, UpdatedAt, NULL -- Set WeighingMode to NULL for existing data
+                        ItemId, CustomerId, TransportId, DriverId, Remarks, Timestamp, Status, UpdatedAt, NULL 
                     FROM Dockets_old;"));
                     Debug.WriteLine("[DatabaseService] Copied data from Dockets_old to new Dockets table.");
 
@@ -223,7 +218,6 @@ namespace Weighbridge.Data
                     Debug.WriteLine("[DatabaseService] Dropped Dockets_old table.");
                 }
             }
-            
             
 
             // Add sample users if none exist
@@ -408,7 +402,7 @@ namespace Weighbridge.Data
             }
         }
 
-        public async Task<int> DeleteItemAsync<T>(T item)
+        public async Task<int> DeleteItemAsync<T>(T item) where T : IEntity
         {
             var auditService = _serviceProvider.GetRequiredService<IAuditService>();
 
