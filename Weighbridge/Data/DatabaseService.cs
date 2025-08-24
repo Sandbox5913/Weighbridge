@@ -167,7 +167,7 @@ namespace Weighbridge.Data
             // Migration: Add WeighingMode column to Dockets table if it doesn't exist
             if (!tableInfo.Any(c => c.name == "WeighingMode"))
             {
-                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN WeighingMode TEXT;"));
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN WeighingMode TEXT DEFAULT NULL;"));
             }
 
             // Add sample users if none exist
