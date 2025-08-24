@@ -5,15 +5,7 @@
              x:DataType="viewmodels:LoginViewModel"
              x:Class="Weighbridge.Pages.LoginPage"
              Title="Login"
-             BackgroundColor="#0A0A0A">
-
-    <!-- Background gradient -->
-    <ContentPage.Background>
-        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#0A0A0A" Offset="0.0" />
-            <GradientStop Color="#1A1A2E" Offset="1.0" />
-        </LinearGradientBrush>
-    </ContentPage.Background>
+             Style="{StaticResource DarkPageStyle}">
 
     <ScrollView>
         <VerticalStackLayout Spacing="0" Padding="32,60,32,40" VerticalOptions="Fill">
@@ -34,14 +26,14 @@
 
             <!-- Title Section -->
             <Label Text="Weighbridge" 
-                   TextColor="#FFFFFF" 
+                   TextColor="{StaticResource White}" 
                    FontSize="36" 
                    FontAttributes="Bold" 
                    HorizontalOptions="Center" 
                    Margin="0,0,0,8" />
 
             <Label Text="Management System" 
-                   TextColor="#9CA3AF" 
+                   TextColor="{StaticResource Gray200}" 
                    FontSize="16" 
                    HorizontalOptions="Center" 
                    Margin="0,0,0,50" />
@@ -69,7 +61,7 @@
                     <!-- Username Field -->
                     <StackLayout Spacing="8">
                         <Label Text="Username" 
-                               TextColor="#E5E7EB" 
+                               TextColor="{StaticResource White}" 
                                FontSize="14" 
                                FontAttributes="Bold" />
                         <Border BackgroundColor="#374151" 
@@ -80,18 +72,14 @@
                             </Border.StrokeShape>
                             <Entry Placeholder="Enter your username" 
                                    Text="{Binding Username}" 
-                                   TextColor="#FFFFFF" 
-                                   PlaceholderColor="#9CA3AF"
-                                   BackgroundColor="Transparent"
-                                   FontSize="16"
-                                   Margin="16,12" />
+                                   Style="{StaticResource DarkEntryStyle}" />
                         </Border>
                     </StackLayout>
 
                     <!-- Password Field -->
                     <StackLayout Spacing="8">
                         <Label Text="Password" 
-                               TextColor="#E5E7EB" 
+                               TextColor="{StaticResource White}" 
                                FontSize="14" 
                                FontAttributes="Bold" />
                         <Border BackgroundColor="#374151" 
@@ -103,11 +91,7 @@
                             <Entry Placeholder="Enter your password" 
                                    Text="{Binding Password}" 
                                    IsPassword="True" 
-                                   TextColor="#FFFFFF" 
-                                   PlaceholderColor="#9CA3AF"
-                                   BackgroundColor="Transparent"
-                                   FontSize="16"
-                                   Margin="16,12"
+                                   Style="{StaticResource DarkEntryStyle}" 
                                    Completed="OnLoginClicked" />
                         </Border>
                     </StackLayout>
@@ -122,18 +106,9 @@
                     <!-- Login Button -->
                     <Button Text="Sign In" 
                             Command="{Binding LoginCommand}" 
-                            FontSize="18" 
-                            FontAttributes="Bold"
+                            Style="{StaticResource DarkButtonStyle}" 
                             HeightRequest="56"
-                            CornerRadius="12"
-                            Margin="0,16,0,0">
-                        <Button.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                <GradientStop Color="#3B82F6" Offset="0.0" />
-                                <GradientStop Color="#1D4ED8" Offset="1.0" />
-                            </LinearGradientBrush>
-                        </Button.Background>
-                    </Button>
+                            Margin="0,16,0,0" />
 
                     <!-- Loading Indicator -->
                     <ActivityIndicator IsRunning="{Binding IsBusy}" 
@@ -157,7 +132,7 @@
 
                 <StackLayout Spacing="12">
                     <Label Text="Demo Credentials" 
-                           TextColor="#CBD5E1" 
+                           TextColor="{StaticResource Gray300}" 
                            FontSize="14" 
                            FontAttributes="Bold" 
                            HorizontalOptions="Center" />
@@ -166,8 +141,8 @@
                         <Label HorizontalOptions="Center">
                             <Label.FormattedText>
                                 <FormattedString>
-                                    <Span Text="Admin: " TextColor="#94A3B8" FontSize="12" FontAttributes="Bold" />
-                                    <Span Text="admin / admin" TextColor="#E2E8F0" FontSize="12" />
+                                    <Span Text="Admin: " TextColor="{StaticResource Gray400}" FontSize="12" FontAttributes="Bold" />
+                                    <Span Text="admin / admin" TextColor="{StaticResource Gray100}" FontSize="12" />
                                 </FormattedString>
                             </Label.FormattedText>
                         </Label>
@@ -175,8 +150,8 @@
                         <Label HorizontalOptions="Center">
                             <Label.FormattedText>
                                 <FormattedString>
-                                    <Span Text="Operator: " TextColor="#94A3B8" FontSize="12" FontAttributes="Bold" />
-                                    <Span Text="operator / operator" TextColor="#E2E8F0" FontSize="12" />
+                                    <Span Text="Operator: " TextColor="{StaticResource Gray400}" FontSize="12" FontAttributes="Bold" />
+                                    <Span Text="operator / operator" TextColor="{StaticResource Gray100}" FontSize="12" />
                                 </FormattedString>
                             </Label.FormattedText>
                         </Label>

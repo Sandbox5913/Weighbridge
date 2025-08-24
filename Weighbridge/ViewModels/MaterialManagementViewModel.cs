@@ -13,6 +13,8 @@ namespace Weighbridge.ViewModels
     {
         private readonly IDatabaseService _databaseService;
         private readonly IValidator<Item> _itemValidator;
+        private readonly ILoggingService _loggingService;
+        private readonly IAlertService _alertService;
 
         [ObservableProperty]
         private Item? _selectedItem;
@@ -26,10 +28,12 @@ namespace Weighbridge.ViewModels
         [ObservableProperty]
         private ValidationResult? _validationErrors;
 
-        public MaterialManagementViewModel(IDatabaseService databaseService, IValidator<Item> itemValidator)
+        public MaterialManagementViewModel(IDatabaseService databaseService, IValidator<Item> itemValidator, ILoggingService loggingService, IAlertService alertService)
         {
             _databaseService = databaseService;
             _itemValidator = itemValidator;
+            _loggingService = loggingService;
+            _alertService = alertService;
 
             LoadItemsCommand.ExecuteAsync(null);
         }
@@ -48,8 +52,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                // TODO: Implement proper error handling/logging
-                Console.WriteLine($"Failed to load items: {ex.Message}");
+                _loggingService.LogError($"Failed to load items: {ex.Message}", ex);
             }
         }
 
@@ -69,8 +72,7 @@ namespace Weighbridge.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    // TODO: Implement proper error handling/logging
-                    Console.WriteLine($"Failed to add material: {ex.Message}");
+                    _loggingService.LogError($"Failed to add material: {ex.Message}", ex);
                 }
             }
         }
@@ -93,8 +95,7 @@ namespace Weighbridge.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    // TODO: Implement proper error handling/logging
-                    Console.WriteLine($"Failed to update material: {ex.Message}");
+                    _loggingService.LogError($"Failed to update material: {ex.Message}", ex);
                 }
             }
         }
@@ -104,8 +105,9 @@ namespace Weighbridge.ViewModels
         [RelayCommand]
         private async Task DeleteItem(Item item)
         {
-            // TODO: Implement confirmation dialog
-            try
+            if (await _alertService.DisplayConfirmation("Confirm Deletion", $"Are you sure you want to delete {item.Name}?", "Yes", "No"))
+            {
+                try
             {
                 await _databaseService.DeleteItemAsync(item);
                 await LoadItems();
@@ -113,9 +115,9 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                // TODO: Implement proper error handling/logging
-                Console.WriteLine($"Failed to delete material: {ex.Message}");
+                _loggingService.LogError($"Failed to delete material: {ex.Message}", ex);
             }
+        }
         }
 
         [RelayCommand]

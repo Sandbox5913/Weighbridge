@@ -19,6 +19,8 @@ namespace Weighbridge.ViewModels
         private readonly IDocketService _docketService;
         private readonly IAuditService _auditService; // Injected Audit Service
         private readonly IExportService _exportService; // Injected Export Service
+        private readonly ILoggingService _loggingService;
+        private readonly IAlertService _alertService;
         private readonly SemaphoreSlim _initializationSemaphore = new(1, 1);
         private readonly CancellationTokenSource _cancellationTokenSource = new();
 
@@ -88,7 +90,7 @@ namespace Weighbridge.ViewModels
             {
                 if (SetProperty(ref _vehicleRegistration, value))
                 {
-                    _ = CheckForOpenDocketAsync();
+                    // _ = CheckForOpenDocketAsync(); // Removed from here
                 }
             }
         }
@@ -108,14 +110,14 @@ namespace Weighbridge.ViewModels
                     {
                         // Found open docket - load it automatically
                         await LoadDocketAsync(openDocket.Id);
-                        await ShowInfoAsync("Open Docket Found",
+                        await ShowInfoAsync("OpenDocket Found",
                             $"Loading existing docket #{openDocket.Id} for vehicle {VehicleRegistration}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error checking for open docket: {ex}");
+                _loggingService.LogError($"Error checking for open docket: {ex.Message}", ex);
             }
         }
 
@@ -182,21 +184,412 @@ namespace Weighbridge.ViewModels
         public ICommand UpdateTareCommand { get; private set; }
         public ICommand ZeroCommand { get; private set; }
 
-        public MainPageViewModel(IWeighbridgeService weighbridgeService, IDatabaseService databaseService, IDocketService docketService, IAuditService auditService, IExportService exportService)
+        // ComboBox Properties for Material
+        private string _materialSearchText = string.Empty;
+        public string MaterialSearchText
+        {
+            get => _materialSearchText;
+            set
+            {
+                if (SetProperty(ref _materialSearchText, value))
+                {
+                    FilterItems();
+                    ShowMaterialSuggestions = !string.IsNullOrWhiteSpace(value);
+                }
+            }
+        }
+
+        private bool _showMaterialSuggestions;
+        public bool ShowMaterialSuggestions
+        {
+            get => _showMaterialSuggestions;
+            set => SetProperty(ref _showMaterialSuggestions, value);
+        }
+
+        public ObservableCollection<Item> FilteredItems { get; } = new(); // Changed to Item
+        // AllItems is no longer needed as we use the existing 'Items' ObservableCollection
+
+        // ComboBox Commands for Material
+        public ICommand ItemSelectedCommand { get; private set; }
+        public ICommand OnMaterialSearchEntryFocusedCommand { get; private set; }
+        public ICommand OnMaterialSearchEntryUnfocusedCommand { get; private set; }
+
+        // ComboBox Properties for Vehicle
+        private string _vehicleSearchText = string.Empty;
+        public string VehicleSearchText
+        {
+            get => _vehicleSearchText;
+            set
+            {
+                if (SetProperty(ref _vehicleSearchText, value))
+                {
+                    FilterVehicles();
+                    ShowVehicleSuggestions = !string.IsNullOrWhiteSpace(value);
+                }
+            }
+        }
+
+        private bool _showVehicleSuggestions;
+        public bool ShowVehicleSuggestions
+        {
+            get => _showVehicleSuggestions;
+            set => SetProperty(ref _showVehicleSuggestions, value);
+        }
+
+        public ObservableCollection<Vehicle> FilteredVehicles { get; } = new();
+
+        // ComboBox Commands for Vehicle
+        public ICommand VehicleSelectedCommand { get; private set; }
+        public ICommand OnVehicleSearchEntryFocusedCommand { get; private set; }
+        public ICommand OnVehicleSearchEntryUnfocusedCommand { get; private set; }
+
+        // ComboBox Properties for Source Site
+        private string _sourceSiteSearchText = string.Empty;
+        public string SourceSiteSearchText
+        {
+            get => _sourceSiteSearchText;
+            set
+            {
+                if (SetProperty(ref _sourceSiteSearchText, value))
+                {
+                    FilterSourceSites();
+                    ShowSourceSiteSuggestions = !string.IsNullOrWhiteSpace(value);
+                }
+            }
+        }
+
+        private bool _showSourceSiteSuggestions;
+        public bool ShowSourceSiteSuggestions
+        {
+            get => _showSourceSiteSuggestions;
+            set => SetProperty(ref _showSourceSiteSuggestions, value);
+        }
+
+        public ObservableCollection<Site> FilteredSourceSites { get; } = new();
+
+        // ComboBox Commands for Source Site
+        public ICommand SourceSiteSelectedCommand { get; private set; }
+        public ICommand OnSourceSiteSearchEntryFocusedCommand { get; private set; }
+        public ICommand OnSourceSiteSearchEntryUnfocusedCommand { get; private set; }
+
+        // ComboBox Properties for Destination Site
+        private string _destinationSiteSearchText = string.Empty;
+        public string DestinationSiteSearchText
+        {
+            get => _destinationSiteSearchText;
+            set
+            {
+                if (SetProperty(ref _destinationSiteSearchText, value))
+                {
+                    FilterDestinationSites();
+                    ShowDestinationSiteSuggestions = !string.IsNullOrWhiteSpace(value);
+                }
+            }
+        }
+
+        private bool _showDestinationSiteSuggestions;
+        public bool ShowDestinationSiteSuggestions
+        {
+            get => _showDestinationSiteSuggestions;
+            set => SetProperty(ref _showDestinationSiteSuggestions, value);
+        }
+
+        public ObservableCollection<Site> FilteredDestinationSites { get; } = new();
+
+        // ComboBox Commands for Destination Site
+        public ICommand DestinationSiteSelectedCommand { get; private set; }
+        public ICommand OnDestinationSiteSearchEntryFocusedCommand { get; private set; }
+        public ICommand OnDestinationSiteSearchEntryUnfocusedCommand { get; private set; }
+
+        // ComboBox Properties for Customer
+        private string _customerSearchText = string.Empty;
+        public string CustomerSearchText
+        {
+            get => _customerSearchText;
+            set
+            {
+                if (SetProperty(ref _customerSearchText, value))
+                {
+                    FilterCustomers();
+                    ShowCustomerSuggestions = !string.IsNullOrWhiteSpace(value);
+                }
+            }
+        }
+
+        private bool _showCustomerSuggestions;
+        public bool ShowCustomerSuggestions
+        {
+            get => _showCustomerSuggestions;
+            set => SetProperty(ref _showCustomerSuggestions, value);
+        }
+
+        public ObservableCollection<Customer> FilteredCustomers { get; } = new();
+
+        // ComboBox Commands for Customer
+        public ICommand CustomerSelectedCommand { get; private set; }
+        public ICommand OnCustomerSearchEntryFocusedCommand { get; private set; }
+        public ICommand OnCustomerSearchEntryUnfocusedCommand { get; private set; }
+
+        // ComboBox Properties for Transport
+        private string _transportSearchText = string.Empty;
+        public string TransportSearchText
+        {
+            get => _transportSearchText;
+            set
+            {
+                if (SetProperty(ref _transportSearchText, value))
+                {
+                    FilterTransports();
+                    ShowTransportSuggestions = !string.IsNullOrWhiteSpace(value);
+                }
+            }
+        }
+
+        private bool _showTransportSuggestions;
+        public bool ShowTransportSuggestions
+        {
+            get => _showTransportSuggestions;
+            set => SetProperty(ref _showTransportSuggestions, value);
+        }
+
+        public ObservableCollection<Transport> FilteredTransports { get; } = new();
+
+        // ComboBox Commands for Transport
+        public ICommand TransportSelectedCommand { get; private set; }
+        public ICommand OnTransportSearchEntryFocusedCommand { get; private set; }
+        public ICommand OnTransportSearchEntryUnfocusedCommand { get; private set; }
+
+        // ComboBox Properties for Driver
+        private string _driverSearchText = string.Empty;
+        public string DriverSearchText
+        {
+            get => _driverSearchText;
+            set
+            {
+                if (SetProperty(ref _driverSearchText, value))
+                {
+                    FilterDrivers();
+                    ShowDriverSuggestions = !string.IsNullOrWhiteSpace(value);
+                }
+            }
+        }
+
+        private bool _showDriverSuggestions;
+        public bool ShowDriverSuggestions
+        {
+            get => _showDriverSuggestions;
+            set => SetProperty(ref _showDriverSuggestions, value);
+        }
+
+        public ObservableCollection<Driver> FilteredDrivers { get; } = new();
+
+        // ComboBox Commands for Driver
+        public ICommand DriverSelectedCommand { get; private set; }
+        public ICommand OnDriverSearchEntryFocusedCommand { get; private set; }
+        public ICommand OnDriverSearchEntryUnfocusedCommand { get; private set; }
+
+        public MainPageViewModel(IWeighbridgeService weighbridgeService, IDatabaseService databaseService, IDocketService docketService, IAuditService auditService, IExportService exportService, ILoggingService loggingService, IAlertService alertService)
         {
             _weighbridgeService = weighbridgeService ?? throw new ArgumentNullException(nameof(weighbridgeService));
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
             _docketService = docketService ?? throw new ArgumentNullException(nameof(docketService));
             _auditService = auditService ?? throw new ArgumentNullException(nameof(auditService));
             _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
+            _loggingService = loggingService ?? throw new ArgumentNullException(nameof(loggingService));
+            _alertService = alertService ?? throw new ArgumentNullException(nameof(alertService));
 
             LoadFormConfig();
             InitializeCommands();
             InitializeDefaultValues();
             SubscribeToWeighbridgeEvents();
 
+            // FilterItems(); // Initial filtering - will be called after Items are loaded in OnAppearingAsync
+
             // Start async initialization
             _ = InitializeAsync();
+        }
+
+        private void FilterItems()
+        {
+            FilteredItems.Clear();
+            if (string.IsNullOrWhiteSpace(MaterialSearchText))
+            {
+                foreach (var item in Items) // Use existing 'Items' collection
+                {
+                    FilteredItems.Add(item);
+                }
+            }
+            else
+            {
+                foreach (var item in Items.Where(i => i.Name.Contains(MaterialSearchText, StringComparison.OrdinalIgnoreCase)))
+                {
+                    FilteredItems.Add(item);
+                }
+            }
+        }
+
+        private void OnItemSelected(Item selectedItem) // Changed to Item
+        {
+            SelectedItem = selectedItem; // Set the actual SelectedItem property
+            MaterialSearchText = selectedItem.Name;
+            ShowMaterialSuggestions = false;
+        }
+
+        private void FilterVehicles()
+        {
+            FilteredVehicles.Clear();
+            if (string.IsNullOrWhiteSpace(VehicleSearchText))
+            {
+                foreach (var vehicle in Vehicles) // Assuming 'Vehicles' is your ObservableCollection of all vehicles
+                {
+                    FilteredVehicles.Add(vehicle);
+                }
+            }
+            else
+            {
+                foreach (var vehicle in Vehicles.Where(v => v.LicenseNumber.Contains(VehicleSearchText, StringComparison.OrdinalIgnoreCase)))
+                {
+                    FilteredVehicles.Add(vehicle);
+                }
+            }
+        }
+
+        private void OnVehicleSelected(Vehicle selectedVehicle)
+        {
+            SelectedVehicle = selectedVehicle; // Set the actual SelectedVehicle property
+            VehicleSearchText = selectedVehicle.LicenseNumber;
+            ShowVehicleSuggestions = false;
+            _ = CheckForOpenDocketAsync();
+        }
+
+        private void FilterSourceSites()
+        {
+            FilteredSourceSites.Clear();
+            if (string.IsNullOrWhiteSpace(SourceSiteSearchText))
+            {
+                foreach (var site in Sites) // Assuming 'Sites' is your ObservableCollection of all sites
+                {
+                    FilteredSourceSites.Add(site);
+                }
+            }
+            else
+            {
+                foreach (var site in Sites.Where(s => s.Name.Contains(SourceSiteSearchText, StringComparison.OrdinalIgnoreCase)))
+                {
+                    FilteredSourceSites.Add(site);
+                }
+            }
+        }
+
+        private void OnSourceSiteSelected(Site selectedSite)
+        {
+            SelectedSourceSite = selectedSite; // Set the actual SelectedSourceSite property
+            SourceSiteSearchText = selectedSite.Name;
+            ShowSourceSiteSuggestions = false;
+        }
+
+        private void FilterDestinationSites()
+        {
+            FilteredDestinationSites.Clear();
+            if (string.IsNullOrWhiteSpace(DestinationSiteSearchText))
+            {
+                foreach (var site in Sites) // Assuming 'Sites' is your ObservableCollection of all sites
+                {
+                    FilteredDestinationSites.Add(site);
+                }
+            }
+            else
+            {
+                foreach (var site in Sites.Where(s => s.Name.Contains(DestinationSiteSearchText, StringComparison.OrdinalIgnoreCase)))
+                {
+                    FilteredDestinationSites.Add(site);
+                }
+            }
+        }
+
+        private void OnDestinationSiteSelected(Site selectedSite)
+        {
+            SelectedDestinationSite = selectedSite; // Set the actual SelectedDestinationSite property
+            DestinationSiteSearchText = selectedSite.Name;
+            ShowDestinationSiteSuggestions = false;
+        }
+
+        private void FilterCustomers()
+        {
+            FilteredCustomers.Clear();
+            if (string.IsNullOrWhiteSpace(CustomerSearchText))
+            {
+                foreach (var customer in Customers) // Assuming 'Customers' is your ObservableCollection of all customers
+                {
+                    FilteredCustomers.Add(customer);
+                }
+            }
+            else
+            {
+                foreach (var customer in Customers.Where(c => c.Name.Contains(CustomerSearchText, StringComparison.OrdinalIgnoreCase)))
+                {
+                    FilteredCustomers.Add(customer);
+                }
+            }
+        }
+
+        private void OnCustomerSelected(Customer selectedCustomer)
+        {
+            SelectedCustomer = selectedCustomer; // Set the actual SelectedCustomer property
+            CustomerSearchText = selectedCustomer.Name;
+            ShowCustomerSuggestions = false;
+        }
+
+        private void FilterTransports()
+        {
+            FilteredTransports.Clear();
+            if (string.IsNullOrWhiteSpace(TransportSearchText))
+            {
+                foreach (var transport in Transports) // Assuming 'Transports' is your ObservableCollection of all transports
+                {
+                    FilteredTransports.Add(transport);
+                }
+            }
+            else
+            {
+                foreach (var transport in Transports.Where(t => t.Name.Contains(TransportSearchText, StringComparison.OrdinalIgnoreCase)))
+                {
+                    FilteredTransports.Add(transport);
+                }
+            }
+        }
+
+        private void OnTransportSelected(Transport selectedTransport)
+        {
+            SelectedTransport = selectedTransport; // Set the actual SelectedTransport property
+            TransportSearchText = selectedTransport.Name;
+            ShowTransportSuggestions = false;
+        }
+
+        private void FilterDrivers()
+        {
+            FilteredDrivers.Clear();
+            if (string.IsNullOrWhiteSpace(DriverSearchText))
+            {
+                foreach (var driver in Drivers) // Assuming 'Drivers' is your ObservableCollection of all drivers
+                {
+                    FilteredDrivers.Add(driver);
+                }
+            }
+            else
+            {
+                foreach (var driver in Drivers.Where(d => d.Name.Contains(DriverSearchText, StringComparison.OrdinalIgnoreCase)))
+                {
+                    FilteredDrivers.Add(driver);
+                }
+            }
+        }
+
+        private void OnDriverSelected(Driver selectedDriver)
+        {
+            SelectedDriver = selectedDriver; // Set the actual SelectedDriver property
+            DriverSearchText = selectedDriver.Name;
+            ShowDriverSuggestions = false;
         }
 
         private void InitializeCommands()
@@ -212,6 +605,28 @@ namespace Weighbridge.ViewModels
             LoadTransportsCommand = new Command(async () => await ExecuteSafelyAsync(() => LoadReferenceDataAsync<Transport>(Transports, _databaseService.GetItemsAsync<Transport>)));
             LoadDriversCommand = new Command(async () => await ExecuteSafelyAsync(() => LoadReferenceDataAsync<Driver>(Drivers, _databaseService.GetItemsAsync<Driver>)));
             UpdateTareCommand = new Command(async () => await ExecuteSafelyAsync(OnUpdateTareClickedAsync));
+            ZeroCommand = new Command(async () => await ExecuteSafelyAsync(OnZeroClickedAsync)); // Assuming OnZeroClickedAsync exists or will be added
+            ItemSelectedCommand = new Command<Item>(OnItemSelected); // Changed to Item
+            OnMaterialSearchEntryFocusedCommand = new Command(() => ShowMaterialSuggestions = true);
+            OnMaterialSearchEntryUnfocusedCommand = new Command(() => ShowMaterialSuggestions = false);
+            VehicleSelectedCommand = new Command<Vehicle>(OnVehicleSelected);
+            OnVehicleSearchEntryFocusedCommand = new Command(() => ShowVehicleSuggestions = true);
+            OnVehicleSearchEntryUnfocusedCommand = new Command(() => ShowVehicleSuggestions = false);
+            SourceSiteSelectedCommand = new Command<Site>(OnSourceSiteSelected);
+            OnSourceSiteSearchEntryFocusedCommand = new Command(() => ShowSourceSiteSuggestions = true);
+            OnSourceSiteSearchEntryUnfocusedCommand = new Command(() => ShowSourceSiteSuggestions = false);
+            DestinationSiteSelectedCommand = new Command<Site>(OnDestinationSiteSelected);
+            OnDestinationSiteSearchEntryFocusedCommand = new Command(() => ShowDestinationSiteSuggestions = true);
+            OnDestinationSiteSearchEntryUnfocusedCommand = new Command(() => ShowDestinationSiteSuggestions = false);
+            CustomerSelectedCommand = new Command<Customer>(OnCustomerSelected);
+            OnCustomerSearchEntryFocusedCommand = new Command(() => ShowCustomerSuggestions = true);
+            OnCustomerSearchEntryUnfocusedCommand = new Command(() => ShowCustomerSuggestions = false);
+            TransportSelectedCommand = new Command<Transport>(OnTransportSelected);
+            OnTransportSearchEntryFocusedCommand = new Command(() => ShowTransportSuggestions = true);
+            OnTransportSearchEntryUnfocusedCommand = new Command(() => ShowTransportSuggestions = false);
+            DriverSelectedCommand = new Command<Driver>(OnDriverSelected);
+            OnDriverSearchEntryFocusedCommand = new Command(() => ShowDriverSuggestions = true);
+            OnDriverSearchEntryUnfocusedCommand = new Command(() => ShowDriverSuggestions = false);
         }
         private bool CanExecuteWeightCaptureCommands()
         {
@@ -269,7 +684,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnAppearing: {ex}");
+                _loggingService.LogError($"Error in OnAppearing: {ex.Message}", ex);
                 await ShowErrorAsync("Error", ex.Message);
             }
         }
@@ -282,7 +697,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in OnDisappearing: {ex}");
+                _loggingService.LogError($"Error in OnDisappearing: {ex.Message}", ex);
             }
         }
 
@@ -293,15 +708,15 @@ namespace Weighbridge.ViewModels
             {
                 if (_isInitialized) return;
 
-                System.Diagnostics.Debug.WriteLine("Starting database initialization...");
+                _loggingService.LogInformation("Starting database initialization...");
                 await _databaseService.InitializeAsync();
 
                 _isInitialized = true;
-                System.Diagnostics.Debug.WriteLine("Initialization complete");
+                _loggingService.LogInformation("Initialization complete");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Initialization error: {ex}");
+                _loggingService.LogError($"Initialization error: {ex.Message}", ex);
                 await ShowErrorAsync("Initialization Error", $"Failed to initialize: {ex.Message}");
             }
             finally
@@ -356,6 +771,31 @@ namespace Weighbridge.ViewModels
                     {
                         collection.Add(item);
                     }
+                    if (typeof(T) == typeof(Vehicle))
+                    {
+                        FilterVehicles(); // Re-filter vehicles after loading
+                    }
+                    else if (typeof(T) == typeof(Site))
+                    {
+                        FilterSourceSites(); // Re-filter source sites after loading
+                        FilterDestinationSites(); // Re-filter destination sites after loading
+                    }
+                    else if (typeof(T) == typeof(Customer))
+                    {
+                        FilterCustomers(); // Re-filter customers after loading
+                    }
+                    else if (typeof(T) == typeof(Transport))
+                    {
+                        FilterTransports(); // Re-filter transports after loading
+                    }
+                    else if (typeof(T) == typeof(Driver))
+                    {
+                        FilterDrivers(); // Re-filter drivers after loading
+                    }
+                    else if (typeof(T) == typeof(Item)) // Added for Item
+                    {
+                        FilterItems(); // Re-filter items after loading
+                    }
                 });
 
                 _cacheTimestamps[typeof(T)] = DateTime.Now;
@@ -409,7 +849,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in HandleVehicleSelection: {ex}");
+                _loggingService.LogError($"Error in HandleVehicleSelection: {ex.Message}", ex);
                 await ShowErrorAsync("Vehicle Selection Error", ex.Message);
             }
         }
@@ -431,7 +871,7 @@ namespace Weighbridge.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error in OnDataReceived: {ex}");
+                    _loggingService.LogError($"Error in OnDataReceived: {ex.Message}", ex);
                 }
             });
         }
@@ -447,7 +887,7 @@ namespace Weighbridge.ViewModels
                     if (!_isDisposed)
                     {
                         IsWeightStable = isStable;
-                        System.Diagnostics.Debug.WriteLine($"OnStabilityChanged: isStable={isStable}, IsWeightStable={IsWeightStable}");
+                        _loggingService.LogInformation($"OnStabilityChanged: isStable={{isStable}}, IsWeightStable={IsWeightStable}");
                         StabilityStatus = isStable ? "STABLE" : "UNSTABLE";
                         StabilityColor = isStable ? Colors.Green : Colors.Red;
                         StabilityStatusColour = isStable ? Colors.Green : Colors.Red;
@@ -460,7 +900,7 @@ namespace Weighbridge.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error in OnStabilityChanged: {ex}");
+                    _loggingService.LogError($"Error in OnStabilityChanged: {ex.Message}", ex);
                 }
             });
         }
@@ -503,7 +943,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in GetOrCreateVehicleAsync: {ex}");
+                _loggingService.LogError($"Error in GetOrCreateVehicleAsync: {ex.Message}", ex);
                 await ShowErrorAsync("Vehicle Error", $"Error handling vehicle: {ex.Message}");
             }
 
@@ -512,7 +952,13 @@ namespace Weighbridge.ViewModels
 
         private async Task OnToYardClickedAsync()
         {
-            System.Diagnostics.Debug.WriteLine("OnToYardClickedAsync: Command executed.");
+            _loggingService.LogInformation("OnToYardClickedAsync: Command executed.");
+            if (LoadDocketId > 0)
+            {
+                await ShowErrorAsync("Error", "A docket is already loaded. Please complete or cancel the current docket.");
+                return;
+            }
+
             if (!ValidateDocket()) return;
 
             IsLoading = true;
@@ -583,6 +1029,15 @@ namespace Weighbridge.ViewModels
 
                 await ShowInfoAsync("Success", "First weight captured. Docket created.");
 
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(10000);
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        EntranceWeight = "0";
+                    });
+                });
+
                 // Clear form for next truck while keeping the open docket reference
                 ClearFormForNextTruck();
             }
@@ -605,6 +1060,14 @@ namespace Weighbridge.ViewModels
             SelectedDriver = null;
             Remarks = string.Empty;
             TareWeight = string.Empty;
+
+            VehicleSearchText = string.Empty;
+            SourceSiteSearchText = string.Empty;
+            DestinationSiteSearchText = string.Empty;
+            MaterialSearchText = string.Empty;
+            CustomerSearchText = string.Empty;
+            TransportSearchText = string.Empty;
+            DriverSearchText = string.Empty;
 
             // Keep LoadDocketId and weights - they represent the active docket state
             // This allows the system to know there's an open docket when the truck returns
@@ -634,11 +1097,13 @@ namespace Weighbridge.ViewModels
                         break;
                 }
 
+                var netWeight = Math.Abs(entranceWeight - exitWeight);
+
                 var docket = new Docket
                 {
                     EntranceWeight = entranceWeight,
                     ExitWeight = exitWeight,
-                    NetWeight = Math.Abs(entranceWeight - exitWeight),
+                    NetWeight = netWeight,
                     VehicleId = vehicle.Id,
                     SourceSiteId = SelectedSourceSite?.Id,
                     DestinationSiteId = SelectedDestinationSite?.Id,
@@ -656,6 +1121,13 @@ namespace Weighbridge.ViewModels
                 await ShowInfoAsync("Success", "Docket saved successfully.");
                 await PrintDocketAsync(docket, vehicle);
                 await ExportDocketAsync(docket);
+
+                EntranceWeight = entranceWeight.ToString("F2");
+                ExitWeight = exitWeight.ToString("F2");
+                NetWeight = netWeight.ToString("F2");
+
+                await Task.Delay(10000);
+
                 ResetForm();
             }
             catch (Exception ex)
@@ -676,12 +1148,12 @@ namespace Weighbridge.ViewModels
                 }
 
                 string action = await Application.Current.MainPage.DisplayActionSheet(
-                    "In-Progress Docket Found",
+                    "In-ProgressDocket Found",
                     "Cancel",
                     null,
                     "Continue Existing",
                     "Start New",
-                    "Edit Open Docket"
+                    "Edit OpenDocket"
                 );
 
                 switch (action)
@@ -690,7 +1162,7 @@ namespace Weighbridge.ViewModels
                         await LoadDocketAsync(inProgressDocket.Id);
                         IsInProgressWarningVisible = false;
                         return true;
-                    case "Edit Open Docket":
+                    case "Edit OpenDocket":
                         await Shell.Current.GoToAsync($"{nameof(EditLoadPage)}?docketId={inProgressDocket.Id}");
                         IsInProgressWarningVisible = false;
                         return true;
@@ -704,7 +1176,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in HandleInProgressDocketWarning: {ex}");
+                _loggingService.LogError($"Error in HandleInProgressDocketWarning: {ex.Message}", ex);
                 await ShowErrorAsync("Warning Check Error", ex.Message);
                 return false;
             }
@@ -712,7 +1184,7 @@ namespace Weighbridge.ViewModels
 
         private async Task OnSaveAndPrintClickedAsync()
         {
-            System.Diagnostics.Debug.WriteLine("OnSaveAndPrintClickedAsync: Command executed.");
+            _loggingService.LogInformation("OnSaveAndPrintClickedAsync: Command executed.");
             if (!ValidateDocket()) return;
             if (CurrentMode != WeighingMode.TwoWeights) return;
 
@@ -766,11 +1238,14 @@ namespace Weighbridge.ViewModels
                     docket.TransportId = SelectedTransport?.Id;
                     docket.DriverId = SelectedDriver?.Id;
                     docket.TransactionType = GetTransactionTypeFromCurrentMode();
-                    
 
                     await _databaseService.SaveItemAsync(docket);
                     await PrintDocketAsync(docket, vehicle);
                     await ExportDocketAsync(docket);
+
+                    ExitWeight = docket.ExitWeight.ToString("F2");
+                    NetWeight = docket.NetWeight.ToString("F2");
+
                     ResetForm();
                 }
             }
@@ -810,7 +1285,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to print docket: {ex.Message}");
+                _loggingService.LogError($"Failed to print docket: {ex.Message}", ex);
                 await ShowErrorAsync("Print Error", $"Failed to print docket: {ex.Message}");
             }
         }
@@ -862,6 +1337,13 @@ namespace Weighbridge.ViewModels
             await ShowInfoAsync("Success", "Tare weight updated successfully.");
         }
 
+        private async Task OnZeroClickedAsync()
+        {
+            // Implement zeroing logic here
+            _loggingService.LogInformation("ZeroCommand executed.");
+            await ShowInfoAsync("Zero Scale", "Scale has been zeroed (simulated).");
+        }
+
         private async Task ExportDocketAsync(Docket docket)
         {
             try
@@ -874,7 +1356,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error exporting docket: {ex.Message}");
+                _loggingService.LogError($"Error exporting docket: {ex.Message}", ex);
                 await ShowErrorAsync("Export Error", $"Failed to export docket: {ex.Message}");
             }
         }
@@ -896,17 +1378,24 @@ namespace Weighbridge.ViewModels
                     if (vehicle != null)
                     {
                         VehicleRegistration = vehicle.LicenseNumber;
+                        VehicleSearchText = vehicle.LicenseNumber;
                     }
 
                     // Ensure reference data is loaded before setting selections
                     await LoadAllReferenceDataAsync();
 
                     SelectedSourceSite = Sites.FirstOrDefault(s => s.Id == docket.SourceSiteId);
+                    if (SelectedSourceSite != null) SourceSiteSearchText = SelectedSourceSite.Name;
                     SelectedDestinationSite = Sites.FirstOrDefault(s => s.Id == docket.DestinationSiteId);
+                    if (SelectedDestinationSite != null) DestinationSiteSearchText = SelectedDestinationSite.Name;
                     SelectedItem = Items.FirstOrDefault(i => i.Id == docket.ItemId);
+                    if (SelectedItem != null) MaterialSearchText = SelectedItem.Name;
                     SelectedCustomer = Customers.FirstOrDefault(c => c.Id == docket.CustomerId);
+                    if (SelectedCustomer != null) CustomerSearchText = SelectedCustomer.Name;
                     SelectedTransport = Transports.FirstOrDefault(t => t.Id == docket.TransportId);
+                    if (SelectedTransport != null) TransportSearchText = SelectedTransport.Name;
                     SelectedDriver = Drivers.FirstOrDefault(d => d.Id == docket.DriverId);
+                    if (SelectedDriver != null) DriverSearchText = SelectedDriver.Name;
                 }
             }
             catch (Exception ex)
@@ -932,6 +1421,15 @@ namespace Weighbridge.ViewModels
             SelectedCustomer = null;
             SelectedTransport = null;
             SelectedDriver = null;
+
+            VehicleSearchText = string.Empty;
+            SourceSiteSearchText = string.Empty;
+            DestinationSiteSearchText = string.Empty;
+            MaterialSearchText = string.Empty;
+            CustomerSearchText = string.Empty;
+            TransportSearchText = string.Empty;
+            DriverSearchText = string.Empty;
+
             IsInProgressWarningVisible = false;
             InProgressWarningText = string.Empty;
             (ToYardCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged(); // Update command status
@@ -957,7 +1455,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading form config: {ex}");
+                _loggingService.LogError($"Error loading form config: {ex.Message}", ex);
                 FormConfig = new MainFormConfig();
             }
         }
@@ -1009,7 +1507,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in ValidateDocket: {ex}");
+                _loggingService.LogError($"Error in ValidateDocket: {ex.Message}", ex);
                 _ = ShowErrorAsync("Validation Error", "An error occurred during validation.");
                 return false;
             }
@@ -1031,7 +1529,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error showing alert: {ex}");
+                _loggingService.LogError($"Error showing alert: {ex.Message}", ex);
             }
         }
 
@@ -1056,7 +1554,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error showing confirmation: {ex}");
+                _loggingService.LogError($"Error showing confirmation: {ex.Message}", ex);
                 return false;
             }
         }
@@ -1072,7 +1570,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in ExecuteSafelyAsync: {ex}");
+                _loggingService.LogError($"Error in ExecuteSafelyAsync: {ex.Message}", ex);
                 await ShowErrorAsync("Error", ex.Message);
             }
         }
@@ -1091,7 +1589,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error in SimulateWeightData: {ex}");
+                _loggingService.LogError($"Error in SimulateWeightData: {ex.Message}", ex);
             }
         }
 
@@ -1178,7 +1676,7 @@ namespace Weighbridge.ViewModels
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Error during disposal: {ex}");
+                        _loggingService.LogError($"Error during disposal: {ex.Message}", ex);
                     }
                     finally
                     {

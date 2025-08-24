@@ -13,6 +13,8 @@ namespace Weighbridge.ViewModels
     {
         private readonly IDatabaseService _databaseService;
         private readonly IValidator<Transport> _transportValidator;
+        private readonly ILoggingService _loggingService;
+        private readonly IAlertService _alertService;
 
         [ObservableProperty]
         private Transport? _selectedTransport;
@@ -26,10 +28,12 @@ namespace Weighbridge.ViewModels
         [ObservableProperty]
         private ValidationResult? _validationErrors;
 
-        public TransportManagementViewModel(IDatabaseService databaseService, IValidator<Transport> transportValidator)
+        public TransportManagementViewModel(IDatabaseService databaseService, IValidator<Transport> transportValidator, ILoggingService loggingService, IAlertService alertService)
         {
             _databaseService = databaseService;
             _transportValidator = transportValidator;
+            _loggingService = loggingService;
+            _alertService = alertService;
 
             LoadTransportsCommand.ExecuteAsync(null);
         }
@@ -48,8 +52,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                // TODO: Implement proper error handling/logging
-                Console.WriteLine($"Failed to load transports: {ex.Message}");
+                _loggingService.LogError($"Failed to load transports: {ex.Message}", ex);
             }
         }
 
@@ -69,8 +72,7 @@ namespace Weighbridge.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    // TODO: Implement proper error handling/logging
-                    Console.WriteLine($"Failed to add transport: {ex.Message}");
+                    _loggingService.LogError($"Failed to add transport: {ex.Message}", ex);
                 }
             }
         }
@@ -93,8 +95,7 @@ namespace Weighbridge.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    // TODO: Implement proper error handling/logging
-                    Console.WriteLine($"Failed to update transport: {ex.Message}");
+                    _loggingService.LogError($"Failed to update transport: {ex.Message}", ex);
                 }
             }
         }
@@ -104,8 +105,9 @@ namespace Weighbridge.ViewModels
         [RelayCommand]
         private async Task DeleteTransport(Transport transport)
         {
-            // TODO: Implement confirmation dialog
-            try
+            if (await _alertService.DisplayConfirmation("Confirm Deletion", $"Are you sure you want to delete {transport.Name}?", "Yes", "No"))
+            {
+                try
             {
                 await _databaseService.DeleteItemAsync(transport);
                 await LoadTransports();
@@ -113,9 +115,9 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                // TODO: Implement proper error handling/logging
-                Console.WriteLine($"Failed to delete transport: {ex.Message}");
+                _loggingService.LogError($"Failed to delete transport: {ex.Message}", ex);
             }
+        }
         }
 
         [RelayCommand]

@@ -13,6 +13,8 @@ namespace Weighbridge.ViewModels
     {
         private readonly IDatabaseService _databaseService;
         private readonly IValidator<Site> _siteValidator;
+        private readonly ILoggingService _loggingService;
+        private readonly IAlertService _alertService;
 
         [ObservableProperty]
         private Site? _selectedSite;
@@ -26,10 +28,12 @@ namespace Weighbridge.ViewModels
         [ObservableProperty]
         private ValidationResult? _validationErrors;
 
-        public SiteManagementViewModel(IDatabaseService databaseService, IValidator<Site> siteValidator)
+        public SiteManagementViewModel(IDatabaseService databaseService, IValidator<Site> siteValidator, ILoggingService loggingService, IAlertService alertService)
         {
             _databaseService = databaseService;
             _siteValidator = siteValidator;
+            _loggingService = loggingService;
+            _alertService = alertService;
 
             LoadSitesCommand.ExecuteAsync(null);
         }
@@ -48,8 +52,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                // TODO: Implement proper error handling/logging
-                Console.WriteLine($"Failed to load sites: {ex.Message}");
+                _loggingService.LogError($"Failed to load sites: {ex.Message}", ex);
             }
         }
 
@@ -69,8 +72,7 @@ namespace Weighbridge.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    // TODO: Implement proper error handling/logging
-                    Console.WriteLine($"Failed to add site: {ex.Message}");
+                    _loggingService.LogError($"Failed to add site: {ex.Message}", ex);
                 }
             }
         }
@@ -93,8 +95,7 @@ namespace Weighbridge.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    // TODO: Implement proper error handling/logging
-                    Console.WriteLine($"Failed to update site: {ex.Message}");
+                    _loggingService.LogError($"Failed to update site: {ex.Message}", ex);
                 }
             }
         }
@@ -104,8 +105,9 @@ namespace Weighbridge.ViewModels
         [RelayCommand]
         private async Task DeleteSite(Site site)
         {
-            // TODO: Implement confirmation dialog
-            try
+            if (await _alertService.DisplayConfirmation("Confirm Deletion", $"Are you sure you want to delete {site.Name}?", "Yes", "No"))
+            {
+                try
             {
                 await _databaseService.DeleteItemAsync(site);
                 await LoadSites();
@@ -113,9 +115,9 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                // TODO: Implement proper error handling/logging
-                Console.WriteLine($"Failed to delete site: {ex.Message}");
+                _loggingService.LogError($"Failed to delete site: {ex.Message}", ex);
             }
+        }
         }
 
         [RelayCommand]

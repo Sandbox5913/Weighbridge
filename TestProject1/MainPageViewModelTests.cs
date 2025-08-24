@@ -15,6 +15,8 @@ namespace Weighbridge.Tests
         private Mock<IDocketService> _mockDocketService;
         private Mock<IAuditService> _mockAuditService;
         private Mock<IExportService> _mockExportService;
+        private Mock<ILoggingService> _mockLoggingService;
+        private Mock<IAlertService> _mockAlertService;
         private MainPageViewModel _viewModel;
 
         [SetUp]
@@ -25,13 +27,17 @@ namespace Weighbridge.Tests
             _mockDocketService = new Mock<IDocketService>();
             _mockAuditService = new Mock<IAuditService>();
             _mockExportService = new Mock<IExportService>();
+            _mockLoggingService = new Mock<ILoggingService>();
+            _mockAlertService = new Mock<IAlertService>();
 
             _viewModel = new MainPageViewModel(
                 _mockWeighbridgeService.Object,
                 _mockDatabaseService.Object,
                 _mockDocketService.Object,
                 _mockAuditService.Object,
-                _mockExportService.Object
+                _mockExportService.Object,
+                _mockLoggingService.Object,
+                _mockAlertService.Object
             );
         }
 

@@ -58,7 +58,7 @@ namespace Weighbridge
             }
             catch (Exception ex)
             {
-                // Log error but don't show alert during disappearing
+                // Log error but don\'t show alert during disappearing
                 System.Diagnostics.Debug.WriteLine($"Error during OnDisappearing: {ex.Message}");
             }
         }
@@ -100,6 +100,119 @@ namespace Weighbridge
                 {
                     label.TextColor = isSelected ? Color.FromArgb("#0E0E0E") : Color.FromArgb("#CCCCCC");
                 }
+            }
+        }
+
+
+        private void OnVehicleSearchEntryFocused(object sender, FocusEventArgs e)
+        {
+            if (_viewModel.OnVehicleSearchEntryFocusedCommand.CanExecute(null))
+            {
+                _viewModel.OnVehicleSearchEntryFocusedCommand.Execute(null);
+            }
+        }
+
+        private void OnVehicleSearchEntryUnfocused(object sender, FocusEventArgs e)
+        {
+            if (_viewModel.OnVehicleSearchEntryUnfocusedCommand.CanExecute(null))
+            {
+                _viewModel.OnVehicleSearchEntryUnfocusedCommand.Execute(null);
+            }
+        }
+
+        private void OnSourceSiteSearchEntryFocused(object sender, FocusEventArgs e)
+        {
+            if (_viewModel.OnSourceSiteSearchEntryFocusedCommand.CanExecute(null))
+            {
+                _viewModel.OnSourceSiteSearchEntryFocusedCommand.Execute(null);
+            }
+        }
+
+        private void OnSourceSiteSearchEntryUnfocused(object sender, FocusEventArgs e)
+        {
+            if (_viewModel.OnSourceSiteSearchEntryUnfocusedCommand.CanExecute(null))
+            {
+                _viewModel.OnSourceSiteSearchEntryUnfocusedCommand.Execute(null);
+            }
+        }
+
+        private void OnDestinationSiteSearchEntryFocused(object sender, FocusEventArgs e)
+        {
+            if (_viewModel.OnDestinationSiteSearchEntryFocusedCommand.CanExecute(null))
+            {
+                _viewModel.OnDestinationSiteSearchEntryFocusedCommand.Execute(null);
+            }
+        }
+
+        private void OnDestinationSiteSearchEntryUnfocused(object sender, FocusEventArgs e)
+        {
+            if (_viewModel.OnDestinationSiteSearchEntryUnfocusedCommand.CanExecute(null))
+            {
+                _viewModel.OnDestinationSiteSearchEntryUnfocusedCommand.Execute(null);
+            }
+        }
+
+        private void OnCustomerSearchEntryFocused(object sender, FocusEventArgs e)
+        {
+            if (_viewModel.OnCustomerSearchEntryFocusedCommand.CanExecute(null))
+            {
+                _viewModel.OnCustomerSearchEntryFocusedCommand.Execute(null);
+            }
+        }
+
+        private void OnCustomerSearchEntryUnfocused(object sender, FocusEventArgs e)
+        {
+            if (_viewModel.OnCustomerSearchEntryUnfocusedCommand.CanExecute(null))
+            {
+                _viewModel.OnCustomerSearchEntryUnfocusedCommand.Execute(null);
+            }
+        }
+
+        private void OnMaterialSearchEntryFocused(object sender, FocusEventArgs e)
+        {
+            if (_viewModel.OnMaterialSearchEntryFocusedCommand.CanExecute(null))
+            {
+                _viewModel.OnMaterialSearchEntryFocusedCommand.Execute(null);
+            }
+        }
+
+        private void OnMaterialSearchEntryUnfocused(object sender, FocusEventArgs e)
+        {
+            if (_viewModel.OnMaterialSearchEntryUnfocusedCommand.CanExecute(null))
+            {
+                _viewModel.OnMaterialSearchEntryUnfocusedCommand.Execute(null);
+            }
+        }
+
+        private void OnTransportSearchEntryFocused(object sender, FocusEventArgs e)
+        {
+            if (_viewModel.OnTransportSearchEntryFocusedCommand.CanExecute(null))
+            {
+                _viewModel.OnTransportSearchEntryFocusedCommand.Execute(null);
+            }
+        }
+
+        private void OnTransportSearchEntryUnfocused(object sender, FocusEventArgs e)
+        {
+            if (_viewModel.OnTransportSearchEntryUnfocusedCommand.CanExecute(null))
+            {
+                _viewModel.OnTransportSearchEntryUnfocusedCommand.Execute(null);
+            }
+        }
+
+        private void OnDriverSearchEntryFocused(object sender, FocusEventArgs e)
+        {
+            if (_viewModel.OnDriverSearchEntryFocusedCommand.CanExecute(null))
+            {
+                _viewModel.OnDriverSearchEntryFocusedCommand.Execute(null);
+            }
+        }
+
+        private void OnDriverSearchEntryUnfocused(object sender, FocusEventArgs e)
+        {
+            if (_viewModel.OnDriverSearchEntryUnfocusedCommand.CanExecute(null))
+            {
+                _viewModel.OnDriverSearchEntryUnfocusedCommand.Execute(null);
             }
         }
 

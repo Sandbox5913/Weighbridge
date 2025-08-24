@@ -47,6 +47,8 @@ public static class MauiProgram
         builder.Services.AddTransient<IValidator<UserPageAccess>, UserPageAccessValidator>();
 
         // Register services
+        builder.Services.AddSingleton<ILoggingService, LoggingService>();
+        builder.Services.AddSingleton<IAlertService, AlertService>();
         builder.Services.AddSingleton<WeightParserService>();
 
         // Register a single IDbConnection for the application
@@ -92,7 +94,9 @@ public static class MauiProgram
                 provider.GetRequiredService<IDatabaseService>(),
                 provider.GetRequiredService<IDocketService>(),
                 provider.GetRequiredService<IAuditService>(),
-                provider.GetRequiredService<IExportService>()
+                provider.GetRequiredService<IExportService>(),
+                provider.GetRequiredService<ILoggingService>(),
+                provider.GetRequiredService<IAlertService>()
             );
         });
         builder.Services.AddTransient<CustomerManagementViewModel>();

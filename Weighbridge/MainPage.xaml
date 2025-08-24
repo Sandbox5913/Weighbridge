@@ -4,6 +4,8 @@
              xmlns:local="clr-namespace:Weighbridge"
              xmlns:converters="clr-namespace:Weighbridge.Converters"
              xmlns:behaviors="clr-namespace:Weighbridge.Behaviors"
+             xmlns:ViewModels="clr-namespace:Weighbridge.ViewModels"
+             xmlns:models="clr-namespace:Weighbridge.Models"
              x:Class="Weighbridge.MainPage"
              Title="Weighbridge System"
              BackgroundColor="#0E0E0E">
@@ -209,240 +211,364 @@
                 <Border.Shadow>
                     <Shadow Brush="Black" Offset="0,4" Radius="16" Opacity="0.3" />
                 </Border.Shadow>
-                <ScrollView>
-                    <VerticalStackLayout Spacing="8" Padding="10">
-                        <StackLayout Spacing="4">
-                            <Label Text="Transaction Details" TextColor="White" FontSize="18" FontAttributes="Bold" />
-                        </StackLayout>
+                <Grid>
+                    <ScrollView>
+                        <VerticalStackLayout Spacing="8" Padding="10">
+                            <StackLayout Spacing="4">
+                                <Label Text="Transaction Details" TextColor="White" FontSize="18" FontAttributes="Bold" />
+                            </StackLayout>
 
-                        <StackLayout IsVisible="{Binding FormConfig.Vehicle.IsVisible}" Spacing="4">
-                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
-                                <Label.FormattedText>
-                                    <FormattedString>
-                                        <Span Text="{Binding FormConfig.Vehicle.Label}" />
-                                        <Span Text="{Binding FormConfig.Vehicle.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
-                                    </FormattedString>
-                                </Label.FormattedText>
-                            </Label>
-                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="8" />
-                                </Border.StrokeShape>
-                                <StackLayout>
-                                    <Entry Placeholder="Enter Vehicle License" Text="{Binding VehicleRegistration}" 
-                                           TextColor="White" BackgroundColor="Transparent" Margin="8,4" FontSize="12" />
-                                    <Picker x:Name="VehiclePicker"  TextColor="White" TitleColor="#888" 
-                                            BackgroundColor="Transparent" ItemsSource="{Binding Vehicles}" SelectedItem="{Binding SelectedVehicle}" 
-                                            ItemDisplayBinding="{Binding LicenseNumber}" Margin="8,4" FontSize="12">
-                                        <Picker.Behaviors>
-                                            <behaviors:EventToCommandBehavior EventName="Focused" Command="{Binding LoadVehiclesCommand}" />
-                                        </Picker.Behaviors>
-                                    </Picker>
-                                </StackLayout>
-                            </Border>
-                        </StackLayout>
+                            <StackLayout IsVisible="{Binding FormConfig.Vehicle.IsVisible}" Spacing="4">
+                                <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding FormConfig.Vehicle.Label}" />
+                                            <Span Text="{Binding FormConfig.Vehicle.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                                <Entry x:Name="VehicleSearchEntry"
+                                       Text="{Binding VehicleSearchText}"
+                                       Placeholder="Search Vehicle"
+                                       Focused="OnVehicleSearchEntryFocused"
+                                       Unfocused="OnVehicleSearchEntryUnfocused"
+                                       TextColor="White"
+                                       PlaceholderColor="#888"
+                                       BackgroundColor="#2A2A2A"
+                                       Margin="8,4"
+                                       FontSize="12" />
+                            </StackLayout>
 
-                        <StackLayout IsVisible="{Binding IsTareEntryVisible}" Spacing="4">
-                            <Label x:Name="TareWeightLabel" Text="TARE WEIGHT (KG)" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" />
-                            <Border x:Name="TareWeightBorder" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="8" />
-                                </Border.StrokeShape>
-                                <Entry x:Name="TareWeightEntry" Text="{Binding TareWeight}" TextColor="White" BackgroundColor="Transparent"
-                                        Placeholder="Enter Tare Weight" PlaceholderColor="#888" Margin="8,4" Keyboard="Numeric" FontSize="12"/>
-                            </Border>
-                        </StackLayout>
+                            <StackLayout IsVisible="{Binding IsTareEntryVisible}" Spacing="4">
+                                <Label x:Name="TareWeightLabel" Text="TARE WEIGHT (KG)" TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold" />
+                                <Border x:Name="TareWeightBorder" BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
+                                    <Entry x:Name="TareWeightEntry" Text="{Binding TareWeight}" TextColor="White" BackgroundColor="Transparent"
+                                            Placeholder="Enter Tare Weight" PlaceholderColor="#888" Margin="8,4" Keyboard="Numeric" FontSize="12"/>
+                                </Border>
+                            </StackLayout>
 
-                        <StackLayout IsVisible="{Binding FormConfig.SourceSite.IsVisible}" Spacing="4">
-                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
-                                <Label.FormattedText>
-                                    <FormattedString>
-                                        <Span Text="{Binding FormConfig.SourceSite.Label}" />
-                                        <Span Text="{Binding FormConfig.SourceSite.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
-                                    </FormattedString>
-                                </Label.FormattedText>
-                            </Label>
-                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="8" />
-                                </Border.StrokeShape>
-                                <Picker x:Name="SourceSitePicker" TextColor="White" TitleColor="#888" 
-                                        BackgroundColor="Transparent" ItemsSource="{Binding Sites}" SelectedItem="{Binding SelectedSourceSite}" 
-                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12">
-                                    <Picker.Behaviors>
-                                        <behaviors:EventToCommandBehavior EventName="Focused" Command="{Binding LoadSitesCommand}" />
-                                    </Picker.Behaviors>
-                                </Picker>
-                            </Border>
-                        </StackLayout>
+                            <StackLayout IsVisible="{Binding FormConfig.SourceSite.IsVisible}" Spacing="4">
+                                <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding FormConfig.SourceSite.Label}" />
+                                            <Span Text="{Binding FormConfig.SourceSite.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                                <Entry x:Name="SourceSiteSearchEntry"
+                                       Text="{Binding SourceSiteSearchText}"
+                                       Placeholder="Search Source Site"
+                                       Focused="OnSourceSiteSearchEntryFocused"
+                                       Unfocused="OnSourceSiteSearchEntryUnfocused"
+                                       TextColor="White"
+                                       PlaceholderColor="#888"
+                                       BackgroundColor="#2A2A2A"
+                                       Margin="8,4"
+                                       FontSize="12" />
+                            </StackLayout>
 
-                        <StackLayout IsVisible="{Binding FormConfig.DestinationSite.IsVisible}" Spacing="4">
-                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
-                                <Label.FormattedText>
-                                    <FormattedString>
-                                        <Span Text="{Binding FormConfig.DestinationSite.Label}" />
-                                        <Span Text="{Binding FormConfig.DestinationSite.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
-                                    </FormattedString>
-                                </Label.FormattedText>
-                            </Label>
-                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="8" />
-                                </Border.StrokeShape>
-                                <Picker x:Name="DestinationSitePicker" TextColor="White" TitleColor="#888" 
-                                        BackgroundColor="Transparent" ItemsSource="{Binding Sites}" SelectedItem="{Binding SelectedDestinationSite}" 
-                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12">
-                                    <Picker.Behaviors>
-                                        <behaviors:EventToCommandBehavior EventName="Focused" Command="{Binding LoadSitesCommand}" />
-                                    </Picker.Behaviors>
-                                </Picker>
-                            </Border>
-                        </StackLayout>
+                            <StackLayout IsVisible="{Binding FormConfig.DestinationSite.IsVisible}" Spacing="4">
+                                <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding FormConfig.DestinationSite.Label}" />
+                                            <Span Text="{Binding FormConfig.DestinationSite.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                                <Entry x:Name="DestinationSiteSearchEntry"
+                                       Text="{Binding DestinationSiteSearchText}"
+                                       Placeholder="Search Destination Site"
+                                       Focused="OnDestinationSiteSearchEntryFocused"
+                                       Unfocused="OnDestinationSiteSearchEntryUnfocused"
+                                       TextColor="White"
+                                       PlaceholderColor="#888"
+                                       BackgroundColor="#2A2A2A"
+                                       Margin="8,4"
+                                       FontSize="12" />
+                            </StackLayout>
 
-                        <StackLayout IsVisible="{Binding FormConfig.Item.IsVisible}" Spacing="4">
-                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
-                                <Label.FormattedText>
-                                    <FormattedString>
-                                        <Span Text="{Binding FormConfig.Item.Label}" />
-                                        <Span Text="{Binding FormConfig.Item.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
-                                    </FormattedString>
-                                </Label.FormattedText>
-                            </Label>
-                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="8" />
-                                </Border.StrokeShape>
-                                <Picker x:Name="ItemPicker"  TextColor="White" TitleColor="#888" 
-                                        BackgroundColor="Transparent" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" 
-                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12">
-                                    <Picker.Behaviors>
-                                        <behaviors:EventToCommandBehavior EventName="Focused" Command="{Binding LoadItemsCommand}" />
-                                    </Picker.Behaviors>
-                                </Picker>
-                            </Border>
-                        </StackLayout>
+                            <StackLayout IsVisible="{Binding FormConfig.Item.IsVisible}" Spacing="4">
+                                <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding FormConfig.Item.Label}" />
+                                            <Span Text="{Binding FormConfig.Item.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                                <Entry x:Name="MaterialSearchEntry"
+                                       Text="{Binding MaterialSearchText}"
+                                       Placeholder="Search Material"
+                                       Focused="OnMaterialSearchEntryFocused"
+                                       Unfocused="OnMaterialSearchEntryUnfocused"
+                                       TextColor="White"
+                                       PlaceholderColor="#888"
+                                       BackgroundColor="#2A2A2A"
+                                       Margin="8,4"
+                                       FontSize="12" />
+                            </StackLayout>
 
-                        <StackLayout IsVisible="{Binding FormConfig.Customer.IsVisible}" Spacing="4">
-                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
-                                <Label.FormattedText>
-                                    <FormattedString>
-                                        <Span Text="{Binding FormConfig.Customer.Label}" />
-                                        <Span Text="{Binding FormConfig.Customer.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
-                                    </FormattedString>
-                                </Label.FormattedText>
-                            </Label>
-                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="8" />
-                                </Border.StrokeShape>
-                                <Picker x:Name="CustomerPicker"  TextColor="White" TitleColor="#888" 
-                                        BackgroundColor="Transparent" ItemsSource="{Binding Customers}" SelectedItem="{Binding SelectedCustomer}" 
-                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12">
-                                    <Picker.Behaviors>
-                                        <behaviors:EventToCommandBehavior EventName="Focused" Command="{Binding LoadCustomersCommand}" />
-                                    </Picker.Behaviors>
-                                </Picker>
-                            </Border>
-                        </StackLayout>
+                            <StackLayout IsVisible="{Binding FormConfig.Customer.IsVisible}" Spacing="4">
+                                <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding FormConfig.Customer.Label}" />
+                                            <Span Text="{Binding FormConfig.Customer.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                                <Entry x:Name="CustomerSearchEntry"
+                                       Text="{Binding CustomerSearchText}"
+                                       Placeholder="Search Customer"
+                                       Focused="OnCustomerSearchEntryFocused"
+                                       Unfocused="OnCustomerSearchEntryUnfocused"
+                                       TextColor="White"
+                                       PlaceholderColor="#888"
+                                       BackgroundColor="#2A2A2A"
+                                       Margin="8,4"
+                                       FontSize="12" />
+                            </StackLayout>
 
-                        <StackLayout IsVisible="{Binding FormConfig.Transport.IsVisible}" Spacing="4">
-                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
-                                <Label.FormattedText>
-                                    <FormattedString>
-                                        <Span Text="{Binding FormConfig.Transport.Label}" />
-                                        <Span Text="{Binding FormConfig.Transport.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
-                                    </FormattedString>
-                                </Label.FormattedText>
-                            </Label>
-                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="8" />
-                                </Border.StrokeShape>
-                                <Picker x:Name="TransportPicker"  TextColor="White" TitleColor="#888" 
-                                        BackgroundColor="Transparent" ItemsSource="{Binding Transports}" SelectedItem="{Binding SelectedTransport}" 
-                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12">
-                                    <Picker.Behaviors>
-                                        <behaviors:EventToCommandBehavior EventName="Focused" Command="{Binding LoadTransportsCommand}" />
-                                    </Picker.Behaviors>
-                                </Picker>
-                            </Border>
-                        </StackLayout>
+                            <StackLayout IsVisible="{Binding FormConfig.Transport.IsVisible}" Spacing="4">
+                                <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding FormConfig.Transport.Label}" />
+                                            <Span Text="{Binding FormConfig.Transport.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                                <Entry x:Name="TransportSearchEntry"
+                                       Text="{Binding TransportSearchText}"
+                                       Placeholder="Search Transport"
+                                       Focused="OnTransportSearchEntryFocused"
+                                       Unfocused="OnTransportSearchEntryUnfocused"
+                                       TextColor="White"
+                                       PlaceholderColor="#888"
+                                       BackgroundColor="#2A2A2A"
+                                       Margin="8,4"
+                                       FontSize="12" />
+                            </StackLayout>
 
-                        <StackLayout IsVisible="{Binding FormConfig.Driver.IsVisible}" Spacing="4">
-                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
-                                <Label.FormattedText>
-                                    <FormattedString>
-                                        <Span Text="{Binding FormConfig.Driver.Label}" />
-                                        <Span Text="{Binding FormConfig.Driver.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
-                                    </FormattedString>
-                                </Label.FormattedText>
-                            </Label>
-                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="8" />
-                                </Border.StrokeShape>
-                                <Picker x:Name="DriverPicker"  TextColor="White" TitleColor="#888" 
-                                        BackgroundColor="Transparent" ItemsSource="{Binding Drivers}" SelectedItem="{Binding SelectedDriver}" 
-                                        ItemDisplayBinding="{Binding Name}" Margin="8,4" FontSize="12">
-                                    <Picker.Behaviors>
-                                        <behaviors:EventToCommandBehavior EventName="Focused" Command="{Binding LoadDriversCommand}" />
-                                    </Picker.Behaviors>
-                                </Picker>
-                            </Border>
-                        </StackLayout>
+                            <StackLayout IsVisible="{Binding FormConfig.Driver.IsVisible}" Spacing="4">
+                                <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding FormConfig.Driver.Label}" />
+                                            <Span Text="{Binding FormConfig.Driver.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                                <Entry x:Name="DriverSearchEntry"
+                                       Text="{Binding DriverSearchText}"
+                                       Placeholder="Search Driver"
+                                       Focused="OnDriverSearchEntryFocused"
+                                       Unfocused="OnDriverSearchEntryUnfocused"
+                                       TextColor="White"
+                                       PlaceholderColor="#888"
+                                       BackgroundColor="#2A2A2A"
+                                       Margin="8,4"
+                                       FontSize="12" />
+                            </StackLayout>
 
-                        <StackLayout IsVisible="{Binding FormConfig.Remarks.IsVisible}" Spacing="4">
-                            <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
-                                <Label.FormattedText>
-                                    <FormattedString>
-                                        <Span Text="{Binding FormConfig.Remarks.Label}" />
-                                        <Span Text="{Binding FormConfig.Remarks.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
-                                    </FormattedString>
-                                </Label.FormattedText>
-                            </Label>
-                            <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="8" />
-                                </Border.StrokeShape>
-                                <Editor x:Name="RemarksEditor" Text="{Binding Remarks}" AutoSize="TextChanges" 
-                                        TextColor="White" BackgroundColor="Transparent" Placeholder="Enter any additional notes..." 
-                                        PlaceholderColor="#888" Margin="8,4" FontSize="12" />
-                            </Border>
-                        </StackLayout>
+                            <StackLayout IsVisible="{Binding FormConfig.Remarks.IsVisible}" Spacing="4">
+                                <Label TextColor="#CCCCCC" FontSize="10" FontAttributes="Bold">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding FormConfig.Remarks.Label}" />
+                                            <Span Text="{Binding FormConfig.Remarks.IsMandatory, Converter={StaticResource BoolToStringConverter}}" TextColor="Red" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                                <Border BackgroundColor="#2A2A2A" StrokeThickness="1" Stroke="#444">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8" />
+                                    </Border.StrokeShape>
+                                    <Editor x:Name="RemarksEditor" Text="{Binding Remarks}" AutoSize="TextChanges" 
+                                            TextColor="White" BackgroundColor="Transparent" Placeholder="Enter any additional notes..." 
+                                            PlaceholderColor="#888" Margin="8,4" FontSize="12" />
+                                </Border>
+                            </StackLayout>
 
-                        <Grid RowDefinitions="Auto,Auto" RowSpacing="8" Margin="0,8,0,0">
-                            <Grid Grid.Row="0" x:Name="MainButtonsGrid" ColumnSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
+                            <Grid RowDefinitions="Auto,Auto" RowSpacing="8" Margin="0,8,0,0">
+                                <Grid Grid.Row="0" x:Name="MainButtonsGrid" ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
 
-                                <Button x:Name="FirstWeightButton" Grid.Column="0" Text="{Binding FirstWeightButtonText}" 
-                                        BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" HeightRequest="40"
-                                        FontAttributes="Bold" Clicked="OnToYardClicked" IsEnabled="{Binding IsWeightStable}" 
-                                        FontSize="{StaticResource ButtonFontSize}" />
-                                <Button x:Name="SecondWeightButton" Grid.Column="1" Text="SAVE and PRINT" 
-                                        BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" HeightRequest="40"
-                                        FontAttributes="Bold" Clicked="OnSaveAndPrintClicked" 
-                                        IsVisible="{Binding IsSecondWeightButtonVisible}" IsEnabled="{Binding IsWeightStable}"
-                                        FontSize="{StaticResource ButtonFontSize}" />
+                                    <Button x:Name="FirstWeightButton" Grid.Column="0" Text="{Binding FirstWeightButtonText}" 
+                                            BackgroundColor="#FFD700" TextColor="#0E0E0E" CornerRadius="8" HeightRequest="40"
+                                            FontAttributes="Bold" Clicked="OnToYardClicked" IsEnabled="{Binding IsWeightStable}" 
+                                            FontSize="{StaticResource ButtonFontSize}" />
+                                    <Button x:Name="SecondWeightButton" Grid.Column="1" Text="SAVE and PRINT" 
+                                            BackgroundColor="#00FF7F" TextColor="#0E0E0E" CornerRadius="8" HeightRequest="40"
+                                            FontAttributes="Bold" Clicked="OnSaveAndPrintClicked" 
+                                            IsVisible="{Binding IsSecondWeightButtonVisible}" IsEnabled="{Binding IsWeightStable}"
+                                            FontSize="{StaticResource ButtonFontSize}" />
+                                </Grid>
+
+                                <Grid Grid.Row="1" x:Name="SecondaryButtonsGrid" ColumnSpacing="6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button Grid.Column="0" Text="UPDATE TARE" BackgroundColor="#2A2A2A" TextColor="White" 
+                                              CornerRadius="8" HeightRequest="35" FontSize="9" Command="{Binding UpdateTareCommand}" />
+                                    <Button Grid.Column="1" x:Name="CancelDocketButton" Text="CANCEL DOCKET" 
+                                            BackgroundColor="#FF4500" TextColor="White" CornerRadius="8" HeightRequest="35"
+                                            FontSize="9" Command="{Binding CancelDocketCommand}" IsEnabled="{Binding IsDocketLoaded}" />
+                                </Grid>
                             </Grid>
+                        </VerticalStackLayout>
+                    </ScrollView>
 
-                            <Grid Grid.Row="1" x:Name="SecondaryButtonsGrid" ColumnSpacing="6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
+                    <CollectionView x:Name="VehicleSuggestionsList"
+                                    ItemsSource="{Binding FilteredVehicles}"
+                                    IsVisible="{Binding ShowVehicleSuggestions}"
+                                    SelectionMode="Single"
+                                    VerticalOptions="Start"
+                                    Margin="8,100,8,0"
+                                    BackgroundColor="#1A1A1A">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="10">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ViewModels:MainPageViewModel}}, Path=VehicleSelectedCommand}"
+                                                              CommandParameter="{Binding .}" />
+                                    </Grid.GestureRecognizers>
+                                    <Label Text="{Binding LicenseNumber}" FontSize="12" TextColor="White" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
 
-                                <Button Grid.Column="0" Text="UPDATE TARE" BackgroundColor="#2A2A2A" TextColor="White" 
-                                          CornerRadius="8" HeightRequest="35" FontSize="9" Command="{Binding UpdateTareCommand}" />
-                                <Button Grid.Column="1" x:Name="CancelDocketButton" Text="CANCEL DOCKET" 
-                                        BackgroundColor="#FF4500" TextColor="White" CornerRadius="8" HeightRequest="35"
-                                        FontSize="9" Command="{Binding CancelDocketCommand}" IsEnabled="{Binding IsDocketLoaded}" />
-                            </Grid>
-                        </Grid>
-                    </VerticalStackLayout>
-                </ScrollView>
+                    <CollectionView x:Name="SourceSiteSuggestionsList"
+                                    ItemsSource="{Binding FilteredSourceSites}"
+                                    IsVisible="{Binding ShowSourceSiteSuggestions}"
+                                    SelectionMode="Single"
+                                    VerticalOptions="Start"
+                                    Margin="8,180,8,0"
+                                    BackgroundColor="#1A1A1A">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="10">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ViewModels:MainPageViewModel}}, Path=SourceSiteSelectedCommand}"
+                                                              CommandParameter="{Binding .}" />
+                                    </Grid.GestureRecognizers>
+                                    <Label Text="{Binding Name}" FontSize="12" TextColor="White" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <CollectionView x:Name="DestinationSiteSuggestionsList"
+                                    ItemsSource="{Binding FilteredDestinationSites}"
+                                    IsVisible="{Binding ShowDestinationSiteSuggestions}"
+                                    SelectionMode="Single"
+                                    VerticalOptions="Start"
+                                    Margin="8,260,8,0"
+                                    BackgroundColor="#1A1A1A">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="10">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ViewModels:MainPageViewModel}}, Path=DestinationSiteSelectedCommand}"
+                                                              CommandParameter="{Binding .}" />
+                                    </Grid.GestureRecognizers>
+                                    <Label Text="{Binding Name}" FontSize="12" TextColor="White" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <CollectionView x:Name="MaterialSuggestionsList"
+                                    ItemsSource="{Binding FilteredItems}"
+                                    IsVisible="{Binding ShowMaterialSuggestions}"
+                                    SelectionMode="Single"
+                                    VerticalOptions="Start"
+                                    Margin="8,340,8,0"
+                                    BackgroundColor="#1A1A1A">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="10">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ViewModels:MainPageViewModel}}, Path=ItemSelectedCommand}"
+                                                              CommandParameter="{Binding .}" />
+                                    </Grid.GestureRecognizers>
+                                    <Label Text="{Binding Name}" FontSize="12" TextColor="White" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <CollectionView x:Name="CustomerSuggestionsList"
+                                    ItemsSource="{Binding FilteredCustomers}"
+                                    IsVisible="{Binding ShowCustomerSuggestions}"
+                                    SelectionMode="Single"
+                                    VerticalOptions="Start"
+                                    Margin="8,420,8,0"
+                                    BackgroundColor="#1A1A1A">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="10">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ViewModels:MainPageViewModel}}, Path=CustomerSelectedCommand}"
+                                                              CommandParameter="{Binding .}" />
+                                    </Grid.GestureRecognizers>
+                                    <Label Text="{Binding Name}" FontSize="12" TextColor="White" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <CollectionView x:Name="TransportSuggestionsList"
+                                    ItemsSource="{Binding FilteredTransports}"
+                                    IsVisible="{Binding ShowTransportSuggestions}"
+                                    SelectionMode="Single"
+                                    VerticalOptions="Start"
+                                    Margin="8,500,8,0"
+                                    BackgroundColor="#1A1A1A">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="10">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ViewModels:MainPageViewModel}}, Path=TransportSelectedCommand}"
+                                                              CommandParameter="{Binding .}" />
+                                    </Grid.GestureRecognizers>
+                                    <Label Text="{Binding Name}" FontSize="12" TextColor="White" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <CollectionView x:Name="DriverSuggestionsList"
+                                    ItemsSource="{Binding FilteredDrivers}"
+                                    IsVisible="{Binding ShowDriverSuggestions}"
+                                    SelectionMode="Single"
+                                    VerticalOptions="Start"
+                                    Margin="8,580,8,0"
+                                    BackgroundColor="#1A1A1A">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="10">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ViewModels:MainPageViewModel}}, Path=DriverSelectedCommand}"
+                                                              CommandParameter="{Binding .}" />
+                                    </Grid.GestureRecognizers>
+                                    <Label Text="{Binding Name}" FontSize="12" TextColor="White" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Grid>
             </Border>
         </Grid>
     </Grid>

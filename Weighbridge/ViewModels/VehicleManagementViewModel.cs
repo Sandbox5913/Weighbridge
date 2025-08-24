@@ -13,6 +13,8 @@ namespace Weighbridge.ViewModels
     {
         private readonly IDatabaseService _databaseService;
         private readonly IValidator<Vehicle> _vehicleValidator;
+        private readonly ILoggingService _loggingService;
+        private readonly IAlertService _alertService;
 
         [ObservableProperty]
         private Vehicle? _selectedVehicle;
@@ -29,10 +31,12 @@ namespace Weighbridge.ViewModels
         [ObservableProperty]
         private ValidationResult? _validationErrors;
 
-        public VehicleManagementViewModel(IDatabaseService databaseService, IValidator<Vehicle> vehicleValidator)
+        public VehicleManagementViewModel(IDatabaseService databaseService, IValidator<Vehicle> vehicleValidator, ILoggingService loggingService, IAlertService alertService)
         {
             _databaseService = databaseService;
             _vehicleValidator = vehicleValidator;
+            _loggingService = loggingService;
+            _alertService = alertService;
 
             LoadVehiclesCommand.ExecuteAsync(null);
         }
@@ -51,8 +55,7 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                // TODO: Implement proper error handling/logging
-                Console.WriteLine($"Failed to load vehicles: {ex.Message}");
+                _loggingService.LogError($"Failed to load vehicles: {ex.Message}", ex);
             }
         }
 
@@ -76,8 +79,7 @@ namespace Weighbridge.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    // TODO: Implement proper error handling/logging
-                    Console.WriteLine($"Failed to add vehicle: {ex.Message}");
+                    _loggingService.LogError($"Failed to add vehicle: {ex.Message}", ex);
                 }
             }
         }
@@ -101,8 +103,7 @@ namespace Weighbridge.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    // TODO: Implement proper error handling/logging
-                    Console.WriteLine($"Failed to update vehicle: {ex.Message}");
+                    _loggingService.LogError($"Failed to update vehicle: {ex.Message}", ex);
                 }
             }
         }
@@ -112,8 +113,9 @@ namespace Weighbridge.ViewModels
         [RelayCommand]
         private async Task DeleteVehicle(Vehicle vehicle)
         {
-            // TODO: Implement confirmation dialog
-            try
+            if (await _alertService.DisplayConfirmation("Confirm Deletion", $"Are you sure you want to delete {vehicle.LicenseNumber}?", "Yes", "No"))
+            {
+                try
             {
                 await _databaseService.DeleteItemAsync(vehicle);
                 await LoadVehicles();
@@ -121,9 +123,9 @@ namespace Weighbridge.ViewModels
             }
             catch (Exception ex)
             {
-                // TODO: Implement proper error handling/logging
-                Console.WriteLine($"Failed to delete vehicle: {ex.Message}");
+                _loggingService.LogError($"Failed to delete vehicle: {ex.Message}", ex);
             }
+        }
         }
 
         [RelayCommand]

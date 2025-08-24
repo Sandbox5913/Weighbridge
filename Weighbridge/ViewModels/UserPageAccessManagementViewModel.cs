@@ -16,6 +16,8 @@ namespace Weighbridge.ViewModels
     {
         private readonly IDatabaseService _databaseService;
         private readonly IValidator<UserPageAccess> _userPageAccessValidator;
+        private readonly ILoggingService _loggingService;
+        private readonly IAlertService _alertService;
 
         [ObservableProperty]
         private ObservableCollection<User> _users = new();
@@ -29,10 +31,12 @@ namespace Weighbridge.ViewModels
         [ObservableProperty]
         private ValidationResult? _validationErrors;
 
-        public UserPageAccessManagementViewModel(IDatabaseService databaseService, IValidator<UserPageAccess> userPageAccessValidator)
+        public UserPageAccessManagementViewModel(IDatabaseService databaseService, IValidator<UserPageAccess> userPageAccessValidator, ILoggingService loggingService, IAlertService alertService)
         {
             _databaseService = databaseService;
             _userPageAccessValidator = userPageAccessValidator;
+            _loggingService = loggingService;
+            _alertService = alertService;
             LoadUsers();
         }
 
@@ -115,8 +119,8 @@ namespace Weighbridge.ViewModels
                 // Don't save page access for Admin users - they always have full access
                 if (SelectedUser?.IsAdmin == true)
                 {
-                    // TODO: Replace with a proper alert service
-                    Console.WriteLine("Info: Admin users automatically have access to all pages.");
+                    _alertService.DisplayAlert("Info", "Admin users automatically have access to all pages.", "OK");
+                    _loggingService.LogInformation("Admin users automatically have access to all pages.");
                 }
                 return;
             }
@@ -141,8 +145,8 @@ namespace Weighbridge.ViewModels
                     }
                     else
                     {
-                        // TODO: Handle validation errors for individual page access items
-                        Console.WriteLine($"Validation error for {page.PageName}: {_validationErrors.Errors.First().ErrorMessage}");
+                        _loggingService.LogError($"Validation error for {page.PageName}: {_validationErrors.Errors.First().ErrorMessage}");
+                        _alertService.DisplayAlert("Validation Error", $"Validation error for {page.PageName}: {_validationErrors.Errors.First().ErrorMessage}", "OK");
                         return; // Stop saving if any validation fails
                     }
                 }
@@ -163,8 +167,8 @@ namespace Weighbridge.ViewModels
                 await _databaseService.DeleteItemAsync(upa);
             }
 
-            // TODO: Replace with a proper alert service
-            Console.WriteLine("Success: Page access permissions updated successfully.");
+            _alertService.DisplayAlert("Success", "Page access permissions updated successfully.", "OK");
+            _loggingService.LogInformation("Page access permissions updated successfully.");
             LoadPageAccess(); // Reload to reflect changes
         }
     }
