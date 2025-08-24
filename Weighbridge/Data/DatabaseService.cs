@@ -28,15 +28,10 @@ namespace Weighbridge.Data
 
         public async Task InitializeAsync()
         {
-            // Use the provided connection directly
-            // Ensure the connection is open before executing commands
-            if (_dbConnection.State != ConnectionState.Open)
-            {
-                _dbConnection.Open();
-            }
+            // The connection is expected to be open when passed to the DatabaseService
 
             // Create Users table first as other tables might reference it
-            await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Users (
+            await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Users (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Username TEXT NOT NULL UNIQUE,
                 PasswordHash TEXT NOT NULL,
@@ -44,25 +39,25 @@ namespace Weighbridge.Data
                 CanEditDockets BOOLEAN NOT NULL DEFAULT 0,
                 CanDeleteDockets BOOLEAN NOT NULL DEFAULT 0,
                 IsAdmin BOOLEAN NOT NULL DEFAULT 0
-            );");
+            );"));
 
             // Migration: Add CanEditDockets, CanDeleteDockets, and IsAdmin columns to Users table if they don't exist
-            var tableInfoUsers = await _dbConnection.QueryAsync<dynamic>("PRAGMA table_info(Users);");
+            var tableInfoUsers = await ExecuteWithRetry(async () => await _dbConnection.QueryAsync<dynamic>("PRAGMA table_info(Users);"));
             if (!tableInfoUsers.Any(c => c.name == "CanEditDockets"))
             {
-                await _dbConnection.ExecuteAsync("ALTER TABLE Users ADD COLUMN CanEditDockets BOOLEAN NOT NULL DEFAULT 0;");
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Users ADD COLUMN CanEditDockets BOOLEAN NOT NULL DEFAULT 0;"));
             }
             if (!tableInfoUsers.Any(c => c.name == "CanDeleteDockets"))
             {
-                await _dbConnection.ExecuteAsync("ALTER TABLE Users ADD COLUMN CanDeleteDockets BOOLEAN NOT NULL DEFAULT 0;");
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Users ADD COLUMN CanDeleteDockets BOOLEAN NOT NULL DEFAULT 0;"));
             }
             if (!tableInfoUsers.Any(c => c.name == "IsAdmin"))
             {
-                await _dbConnection.ExecuteAsync("ALTER TABLE Users ADD COLUMN IsAdmin BOOLEAN NOT NULL DEFAULT 0;");
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Users ADD COLUMN IsAdmin BOOLEAN NOT NULL DEFAULT 0;"));
             }
 
             // Create AuditLogs table early as it's used during initialization/login
-            await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS AuditLogs (
+            await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS AuditLogs (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Timestamp TEXT NOT NULL,
                 UserId INTEGER,
@@ -71,62 +66,62 @@ namespace Weighbridge.Data
                 EntityType TEXT,
                 EntityId INTEGER,
                 Details TEXT
-            );");
+            );"));
 
             // Create UserPageAccesses table
-            await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS UserPageAccesses (
+            await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS UserPageAccesses (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 UserId INTEGER NOT NULL,
                 PageName TEXT NOT NULL,
                 FOREIGN KEY (UserId) REFERENCES Users(Id)
-            );");
+            );"));
 
             // Now create other tables
             Debug.WriteLine("[DatabaseService] Creating Vehicles table...");
-            await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Vehicles (
+            await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Vehicles (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 LicenseNumber TEXT NOT NULL UNIQUE,
                 TareWeight REAL NOT NULL DEFAULT 0
-            );");
+            );"));
             Debug.WriteLine("[DatabaseService] Vehicles table created.");
 
             Debug.WriteLine("[DatabaseService] Creating Sites table...");
-            await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Sites (
+            await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Sites (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name TEXT NOT NULL UNIQUE
-            );");
+            );"));
             Debug.WriteLine("[DatabaseService] Sites table created.");
 
             Debug.WriteLine("[DatabaseService] Creating Items table...");
-            await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Items (
+            await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Items (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name TEXT NOT NULL UNIQUE
-            );");
+            );"));
             Debug.WriteLine("[DatabaseService] Items table created.");
 
             Debug.WriteLine("[DatabaseService] Creating Customers table...");
-            await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Customers (
+            await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Customers (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name TEXT NOT NULL UNIQUE
-            );");
+            );"));
             Debug.WriteLine("[DatabaseService] Customers table created.");
 
             Debug.WriteLine("[DatabaseService] Creating Transports table...");
-            await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Transports (
+            await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Transports (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name TEXT NOT NULL UNIQUE
-            );");
+            );"));
             Debug.WriteLine("[DatabaseService] Transports table created.");
 
             Debug.WriteLine("[DatabaseService] Creating Drivers table...");
-            await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Drivers (
+            await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Drivers (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name TEXT NOT NULL UNIQUE
-            );");
+            );"));
             Debug.WriteLine("[DatabaseService] Drivers table created.");
 
             Debug.WriteLine("[DatabaseService] Creating Dockets table...");
-            await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Dockets (
+            await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Dockets (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 EntranceWeight REAL NOT NULL,
                 ExitWeight REAL NOT NULL,
@@ -148,91 +143,98 @@ namespace Weighbridge.Data
                 FOREIGN KEY (ItemId) REFERENCES Items(Id),
                 FOREIGN KEY (CustomerId) REFERENCES Customers(Id),
                 FOREIGN KEY (TransportId) REFERENCES Transports(Id),
-                FOREIGN KEY (DriverId) REFERENCES Drivers(Id)
-            );");
+                FOREIGN KEY (DriverId) REFERENCES Drivers(Id),
+                WeighingMode TEXT
+            );"));
             Debug.WriteLine("[DatabaseService] Dockets table created.");
 
             // Create indexes for performance
-            await _dbConnection.ExecuteAsync("CREATE INDEX IF NOT EXISTS IX_Dockets_Timestamp ON Dockets (Timestamp);");
-            await _dbConnection.ExecuteAsync("CREATE INDEX IF NOT EXISTS IX_Dockets_VehicleId ON Dockets (VehicleId);");
+            await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("CREATE INDEX IF NOT EXISTS IX_Dockets_Timestamp ON Dockets (Timestamp);"));
+            await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("CREATE INDEX IF NOT EXISTS IX_Dockets_VehicleId ON Dockets (VehicleId);"));
 
             // Migration: Add UpdatedAt column to Dockets table if it doesn't exist
-            var tableInfo = await _dbConnection.QueryAsync<dynamic>("PRAGMA table_info(Dockets);");
+            var tableInfo = await ExecuteWithRetry(async () => await _dbConnection.QueryAsync<dynamic>("PRAGMA table_info(Dockets);"));
             if (!tableInfo.Any(c => c.name == "UpdatedAt"))
             {
-                await _dbConnection.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN UpdatedAt TEXT;");
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN UpdatedAt TEXT;"));
             }
 
             if (!tableInfo.Any(c => c.name == "TransactionType"))
             {
-                await _dbConnection.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN TransactionType INTEGER NOT NULL DEFAULT 0;");
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN TransactionType INTEGER NOT NULL DEFAULT 0;"));
+            }
+            
+            // Migration: Add WeighingMode column to Dockets table if it doesn't exist
+            if (!tableInfo.Any(c => c.name == "WeighingMode"))
+            {
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN WeighingMode TEXT;"));
             }
 
             // Add sample users if none exist
-            var userCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Users;");
+            var userCount = await ExecuteWithRetry(async () => await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Users;"));
             if (userCount == 0)
             {
-                await _dbConnection.ExecuteAsync("INSERT INTO Users (Username, PasswordHash, Role, CanEditDockets, CanDeleteDockets, IsAdmin) VALUES (@Username, @PasswordHash, @Role, @CanEditDockets, @CanDeleteDockets, @IsAdmin);", new { Username = "admin", PasswordHash = "admin", Role = "Admin", CanEditDockets = true, CanDeleteDockets = true, IsAdmin = true });
-                await _dbConnection.ExecuteAsync("INSERT INTO Users (Username, PasswordHash, Role, CanEditDockets, CanDeleteDockets, IsAdmin) VALUES (@Username, @PasswordHash, @Role, @CanEditDockets, @CanDeleteDockets, @IsAdmin);", new { Username = "operator", PasswordHash = "operator", Role = "Operator", CanEditDockets = false, CanDeleteDockets = false, IsAdmin = false });
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("INSERT INTO Users (Username, PasswordHash, Role, CanEditDockets, CanDeleteDockets, IsAdmin) VALUES (@Username, @PasswordHash, @Role, @CanEditDockets, @CanDeleteDockets, @IsAdmin);", new { Username = "admin", PasswordHash = "admin", Role = "Admin", CanEditDockets = true, CanDeleteDockets = true, IsAdmin = true }));
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("INSERT INTO Users (Username, PasswordHash, Role, CanEditDockets, CanDeleteDockets, IsAdmin) VALUES (@Username, @PasswordHash, @Role, @CanEditDockets, @CanDeleteDockets, @IsAdmin);", new { Username = "operator", PasswordHash = "operator", Role = "Operator", CanEditDockets = false, CanDeleteDockets = false, IsAdmin = false }));
                 Debug.WriteLine("[DatabaseService] Added default admin and operator users.");
             }
-            userCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Users;");
+            userCount = await ExecuteWithRetry(async () => await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Users;"));
             Debug.WriteLine($"[DatabaseService] Current user count: {userCount}");
 
 
             // Add sample Vehicles if none exist
-            var vehicleCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Vehicles;");
+            var vehicleCount = await ExecuteWithRetry(async () => await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Vehicles;"));
             if (vehicleCount == 0)
             {
-                await _dbConnection.ExecuteAsync("INSERT INTO Vehicles (LicenseNumber, TareWeight) VALUES ('ABC-123', 5000);");
-                await _dbConnection.ExecuteAsync("INSERT INTO Vehicles (LicenseNumber, TareWeight) VALUES ('XYZ-789', 6500); ");
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("INSERT INTO Vehicles (LicenseNumber, TareWeight) VALUES ('ABC-123', 5000);"));
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("INSERT INTO Vehicles (LicenseNumber, TareWeight) VALUES ('XYZ-789', 6500); "));
             }
 
             // Add sample Sites if none exist
-            var siteCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Sites;");
+            var siteCount = await ExecuteWithRetry(async () => await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Sites;"));
             if (siteCount == 0)
             {
-                await _dbConnection.ExecuteAsync("INSERT INTO Sites (Name) VALUES ('Site A');");
-                await _dbConnection.ExecuteAsync("INSERT INTO Sites (Name) VALUES ('Site B');");
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("INSERT INTO Sites (Name) VALUES ('Site A');"));
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("INSERT INTO Sites (Name) VALUES ('Site B');"));
             }
 
             // Add sample Items if none exist
-            var itemCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Items;");
+            var itemCount = await ExecuteWithRetry(async () => await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Items;"));
             if (itemCount == 0)
             {
-                await _dbConnection.ExecuteAsync("INSERT INTO Items (Name) VALUES ('Sand');");
-                await _dbConnection.ExecuteAsync("INSERT INTO Items (Name) VALUES ('Gravel');");
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("INSERT INTO Items (Name) VALUES ('Sand');"));
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("INSERT INTO Items (Name) VALUES ('Gravel');"));
             }
 
             // Add sample Customers if none exist
-            var customerCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Customers;");
+            var customerCount = await ExecuteWithRetry(async () => await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Customers;"));
             if (customerCount == 0)
             {
-                await _dbConnection.ExecuteAsync("INSERT INTO Customers (Name) VALUES ('Customer 1');");
-                await _dbConnection.ExecuteAsync("INSERT INTO Customers (Name) VALUES ('Customer 2');");
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("INSERT INTO Customers (Name) VALUES ('Customer 1');"));
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("INSERT INTO Customers (Name) VALUES ('Customer 2');"));
             }
 
             // Add sample Transports if none exist
-            var transportCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Transports;");
+            var transportCount = await ExecuteWithRetry(async () => await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Transports;"));
             if (transportCount == 0)
             {
-                await _dbConnection.ExecuteAsync("INSERT INTO Transports (Name) VALUES ('Transport Co A');");
-                await _dbConnection.ExecuteAsync("INSERT INTO Transports (Name) VALUES ('Transport Co B');");
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("INSERT INTO Transports (Name) VALUES ('Transport Co A');"));
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("INSERT INTO Transports (Name) VALUES ('Transport Co B');"));
             }
 
             // Add sample Drivers if none exist
-            var driverCount = await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Drivers;");
+            var driverCount = await ExecuteWithRetry(async () => await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Drivers;"));
             if (driverCount == 0)
             {
-                await _dbConnection.ExecuteAsync("INSERT INTO Drivers (Name) VALUES ('John Doe');");
-                await _dbConnection.ExecuteAsync("INSERT INTO Drivers (Name) VALUES ('Jane Smith');");
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("INSERT INTO Drivers (Name) VALUES ('John Doe');"));
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("INSERT INTO Drivers (Name) VALUES ('Jane Smith');"));
             }
         }
 
         public async Task<List<T>> GetItemsAsync<T>()
         {
             string tableName = GetTableName<T>();
-            return (await _dbConnection.QueryAsync<T>($"SELECT * FROM {tableName}")).ToList();
+            return (await ExecuteWithRetry(async () => await _dbConnection.QueryAsync<T>($"SELECT * FROM {tableName}"))).ToList();
         }
 
         public async Task<List<DocketViewModel>> GetDocketViewModelsAsync(string statusFilter, DateTime dateFromFilter, DateTime dateToFilter, string vehicleRegFilter, string globalSearchFilter)
@@ -291,14 +293,14 @@ namespace Weighbridge.Data
 
             sql += " ORDER BY d.Timestamp DESC;";
 
-            var dockets = await _dbConnection.QueryAsync<DocketViewModel>(sql, parameters);
+            var dockets = await ExecuteWithRetry(async () => await _dbConnection.QueryAsync<DocketViewModel>(sql, parameters));
             return dockets.ToList();
         }
 
         public async Task<T> GetItemAsync<T>(int id) where T : IEntity
         {
             string tableName = GetTableName<T>();
-            return await _dbConnection.QueryFirstOrDefaultAsync<T>($"SELECT * FROM {tableName} WHERE Id = @Id", new { Id = id });
+            return await ExecuteWithRetry(async () => await _dbConnection.QueryFirstOrDefaultAsync<T>($"SELECT * FROM {tableName} WHERE Id = @Id", new { Id = id }));
         }
 
         public async Task<int> SaveItemAsync<T>(T item) where T : IEntity
@@ -314,7 +316,7 @@ namespace Weighbridge.Data
                 var properties = typeof(T).GetProperties().Where(p => p.Name != "Id" && p.CanWrite);
                 string setClause = string.Join(", ", properties.Select(p => $"{p.Name} = @{p.Name}"));
                 string sql = $"UPDATE {tableName} SET {setClause} WHERE Id = @Id;";
-                int rowsAffected = await _dbConnection.ExecuteAsync(sql, item);
+                int rowsAffected = await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(sql, item));
 
                 if (rowsAffected > 0 && originalItem != null)
                 {
@@ -343,7 +345,7 @@ namespace Weighbridge.Data
                 string columns = string.Join(", ", properties.Select(p => p.Name));
                 string values = string.Join(", ", properties.Select(p => $"@{p.Name}"));
                 string sql = $"INSERT INTO {tableName} ({columns}) VALUES ({values}); SELECT last_insert_rowid();";
-                int newId = await _dbConnection.ExecuteScalarAsync<int>(sql, item);
+                int newId = await ExecuteWithRetry(async () => await _dbConnection.ExecuteScalarAsync<int>(sql, item));
                 item.Id = newId;
                 await auditService.LogActionAsync("Created", typeof(T).Name, item.Id, $"New {typeof(T).Name} created with ID: {item.Id}");
                 return 1;
@@ -366,11 +368,11 @@ namespace Weighbridge.Data
                 throw new ArgumentException("Id cannot be null");
 
             string tableName = GetTableName<T>();
-            var itemToDelete = await _dbConnection.QueryFirstOrDefaultAsync<T>($"SELECT * FROM {tableName} WHERE Id = @Id", new { Id = idValue });
+            var itemToDelete = await ExecuteWithRetry(async () => await _dbConnection.QueryFirstOrDefaultAsync<T>($"SELECT * FROM {tableName} WHERE Id = @Id", new { Id = idValue }));
 
             if (itemToDelete != null)
             {
-                int rowsAffected = await _dbConnection.ExecuteAsync($"DELETE FROM [{tableName}] WHERE Id = @Id", new { Id = idValue });
+                int rowsAffected = await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync($"DELETE FROM [{tableName}] WHERE Id = @Id", new { Id = idValue }));
                 if (rowsAffected > 0)
                 {
                     await auditService.LogActionAsync("Deleted", typeof(T).Name, (int)idValue, JsonSerializer.Serialize(itemToDelete));
@@ -383,24 +385,24 @@ namespace Weighbridge.Data
         public async Task<Docket> GetInProgressDocketAsync(int vehicleId)
         {
             var since = DateTime.Now.AddDays(-1);
-            return await _dbConnection.QueryFirstOrDefaultAsync<Docket>(
+            return await ExecuteWithRetry(async () => await _dbConnection.QueryFirstOrDefaultAsync<Docket>(
                 "SELECT * FROM Dockets WHERE VehicleId = @VehicleId AND Status = 'OPEN' AND Timestamp > @Since ORDER BY Timestamp DESC;",
-                new { VehicleId = vehicleId, Since = since.ToString("yyyy-MM-dd HH:mm:ss") });
+                new { VehicleId = vehicleId, Since = since.ToString("yyyy-MM-dd HH:mm:ss") }));
         }
 
         public async Task<User> GetUserByUsernameAsync(string username)
         {
-            return await _dbConnection.QueryFirstOrDefaultAsync<User>("SELECT * FROM Users WHERE Username = @Username", new { Username = username });
+            return await ExecuteWithRetry(async () => await _dbConnection.QueryFirstOrDefaultAsync<User>("SELECT * FROM Users WHERE Username = @Username", new { Username = username }));
         }
 
         public async Task<Vehicle> GetVehicleByLicenseAsync(string licenseNumber)
         {
-            return await _dbConnection.QueryFirstOrDefaultAsync<Vehicle>("SELECT * FROM Vehicles WHERE LicenseNumber = @LicenseNumber", new { LicenseNumber = licenseNumber });
+            return await ExecuteWithRetry(async () => await _dbConnection.QueryFirstOrDefaultAsync<Vehicle>("SELECT * FROM Vehicles WHERE LicenseNumber = @LicenseNumber", new { LicenseNumber = licenseNumber }));
         }
 
         public async Task<List<UserPageAccess>> GetUserPageAccessAsync(int userId)
         {
-            var accessList = (await _dbConnection.QueryAsync<UserPageAccess>("SELECT * FROM UserPageAccesses WHERE UserId = @UserId", new { UserId = userId })).ToList();
+            var accessList = (await ExecuteWithRetry(async () => await _dbConnection.QueryAsync<UserPageAccess>("SELECT * FROM UserPageAccesses WHERE UserId = @UserId", new { UserId = userId }))).ToList();
             Debug.WriteLine($"[DatabaseService] GetUserPageAccessAsync for UserId {userId}: Retrieved {accessList.Count} entries.");
             foreach (var entry in accessList)
             {
@@ -413,26 +415,17 @@ namespace Weighbridge.Data
         {
             if (userPageAccess.Id != 0)
             {
-                Debug.WriteLine($"[DatabaseService] Updating UserPageAccess: Id={userPageAccess.Id}, UserId={userPageAccess.UserId}, PageName={userPageAccess.PageName}");
-                var rowsAffected = await _dbConnection.ExecuteAsync("UPDATE UserPageAccesses SET UserId = @UserId, PageName = @PageName WHERE Id = @Id", userPageAccess);
-                Debug.WriteLine($"[DatabaseService] Updated UserPageAccess rows affected: {rowsAffected}");
-                return rowsAffected;
+                return await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("UPDATE UserPageAccesses SET UserId = @UserId, PageName = @PageName WHERE Id = @Id", userPageAccess));
             }
             else
             {
-                Debug.WriteLine($"[DatabaseService] Inserting UserPageAccess: UserId={userPageAccess.UserId}, PageName={userPageAccess.PageName}");
-                var rowsAffected = await _dbConnection.ExecuteAsync("INSERT INTO UserPageAccesses (UserId, PageName) VALUES (@UserId, @PageName)", userPageAccess);
-                Debug.WriteLine($"[DatabaseService] Inserted UserPageAccess rows affected: {rowsAffected}");
-                return rowsAffected;
+                return await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("INSERT INTO UserPageAccesses (UserId, PageName) VALUES (@UserId, @PageName)", userPageAccess));
             }
         }
 
         public async Task<int> DeleteUserPageAccessAsync(UserPageAccess userPageAccess)
         {
-            Debug.WriteLine($"[DatabaseService] Deleting UserPageAccess: Id={userPageAccess.Id}, UserId={userPageAccess.UserId}, PageName={userPageAccess.PageName}");
-            var rowsAffected = await _dbConnection.ExecuteAsync("DELETE FROM UserPageAccesses WHERE Id = @Id", new { userPageAccess.Id });
-            Debug.WriteLine($"[DatabaseService] Deleted UserPageAccess rows affected: {rowsAffected}");
-            return rowsAffected;
+            return await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("DELETE FROM UserPageAccesses WHERE Id = @Id", new { userPageAccess.Id }));
         }
 
         public async Task<List<Docket>> GetDocketsByDateRangeAsync(DateTime startDate, DateTime endDate)
@@ -441,8 +434,50 @@ namespace Weighbridge.Data
                            WHERE Timestamp >= @StartDate AND Timestamp <= @EndDate 
                            ORDER BY Timestamp DESC;";
             var parameters = new { StartDate = startDate.ToString("yyyy-MM-dd HH:mm:ss"), EndDate = endDate.Date.AddDays(1).ToString("yyyy-MM-dd HH:mm:ss") };
-            var dockets = await _dbConnection.QueryAsync<Docket>(sql, parameters);
+            var dockets = await ExecuteWithRetry(async () => await _dbConnection.QueryAsync<Docket>(sql, parameters));
             return dockets.ToList();
+        }
+
+        private async Task<T> ExecuteWithRetry<T>(Func<Task<T>> operation, int maxRetries = 3, int initialDelayMs = 100)
+        {
+            for (int i = 0; i < maxRetries; i++)
+            {
+                try
+                {
+                    return await operation();
+                }
+                catch (Exception ex)
+                {
+                    _serviceProvider.GetRequiredService<ILoggingService>().LogError($"Database operation failed (attempt {i + 1}/{maxRetries}): {ex.Message}");
+                    if (i == maxRetries - 1)
+                    {
+                        throw; // Re-throw if last attempt
+                    }
+                    await Task.Delay(initialDelayMs * (1 << i)); // Exponential backoff
+                }
+            }
+            throw new InvalidOperationException("Should not reach here."); // Should be caught by re-throw
+        }
+
+        private async Task ExecuteWithRetry(Func<Task> operation, int maxRetries = 3, int initialDelayMs = 100)
+        {
+            for (int i = 0; i < maxRetries; i++)
+            {
+                try
+                {
+                    await operation();
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    _serviceProvider.GetRequiredService<ILoggingService>().LogError($"Database operation failed (attempt {i + 1}/{maxRetries}): {ex.Message}");
+                    if (i == maxRetries - 1)
+                    {
+                        throw; // Re-throw if last attempt
+                    }
+                    await Task.Delay(initialDelayMs * (1 << i)); // Exponential backoff
+                }
+            }
         }
 
         // Helper method to get table name from [Table] attribute or use default pluralization
