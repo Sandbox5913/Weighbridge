@@ -163,12 +163,68 @@ namespace Weighbridge.Data
             {
                 await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN TransactionType INTEGER NOT NULL DEFAULT 0;"));
             }
-            
-            // Migration: Add WeighingMode column to Dockets table if it doesn't exist
+
+            // Robust Migration for WeighingMode column
+            tableInfo = await ExecuteWithRetry(async () => await _dbConnection.QueryAsync<dynamic>("PRAGMA table_info(Dockets);"));
             if (!tableInfo.Any(c => c.name == "WeighingMode"))
             {
-                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN WeighingMode TEXT DEFAULT NULL;"));
+                try
+                {
+                    // Attempt to add the column directly
+                    await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Dockets ADD COLUMN WeighingMode TEXT DEFAULT NULL;"));
+                    Debug.WriteLine("[DatabaseService] Successfully added WeighingMode column to Dockets table.");
+                }
+                catch (Exception ex)
+                {
+                    _serviceProvider.GetRequiredService<ILoggingService>().LogError($"Failed to add WeighingMode column directly: {ex.Message}. Attempting full table migration.");
+
+                    // If direct ALTER TABLE fails, perform a full table migration
+                    await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Dockets RENAME TO Dockets_old;"));
+                    Debug.WriteLine("[DatabaseService] Renamed Dockets to Dockets_old.");
+
+                    await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"CREATE TABLE Dockets (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        EntranceWeight REAL NOT NULL,
+                        ExitWeight REAL NOT NULL,
+                        NetWeight REAL NOT NULL,
+                        VehicleId INTEGER,
+                        SourceSiteId INTEGER,
+                        DestinationSiteId INTEGER,
+                        ItemId INTEGER,
+                        CustomerId INTEGER,
+                        TransportId INTEGER,
+                        DriverId INTEGER,
+                        Remarks TEXT,
+                        Timestamp TEXT NOT NULL,
+                        Status TEXT NOT NULL,
+                        UpdatedAt TEXT,
+                        WeighingMode TEXT DEFAULT NULL,
+                        FOREIGN KEY (VehicleId) REFERENCES Vehicles(Id),
+                        FOREIGN KEY (SourceSiteId) REFERENCES Sites(Id),
+                        FOREIGN KEY (DestinationSiteId) REFERENCES Sites(Id),
+                        FOREIGN KEY (ItemId) REFERENCES Items(Id),
+                        FOREIGN KEY (CustomerId) REFERENCES Customers(Id),
+                        FOREIGN KEY (TransportId) REFERENCES Transports(Id),
+                        FOREIGN KEY (DriverId) REFERENCES Drivers(Id)
+                    );"));
+                    Debug.WriteLine("[DatabaseService] Created new Dockets table.");
+
+                    await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"INSERT INTO Dockets (
+                        Id, EntranceWeight, ExitWeight, NetWeight, VehicleId, SourceSiteId, DestinationSiteId,
+                        ItemId, CustomerId, TransportId, DriverId, Remarks, Timestamp, Status, UpdatedAt, WeighingMode
+                    )
+                    SELECT
+                        Id, EntranceWeight, ExitWeight, NetWeight, VehicleId, SourceSiteId, DestinationSiteId,
+                        ItemId, CustomerId, TransportId, DriverId, Remarks, Timestamp, Status, UpdatedAt, NULL -- Set WeighingMode to NULL for existing data
+                    FROM Dockets_old;"));
+                    Debug.WriteLine("[DatabaseService] Copied data from Dockets_old to new Dockets table.");
+
+                    await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("DROP TABLE Dockets_old;"));
+                    Debug.WriteLine("[DatabaseService] Dropped Dockets_old table.");
+                }
             }
+            
+            
 
             // Add sample users if none exist
             var userCount = await ExecuteWithRetry(async () => await _dbConnection.QueryFirstOrDefaultAsync<int>("SELECT COUNT(*) FROM Users;"));
