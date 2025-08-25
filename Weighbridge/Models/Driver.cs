@@ -13,5 +13,10 @@ namespace Weighbridge.Models
         public bool IsHazmatCertified { get; set; }
         public DateTime? CertificationExpiry { get; set; }
         public bool IsActive { get; set; } = true;
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

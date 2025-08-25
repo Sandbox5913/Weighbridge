@@ -2,6 +2,7 @@ using Weighbridge.ViewModels;
 using Microsoft.Maui.Controls;
 using Weighbridge.Models;
 using System;
+using Maui.ComboBox;
 
 namespace Weighbridge
 {
@@ -104,101 +105,13 @@ namespace Weighbridge
         }
 
 
-        private void OnVehicleSearchEntryFocused(object sender, FocusEventArgs e)
-        {
-            if (sender is Entry entry)
-            {
-                // Force refresh the Entry display
-                entry.TextColor = Colors.White;
-                entry.BackgroundColor = Color.FromArgb("#3A3A3A");
-            }
-        }
+        
 
-        private void OnVehicleSearchEntryUnfocused(object sender, FocusEventArgs e)
-        {
-            if (sender is Entry entry)
-            {
-                entry.BackgroundColor = Color.FromArgb("#2A2A2A");
-            }
-        }
+        
 
-        private void OnSourceSiteSearchEntryFocused(object sender, FocusEventArgs e)
-        {
-        }
+        
 
-        private void OnSourceSiteSearchEntryUnfocused(object sender, FocusEventArgs e)
-        {
-        }
-
-        private void OnSourceSiteSearchTextChanged(object sender, TextChangedEventArgs e)
-        {
-            _viewModel.SourceSiteSearchText = e.NewTextValue;
-        }
-
-        private void OnDestinationSiteSearchEntryFocused(object sender, FocusEventArgs e)
-        {
-        }
-
-        private void OnDestinationSiteSearchEntryUnfocused(object sender, FocusEventArgs e)
-        {
-        }
-
-        private void OnDestinationSiteSearchTextChanged(object sender, TextChangedEventArgs e)
-        {
-            _viewModel.DestinationSiteSearchText = e.NewTextValue;
-        }
-
-        private void OnCustomerSearchEntryFocused(object sender, FocusEventArgs e)
-        {
-        }
-
-        private void OnCustomerSearchEntryUnfocused(object sender, FocusEventArgs e)
-        {
-        }
-
-        private void OnCustomerSearchTextChanged(object sender, TextChangedEventArgs e)
-        {
-            _viewModel.CustomerSearchText = e.NewTextValue;
-        }
-
-        private void OnMaterialSearchEntryFocused(object sender, FocusEventArgs e)
-        {
-        }
-
-        private void OnMaterialSearchEntryUnfocused(object sender, FocusEventArgs e)
-        {
-        }
-
-        private void OnMaterialSearchTextChanged(object sender, TextChangedEventArgs e)
-        {
-            _viewModel.MaterialSearchText = e.NewTextValue;
-        }
-
-        private void OnTransportSearchEntryFocused(object sender, FocusEventArgs e)
-        {
-        }
-
-        private void OnTransportSearchEntryUnfocused(object sender, FocusEventArgs e)
-        {
-        }
-
-        private void OnTransportSearchTextChanged(object sender, TextChangedEventArgs e)
-        {
-            _viewModel.TransportSearchText = e.NewTextValue;
-        }
-
-        private void OnDriverSearchEntryFocused(object sender, FocusEventArgs e)
-        {
-        }
-
-        private void OnDriverSearchEntryUnfocused(object sender, FocusEventArgs e)
-        {
-        }
-
-        private void OnDriverSearchTextChanged(object sender, TextChangedEventArgs e)
-        {
-            _viewModel.DriverSearchText = e.NewTextValue;
-        }
+        
 
         private async void OnToYardClicked(object sender, EventArgs e)
         {
@@ -226,16 +139,34 @@ namespace Weighbridge
             }
         }
 
-        private void OnVehicleSearchTextChanged(object sender, TextChangedEventArgs e)
+        private void OnComboBoxTextChanged(object sender, TextChangedEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine($"VehicleSearchEntry TextChanged: {e.NewTextValue}");
-            _viewModel.VehicleSearchText = e.NewTextValue;
+            // Optional: Just clear selection if text doesn't match
+            var comboBox = sender as PopupComboBox;
+            if (!string.IsNullOrEmpty(e.NewTextValue))
+            {
+                var hasMatch = _viewModel.FilteredTransports?.Any(item => 
+                    item?.ToString()?.Equals(e.NewTextValue, StringComparison.OrdinalIgnoreCase) == true) == true;
+                
+                if (!hasMatch)
+                    comboBox.SelectedItem = null;
+            }
         }
 
-        
-
-        
-
-        
+        private void OnComboBoxEditCompleted(object sender, EventArgs e)
+        {
+            // Optional: Find exact match and select it
+            var comboBox = sender as PopupComboBox;
+            var text = comboBox?.Text;
+            
+            if (!string.IsNullOrEmpty(text))
+            {
+                var match = _viewModel.FilteredTransports?.FirstOrDefault(item => 
+                    item?.ToString()?.Equals(text, StringComparison.OrdinalIgnoreCase) == true);
+                
+                if (match != null)
+                    comboBox.SelectedItem = match;
+            }
+        }
     }
 }

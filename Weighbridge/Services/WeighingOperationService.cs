@@ -14,6 +14,8 @@ using System.IO; // For Path.Combine, File.ReadAllText
 
 namespace Weighbridge.Services
 {
+    public delegate Task LoadDocketCallback(int docketId);
+
     public class WeighingOperationService : IWeighingOperationService
     {
         private readonly IDatabaseService _databaseService;
@@ -367,7 +369,7 @@ namespace Weighbridge.Services
             }
         }
 
-        public async Task<bool> HandleInProgressDocketWarningAsync(Vehicle vehicle, Func<string, string, string, string[], Task<string>> displayActionSheetAsync, Action resetForm, Action<Vehicle?> setSelectedVehicle, Action<bool> setIsInProgressWarningVisible, Action<string> setInProgressWarningText, Func<int, Task> loadDocketAsync)
+        public async Task<bool> HandleInProgressDocketWarningAsync(Vehicle vehicle, Func<string, string, string, string[], Task<string>> displayActionSheetAsync, Action resetForm, Action<Vehicle?> setSelectedVehicle, Action<bool> setIsInProgressWarningVisible, Action<string> setInProgressWarningText, LoadDocketCallback loadDocketAsync)
         {
             try
             {
@@ -525,7 +527,7 @@ namespace Weighbridge.Services
             await showInfoAsync("Zero Scale", "Scale has been zeroed (simulated).");
         }
 
-        public async Task LoadDocketAsync(int docketId, Action<int> setLoadDocketId, Action<string> setEntranceWeight, Action<string> setExitWeight, Action<string> setNetWeight, Action<string> setRemarks, Action<string> setVehicleRegistration, Action<string> setVehicleSearchText, Action<Site?> setSelectedSourceSite, Action<string> setSourceSiteSearchText, Action<Site?> setSelectedDestinationSite, Action<string> setDestinationSiteSearchText, Action<Item?> setSelectedItem, Action<string> setMaterialSearchText, Action<Customer?> setSelectedCustomer, Action<string> setCustomerSearchText, Action<Transport?> setSelectedTransport, Action<string> setTransportSearchText, Action<Driver?> setSelectedDriver, Action<string> setDriverSearchText, Func<string, string, Task> showErrorAsync, Func<Task> loadAllReferenceDataAsync, ObservableCollection<Site> sites, ObservableCollection<Item> items, ObservableCollection<Customer> customers, ObservableCollection<Transport> transports, ObservableCollection<Driver> drivers)
+        public async Task LoadDocketAsync(int docketId, Action<int> setLoadDocketId, Action<string> setEntranceWeight, Action<string> setExitWeight, Action<string> setNetWeight, Action<string> setRemarks, Action<string> setVehicleRegistration, Action<Site?> setSelectedSourceSite, Action<Site?> setSelectedDestinationSite, Action<Item?> setSelectedItem, Action<Customer?> setSelectedCustomer, Action<Transport?> setSelectedTransport, Action<Driver?> setSelectedDriver, Func<string, string, Task> showErrorAsync, Func<Task> loadAllReferenceDataAsync, ObservableCollection<Site> sites, ObservableCollection<Item> items, ObservableCollection<Customer> customers, ObservableCollection<Transport> transports, ObservableCollection<Driver> drivers)
         {
             try
             {
@@ -542,24 +544,24 @@ namespace Weighbridge.Services
                     if (vehicle != null)
                     {
                         setVehicleRegistration(vehicle.LicenseNumber);
-                        setVehicleSearchText(vehicle.LicenseNumber);
+                        // setVehicleSearchText(vehicle.LicenseNumber); // Removed as SearchText is no longer needed
                     }
 
                     // Ensure reference data is loaded before setting selections
                     await loadAllReferenceDataAsync();
 
                     setSelectedSourceSite(sites.FirstOrDefault(s => s.Id == docket.SourceSiteId));
-                    if (setSelectedSourceSite != null) setSourceSiteSearchText(sites.FirstOrDefault(s => s.Id == docket.SourceSiteId)?.Name);
+                    // if (setSelectedSourceSite != null) setSourceSiteSearchText(sites.FirstOrDefault(s => s.Id == docket.SourceSiteId)?.Name); // Removed
                     setSelectedDestinationSite(sites.FirstOrDefault(s => s.Id == docket.DestinationSiteId));
-                    if (setSelectedDestinationSite != null) setDestinationSiteSearchText(sites.FirstOrDefault(s => s.Id == docket.DestinationSiteId)?.Name);
+                    // if (setSelectedDestinationSite != null) setDestinationSiteSearchText(sites.FirstOrDefault(s => s.Id == docket.DestinationSiteId)?.Name); // Removed
                     setSelectedItem(items.FirstOrDefault(i => i.Id == docket.ItemId));
-                    if (setSelectedItem != null) setMaterialSearchText(items.FirstOrDefault(i => i.Id == docket.ItemId)?.Name);
+                    // if (setSelectedItem != null) setMaterialSearchText(items.FirstOrDefault(i => i.Id == docket.ItemId)?.Name); // Removed
                     setSelectedCustomer(customers.FirstOrDefault(c => c.Id == docket.CustomerId));
-                    if (setSelectedCustomer != null) setCustomerSearchText(customers.FirstOrDefault(c => c.Id == docket.CustomerId)?.Name);
+                    // if (setSelectedCustomer != null) setCustomerSearchText(customers.FirstOrDefault(c => c.Id == docket.CustomerId)?.Name); // Removed
                     setSelectedTransport(transports.FirstOrDefault(t => t.Id == docket.TransportId));
-                    if (setSelectedTransport != null) setTransportSearchText(transports.FirstOrDefault(t => t.Id == docket.TransportId)?.Name);
+                    // if (setSelectedTransport != null) setTransportSearchText(transports.FirstOrDefault(t => t.Id == docket.TransportId)?.Name); // Removed
                     setSelectedDriver(drivers.FirstOrDefault(d => d.Id == docket.DriverId));
-                    if (setSelectedDriver != null) setDriverSearchText(drivers.FirstOrDefault(d => d.Id == docket.DriverId)?.Name);
+                    // if (setSelectedDriver != null) setDriverSearchText(drivers.FirstOrDefault(d => d.Id == docket.DriverId)?.Name); // Removed
                 }
             }
             catch (Exception ex)
@@ -568,7 +570,7 @@ namespace Weighbridge.Services
             }
         }
 
-        public async Task CheckForOpenDocketAsync(string vehicleRegistration, Action<int> setLoadDocketId, Action<string> setEntranceWeight, Action<string> setExitWeight, Action<string> setNetWeight, Action<string> setRemarks, Action<string> setVehicleRegistration, Action<string> setVehicleSearchText, Action<Site?> setSelectedSourceSite, Action<string> setSourceSiteSearchText, Action<Site?> setSelectedDestinationSite, Action<string> setDestinationSiteSearchText, Action<Item?> setSelectedItem, Action<string> setMaterialSearchText, Action<Customer?> setSelectedCustomer, Action<string> setCustomerSearchText, Action<Transport?> setSelectedTransport, Action<string> setTransportSearchText, Action<Driver?> setSelectedDriver, Action<string> setDriverSearchText, Func<string, string, Task> showErrorAsync, Func<Task> loadAllReferenceDataAsync, ObservableCollection<Site> sites, ObservableCollection<Item> items, ObservableCollection<Customer> customers, ObservableCollection<Transport> transports, ObservableCollection<Driver> drivers)
+        public async Task CheckForOpenDocketAsync(string vehicleRegistration, Action<int> setLoadDocketId, Action<string> setEntranceWeight, Action<string> setExitWeight, Action<string> setNetWeight, Action<string> setRemarks, Action<string> setVehicleRegistration, Action<Site?> setSelectedSourceSite, Action<Site?> setSelectedDestinationSite, Action<Item?> setSelectedItem, Action<Customer?> setSelectedCustomer, Action<Transport?> setSelectedTransport, Action<Driver?> setSelectedDriver, Func<string, string, Task> showErrorAsync, Func<Task> loadAllReferenceDataAsync, ObservableCollection<Site> sites, ObservableCollection<Item> items, ObservableCollection<Customer> customers, ObservableCollection<Transport> transports, ObservableCollection<Driver> drivers)
         {
             if (string.IsNullOrWhiteSpace(vehicleRegistration))
                 return;
@@ -590,19 +592,12 @@ namespace Weighbridge.Services
                             setNetWeight,
                             setRemarks,
                             setVehicleRegistration,
-                            setVehicleSearchText,
                             setSelectedSourceSite,
-                            setSourceSiteSearchText,
                             setSelectedDestinationSite,
-                            setDestinationSiteSearchText,
                             setSelectedItem,
-                            setMaterialSearchText,
                             setSelectedCustomer,
-                            setCustomerSearchText,
                             setSelectedTransport,
-                            setTransportSearchText,
                             setSelectedDriver,
-                            setDriverSearchText,
                             showErrorAsync,
                             loadAllReferenceDataAsync,
                             sites, items, customers, transports, drivers
@@ -644,19 +639,12 @@ namespace Weighbridge.Services
             Action<string> setNetWeight,
             Action<string> setRemarks,
             Action<string> setVehicleRegistration,
-            Action<string> setVehicleSearchText,
             Action<Site?> setSelectedSourceSiteCallback,
-            Action<string> setSourceSiteSearchText,
             Action<Site?> setSelectedDestinationSiteCallback,
-            Action<string> setDestinationSiteSearchText,
             Action<Item?> setSelectedItemCallback,
-            Action<string> setMaterialSearchText,
             Action<Customer?> setSelectedCustomerCallback,
-            Action<string> setCustomerSearchText,
             Action<Transport?> setSelectedTransportCallback,
-            Action<string> setTransportSearchText,
             Action<Driver?> setSelectedDriverCallback,
-            Action<string> setDriverSearchText,
             Func<Task> loadAllReferenceDataAsync,
             ObservableCollection<Site> sites,
             ObservableCollection<Item> items,
@@ -719,19 +707,12 @@ namespace Weighbridge.Services
                         setNetWeight,
                         setRemarks,
                         setVehicleRegistration,
-                        setVehicleSearchText,
                         setSelectedSourceSiteCallback,
-                        setSourceSiteSearchText,
                         setSelectedDestinationSiteCallback,
-                        setDestinationSiteSearchText,
                         setSelectedItemCallback,
-                        setMaterialSearchText,
                         setSelectedCustomerCallback,
-                        setCustomerSearchText,
                         setSelectedTransportCallback,
-                        setTransportSearchText,
                         setSelectedDriverCallback,
-                        setDriverSearchText,
                         showErrorAsync,
                         loadAllReferenceDataAsync,
                         sites, items, customers, transports, drivers

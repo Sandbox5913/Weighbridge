@@ -6,6 +6,7 @@
              xmlns:behaviors="clr-namespace:Weighbridge.Behaviors"
              xmlns:ViewModels="clr-namespace:Weighbridge.ViewModels"
              xmlns:models="clr-namespace:Weighbridge.Models"
+             xmlns:controls="clr-namespace:Maui.ComboBox;assembly=Maui.ComboBox.Lib"
              x:Class="Weighbridge.MainPage"
              Title="Weighbridge System"
              BackgroundColor="#0E0E0E">
@@ -229,60 +230,12 @@
                                     </Label.FormattedText>
                                 </Label>
 
-                                <!-- Container for Entry and Dropdown -->
-                                <Grid>
-                                    <Entry x:Name="VehicleSearchEntry"
-                                           Text="{Binding VehicleSearchText}"
-                                           Placeholder="Search Vehicle"
-                                           Focused="OnVehicleSearchEntryFocused"
-                                           Unfocused="OnVehicleSearchEntryUnfocused"
-                                           TextChanged="OnVehicleSearchTextChanged"
-                                           TextColor="White"
-                                           PlaceholderColor="#888"
-                                           BackgroundColor="#2A2A2A"
-                                           FontSize="12">
-                                        <!-- Add keyboard behavior -->
-                                        <Entry.Behaviors>
-                                            <behaviors:ComboBoxKeyboardBehavior 
-                                                SuggestionsSource="{Binding FilteredVehicles}"
-                                                IsDropDownOpen="{Binding ShowVehicleSuggestions}"
-                                                SelectedItem="{Binding HighlightedVehicle}"
-                                                SelectionCommand="{Binding VehicleSelectedCommand}" />
-                                        </Entry.Behaviors>
-                                    </Entry>
-
-                                    <!-- Popup-style dropdown positioned relative to Entry -->
-                                    <Frame IsVisible="{Binding ShowVehicleSuggestions}"
-                                           BackgroundColor="#1A1A1A"
-                                           BorderColor="#444"
-                                           HasShadow="True"
-                                           CornerRadius="8"
-                                           Padding="0"
-                                           Margin="0,55,0,0"
-                                           VerticalOptions="Start"
-                                           ZIndex="999">
-
-                                        <CollectionView ItemsSource="{Binding FilteredVehicles}"
-                                                        SelectionMode="Single"
-                                                        SelectedItem="{Binding HighlightedVehicle}"
-                                                        HeightRequest="100">
-                                            <CollectionView.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Grid Padding="12,8" BackgroundColor="{Binding IsHighlighted, Converter={StaticResource BoolToHighlightConverter}}">
-                                                        <Grid.GestureRecognizers>
-                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ViewModels:MainPageViewModel}}, Path=VehicleSelectedCommand}"
-                                                                                  CommandParameter="{Binding .}" />
-                                                        </Grid.GestureRecognizers>
-                                                        <Label Text="{Binding LicenseNumber}" 
-                                                               FontSize="12" 
-                                                               TextColor="White"
-                                                               VerticalOptions="Center" />
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </CollectionView.ItemTemplate>
-                                        </CollectionView>
-                                    </Frame>
-                                </Grid>
+                                <controls:PopupComboBox
+                                    ItemsSource="{Binding FilteredVehicles}"
+                                    SelectedItem="{Binding SelectedVehicle}"
+                                    Placeholder="Search Vehicle"
+                                    TextColor="White"
+                                    BackgroundColor="#2A2A2A"/>
                             </StackLayout>
 
                             <StackLayout IsVisible="{Binding IsTareEntryVisible}" Spacing="4">
@@ -306,60 +259,12 @@
                                     </Label.FormattedText>
                                 </Label>
 
-                                <!-- Container for Entry and Dropdown -->
-                                <Grid>
-                                    <Entry x:Name="SourceSiteSearchEntry"
-                                           Text="{Binding SourceSiteSearchText}"
-                                           Placeholder="Search Source Site"
-                                           Focused="OnSourceSiteSearchEntryFocused"
-                                           Unfocused="OnSourceSiteSearchEntryUnfocused"
-                                           TextChanged="OnSourceSiteSearchTextChanged"
-                                           TextColor="White"
-                                           PlaceholderColor="#888"
-                                           BackgroundColor="#2A2A2A"
-                                           FontSize="12">
-                                        <!-- Add keyboard behavior -->
-                                        <Entry.Behaviors>
-                                            <behaviors:ComboBoxKeyboardBehavior 
-                                                SuggestionsSource="{Binding FilteredSourceSites}"
-                                                IsDropDownOpen="{Binding ShowSourceSiteSuggestions}"
-                                                SelectedItem="{Binding HighlightedSourceSite}"
-                                                SelectionCommand="{Binding SourceSiteSelectedCommand}" />
-                                        </Entry.Behaviors>
-                                    </Entry>
-
-                                    <!-- Popup-style dropdown positioned relative to Entry -->
-                                    <Frame IsVisible="{Binding ShowSourceSiteSuggestions}"
-                                           BackgroundColor="#1A1A1A"
-                                           BorderColor="#444"
-                                           HasShadow="True"
-                                           CornerRadius="8"
-                                           Padding="0"
-                                           Margin="0,55,0,0"
-                                           VerticalOptions="Start"
-                                           ZIndex="999">
-
-                                        <CollectionView ItemsSource="{Binding FilteredSourceSites}"
-                                                        SelectionMode="Single"
-                                                        SelectedItem="{Binding HighlightedSourceSite}"
-                                                        HeightRequest="100">
-                                            <CollectionView.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Grid Padding="12,8" BackgroundColor="{Binding IsHighlighted, Converter={StaticResource BoolToHighlightConverter}}">
-                                                        <Grid.GestureRecognizers>
-                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ViewModels:MainPageViewModel}}, Path=SourceSiteSelectedCommand}"
-                                                                                  CommandParameter="{Binding .}" />
-                                                        </Grid.GestureRecognizers>
-                                                        <Label Text="{Binding Name}" 
-                                                               FontSize="12" 
-                                                               TextColor="White"
-                                                               VerticalOptions="Center" />
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </CollectionView.ItemTemplate>
-                                        </CollectionView>
-                                    </Frame>
-                                </Grid>
+                                <controls:PopupComboBox
+                                    ItemsSource="{Binding FilteredSourceSites}"
+                                    SelectedItem="{Binding SelectedSourceSite}"
+                                    Placeholder="Search Source Site"
+                                    TextColor="White"
+                                    BackgroundColor="#2A2A2A"/>
                             </StackLayout>
 
                             <StackLayout IsVisible="{Binding FormConfig.DestinationSite.IsVisible}" Spacing="4">
@@ -372,60 +277,12 @@
                                     </Label.FormattedText>
                                 </Label>
 
-                                <!-- Container for Entry and Dropdown -->
-                                <Grid>
-                                    <Entry x:Name="DestinationSiteSearchEntry"
-                                           Text="{Binding DestinationSiteSearchText}"
-                                           Placeholder="Search Destination Site"
-                                           Focused="OnDestinationSiteSearchEntryFocused"
-                                           Unfocused="OnDestinationSiteSearchEntryUnfocused"
-                                           TextChanged="OnDestinationSiteSearchTextChanged"
-                                           TextColor="White"
-                                           PlaceholderColor="#888"
-                                           BackgroundColor="#2A2A2A"
-                                           FontSize="12">
-                                        <!-- Add keyboard behavior -->
-                                        <Entry.Behaviors>
-                                            <behaviors:ComboBoxKeyboardBehavior 
-                                                SuggestionsSource="{Binding FilteredDestinationSites}"
-                                                IsDropDownOpen="{Binding ShowDestinationSiteSuggestions}"
-                                                SelectedItem="{Binding HighlightedDestinationSite}"
-                                                SelectionCommand="{Binding DestinationSiteSelectedCommand}" />
-                                        </Entry.Behaviors>
-                                    </Entry>
-
-                                    <!-- Popup-style dropdown positioned relative to Entry -->
-                                    <Frame IsVisible="{Binding ShowDestinationSiteSuggestions}"
-                                           BackgroundColor="#1A1A1A"
-                                           BorderColor="#444"
-                                           HasShadow="True"
-                                           CornerRadius="8"
-                                           Padding="0"
-                                           Margin="0,55,0,0"
-                                           VerticalOptions="Start"
-                                           ZIndex="999">
-
-                                        <CollectionView ItemsSource="{Binding FilteredDestinationSites}"
-                                                        SelectionMode="Single"
-                                                        SelectedItem="{Binding HighlightedDestinationSite}"
-                                                        HeightRequest="100">
-                                            <CollectionView.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Grid Padding="12,8" BackgroundColor="{Binding IsHighlighted, Converter={StaticResource BoolToHighlightConverter}}">
-                                                        <Grid.GestureRecognizers>
-                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ViewModels:MainPageViewModel}}, Path=DestinationSiteSelectedCommand}"
-                                                                                  CommandParameter="{Binding .}" />
-                                                        </Grid.GestureRecognizers>
-                                                        <Label Text="{Binding Name}" 
-                                                               FontSize="12" 
-                                                               TextColor="White"
-                                                               VerticalOptions="Center" />
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </CollectionView.ItemTemplate>
-                                        </CollectionView>
-                                    </Frame>
-                                </Grid>
+                                <controls:PopupComboBox
+                                    ItemsSource="{Binding FilteredDestinationSites}"
+                                    SelectedItem="{Binding SelectedDestinationSite}"
+                                    Placeholder="Search Destination Site"
+                                    TextColor="White"
+                                    BackgroundColor="#2A2A2A"/>
                             </StackLayout>
 
                             <StackLayout IsVisible="{Binding FormConfig.Item.IsVisible}" Spacing="4">
@@ -438,60 +295,12 @@
                                     </Label.FormattedText>
                                 </Label>
 
-                                <!-- Container for Entry and Dropdown -->
-                                <Grid>
-                                    <Entry x:Name="MaterialSearchEntry"
-                                           Text="{Binding MaterialSearchText}"
-                                           Placeholder="Search Material"
-                                           Focused="OnMaterialSearchEntryFocused"
-                                           Unfocused="OnMaterialSearchEntryUnfocused"
-                                           TextChanged="OnMaterialSearchTextChanged"
-                                           TextColor="White"
-                                           PlaceholderColor="#888"
-                                           BackgroundColor="#2A2A2A"
-                                           FontSize="12">
-                                        <!-- Add keyboard behavior -->
-                                        <Entry.Behaviors>
-                                            <behaviors:ComboBoxKeyboardBehavior 
-                                                SuggestionsSource="{Binding FilteredItems}"
-                                                IsDropDownOpen="{Binding ShowMaterialSuggestions}"
-                                                SelectedItem="{Binding HighlightedItem}"
-                                                SelectionCommand="{Binding ItemSelectedCommand}" />
-                                        </Entry.Behaviors>
-                                    </Entry>
-
-                                    <!-- Popup-style dropdown positioned relative to Entry -->
-                                    <Frame IsVisible="{Binding ShowMaterialSuggestions}"
-                                           BackgroundColor="#1A1A1A"
-                                           BorderColor="#444"
-                                           HasShadow="True"
-                                           CornerRadius="8"
-                                           Padding="0"
-                                           Margin="0,55,0,0"
-                                           VerticalOptions="Start"
-                                           ZIndex="999">
-
-                                        <CollectionView ItemsSource="{Binding FilteredItems}"
-                                                        SelectionMode="Single"
-                                                        SelectedItem="{Binding HighlightedItem}"
-                                                        HeightRequest="100">
-                                            <CollectionView.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Grid Padding="12,8" BackgroundColor="{Binding IsHighlighted, Converter={StaticResource BoolToHighlightConverter}}">
-                                                        <Grid.GestureRecognizers>
-                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ViewModels:MainPageViewModel}}, Path=ItemSelectedCommand}"
-                                                                                  CommandParameter="{Binding .}" />
-                                                        </Grid.GestureRecognizers>
-                                                        <Label Text="{Binding Name}" 
-                                                               FontSize="12" 
-                                                               TextColor="White"
-                                                               VerticalOptions="Center" />
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </CollectionView.ItemTemplate>
-                                        </CollectionView>
-                                    </Frame>
-                                </Grid>
+                                <controls:PopupComboBox
+                                    ItemsSource="{Binding FilteredItems}"
+                                    SelectedItem="{Binding SelectedItem}"
+                                    Placeholder="Search Material"
+                                    TextColor="White"
+                                    BackgroundColor="#2A2A2A"/>
                             </StackLayout>
 
                             <StackLayout IsVisible="{Binding FormConfig.Customer.IsVisible}" Spacing="4">
@@ -504,61 +313,12 @@
                                     </Label.FormattedText>
                                 </Label>
 
-                                <!-- Container for Entry and Dropdown -->
-                                <Grid>
-                                    <Entry x:Name="CustomerSearchEntry"
-                                           Text="{Binding CustomerSearchText}"
-                                           Placeholder="Search Customer"
-                                           Focused="OnCustomerSearchEntryFocused"
-                                           Unfocused="OnCustomerSearchEntryUnfocused"
-                                           TextChanged="OnCustomerSearchTextChanged"
-                                           TextColor="White"
-                                           PlaceholderColor="#888"
-                                           BackgroundColor="#2A2A2A"
-                                           Margin="8,4"
-                                           FontSize="12">
-                                        <!-- Add keyboard behavior -->
-                                        <Entry.Behaviors>
-                                            <behaviors:ComboBoxKeyboardBehavior 
-                                                SuggestionsSource="{Binding FilteredCustomers}"
-                                                IsDropDownOpen="{Binding ShowCustomerSuggestions}"
-                                                SelectedItem="{Binding HighlightedCustomer}"
-                                                SelectionCommand="{Binding CustomerSelectedCommand}" />
-                                        </Entry.Behaviors>
-                                    </Entry>
-
-                                    <!-- Popup-style dropdown positioned relative to Entry -->
-                                    <Frame IsVisible="{Binding ShowCustomerSuggestions}"
-                                           BackgroundColor="#1A1A1A"
-                                           BorderColor="#444"
-                                           HasShadow="True"
-                                           CornerRadius="8"
-                                           Padding="0"
-                                           Margin="0,55,0,0"
-                                           VerticalOptions="Start"
-                                           ZIndex="999">
-
-                                        <CollectionView ItemsSource="{Binding FilteredCustomers}"
-                                                        SelectionMode="Single"
-                                                        SelectedItem="{Binding HighlightedCustomer}"
-                                                        HeightRequest="100">
-                                            <CollectionView.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Grid Padding="12,8" BackgroundColor="{Binding IsHighlighted, Converter={StaticResource BoolToHighlightConverter}}">
-                                                        <Grid.GestureRecognizers>
-                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ViewModels:MainPageViewModel}}, Path=CustomerSelectedCommand}"
-                                                                                  CommandParameter="{Binding .}" />
-                                                        </Grid.GestureRecognizers>
-                                                        <Label Text="{Binding Name}" 
-                                                               FontSize="12" 
-                                                               TextColor="White"
-                                                               VerticalOptions="Center" />
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </CollectionView.ItemTemplate>
-                                        </CollectionView>
-                                    </Frame>
-                                </Grid>
+                                <controls:PopupComboBox
+                                    ItemsSource="{Binding FilteredCustomers}"
+                                    SelectedItem="{Binding SelectedCustomer}"
+                                    Placeholder="Search Customer"
+                                    TextColor="White"
+                                    BackgroundColor="#2A2A2A"/>
                             </StackLayout>
 
                             <StackLayout IsVisible="{Binding FormConfig.Transport.IsVisible}" Spacing="4">
@@ -571,61 +331,16 @@
                                     </Label.FormattedText>
                                 </Label>
 
-                                <!-- Container for Entry and Dropdown -->
-                                <Grid>
-                                    <Entry x:Name="TransportSearchEntry"
-                                           Text="{Binding TransportSearchText}"
-                                           Placeholder="Search Transport"
-                                           Focused="OnTransportSearchEntryFocused"
-                                           Unfocused="OnTransportSearchEntryUnfocused"
-                                           TextChanged="OnTransportSearchTextChanged"
-                                           TextColor="White"
-                                           PlaceholderColor="#888"
-                                           BackgroundColor="#2A2A2A"
-                                           Margin="8,4"
-                                           FontSize="12">
-                                        <!-- Add keyboard behavior -->
-                                        <Entry.Behaviors>
-                                            <behaviors:ComboBoxKeyboardBehavior 
-                                                SuggestionsSource="{Binding FilteredTransports}"
-                                                IsDropDownOpen="{Binding ShowTransportSuggestions}"
-                                                SelectedItem="{Binding HighlightedTransport}"
-                                                SelectionCommand="{Binding TransportSelectedCommand}" />
-                                        </Entry.Behaviors>
-                                    </Entry>
-
-                                    <!-- Popup-style dropdown positioned relative to Entry -->
-                                    <Frame IsVisible="{Binding ShowTransportSuggestions}"
-                                           BackgroundColor="#1A1A1A"
-                                           BorderColor="#444"
-                                           HasShadow="True"
-                                           CornerRadius="8"
-                                           Padding="0"
-                                           Margin="0,55,0,0"
-                                           VerticalOptions="Start"
-                                           ZIndex="999">
-
-                                        <CollectionView ItemsSource="{Binding FilteredTransports}"
-                                                        SelectionMode="Single"
-                                                        SelectedItem="{Binding HighlightedTransport}"
-                                                        HeightRequest="100">
-                                            <CollectionView.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Grid Padding="12,8" BackgroundColor="{Binding IsHighlighted, Converter={StaticResource BoolToHighlightConverter}}">
-                                                        <Grid.GestureRecognizers>
-                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ViewModels:MainPageViewModel}}, Path=TransportSelectedCommand}"
-                                                                                  CommandParameter="{Binding .}" />
-                                                        </Grid.GestureRecognizers>
-                                                        <Label Text="{Binding Name}" 
-                                                               FontSize="12" 
-                                                               TextColor="White"
-                                                               VerticalOptions="Center" />
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </CollectionView.ItemTemplate>
-                                        </CollectionView>
-                                    </Frame>
-                                </Grid>
+                                                                <controls:PopupComboBox
+                                    ItemsSource="{Binding FilteredTransports}"
+                                    SelectedItem="{Binding SelectedTransport}"
+                                    Placeholder="Search Transport"
+                                    TextColor="White"
+                                    BackgroundColor="#2A2A2A"
+                                    IsEditable="True"
+                                    MinimumSearchLength="2"
+                                    TextChanged="OnComboBoxTextChanged"
+                                    EditingCompleted="OnComboBoxEditCompleted" />
                             </StackLayout>
 
                             <StackLayout IsVisible="{Binding FormConfig.Driver.IsVisible}" Spacing="4">
@@ -638,61 +353,18 @@
                                     </Label.FormattedText>
                                 </Label>
 
-                                <!-- Container for Entry and Dropdown -->
-                                <Grid>
-                                    <Entry x:Name="DriverSearchEntry"
-                                           Text="{Binding DriverSearchText}"
-                                           Placeholder="Search Driver"
-                                           Focused="OnDriverSearchEntryFocused"
-                                           Unfocused="OnDriverSearchEntryUnfocused"
-                                           TextChanged="OnDriverSearchTextChanged"
-                                           TextColor="White"
-                                           PlaceholderColor="#888"
-                                           BackgroundColor="#2A2A2A"
-                                           Margin="8,4"
-                                           FontSize="12">
-                                        <!-- Add keyboard behavior -->
-                                        <Entry.Behaviors>
-                                            <behaviors:ComboBoxKeyboardBehavior 
-                                                SuggestionsSource="{Binding FilteredDrivers}"
-                                                IsDropDownOpen="{Binding ShowDriverSuggestions}"
-                                                SelectedItem="{Binding HighlightedDriver}"
-                                                SelectionCommand="{Binding DriverSelectedCommand}" />
-                                        </Entry.Behaviors>
-                                    </Entry>
+                                <controls:PopupComboBox 
+                                    ItemsSource="{Binding FilteredDrivers}"
+                                    SelectedItem="{Binding SelectedDriver}"
+                                    Placeholder="Search Driver"
+                                    TextColor="White"
+                                    BackgroundColor="#2A2A2A"
+                                    DropdownBackgroundColor="#1A1A1A"
+                                    DropdownTextColor="White"
+                                    DropdownCornerRadius="8"
+                                    DropdownBorderColor="#444"
+                                    DropdownBorderWidth="1"/>
 
-                                    <!-- Popup-style dropdown positioned relative to Entry -->
-                                    <Frame IsVisible="{Binding ShowDriverSuggestions}"
-                                           BackgroundColor="#1A1A1A"
-                                           BorderColor="#444"
-                                           HasShadow="True"
-                                           CornerRadius="8"
-                                           Padding="0"
-                                           Margin="0,55,0,0"
-                                           VerticalOptions="Start"
-                                           ZIndex="999">
-
-                                        <CollectionView ItemsSource="{Binding FilteredDrivers}"
-                                                        SelectionMode="Single"
-                                                        SelectedItem="{Binding HighlightedDriver}"
-                                                        HeightRequest="100">
-                                            <CollectionView.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Grid Padding="12,8" BackgroundColor="{Binding IsHighlighted, Converter={StaticResource BoolToHighlightConverter}}">
-                                                        <Grid.GestureRecognizers>
-                                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ViewModels:MainPageViewModel}}, Path=DriverSelectedCommand}"
-                                                                                  CommandParameter="{Binding .}" />
-                                                        </Grid.GestureRecognizers>
-                                                        <Label Text="{Binding Name}" 
-                                                               FontSize="12" 
-                                                               TextColor="White"
-                                                               VerticalOptions="Center" />
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </CollectionView.ItemTemplate>
-                                        </CollectionView>
-                                    </Frame>
-                                </Grid>
                             </StackLayout>
 
                             <StackLayout IsVisible="{Binding FormConfig.Remarks.IsVisible}" Spacing="4">

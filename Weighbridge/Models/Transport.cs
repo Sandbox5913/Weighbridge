@@ -9,6 +9,11 @@ namespace Weighbridge.Models
         public int Id { get; set; }
 
         [MaxLength(100), Unique]
-        public string? Name { get; set; }
+        public string Name { get; set; } = string.Empty;
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

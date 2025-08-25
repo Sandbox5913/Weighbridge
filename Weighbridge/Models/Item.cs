@@ -13,5 +13,10 @@ namespace Weighbridge.Models
         public int? RequiredTransportId { get; set; } // Specific transport company required
         public decimal? MinimumWeight { get; set; }   // Minimum weight for this material
         public decimal? MaximumWeight { get; set; }   // Maximum weight for this material
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

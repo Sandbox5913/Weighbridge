@@ -15,6 +15,7 @@ using Weighbridge.ViewModels;
 using FluentValidation;
 using Weighbridge.Validation;
 using CommunityToolkit.Maui;
+using Maui.ComboBox.Handlers;
 
 namespace Weighbridge;
 
@@ -27,6 +28,7 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
+            .UseAxDLFComboBox()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

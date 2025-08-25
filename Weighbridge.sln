@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Weighbridge", "Weighbridge\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject1", "TestProject1\TestProject1.csproj", "{89E9C763-636E-44C8-96C5-C8A31CEAD217}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maui.ComboBox.Lib", "..\..\..\Downloads\maui-combobox-main\maui-combobox-main\Maui.ComboBox.Lib\Maui.ComboBox.Lib.csproj", "{88F64F15-A3DE-05D1-9B4F-00A47542E8B8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Maui.ComboBox.Lib", "Maui.ComboBox.Lib\Maui.ComboBox.Lib.csproj", "{88F64F15-A3DE-05D1-9B4F-00A47542E8B8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

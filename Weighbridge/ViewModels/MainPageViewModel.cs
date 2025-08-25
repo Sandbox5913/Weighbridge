@@ -101,19 +101,12 @@ namespace Weighbridge.ViewModels
                             (net) => NetWeight = net,
                             (remarks) => Remarks = remarks,
                             (reg) => VehicleRegistration = reg,
-                            (search) => VehicleSearchText = search,
                             (site) => SelectedSourceSite = site,
-                            (search) => SourceSiteSearchText = search,
                             (site) => SelectedDestinationSite = site,
-                            (search) => DestinationSiteSearchText = search,
                             (item) => SelectedItem = item,
-                            (search) => MaterialSearchText = search,
                             (customer) => SelectedCustomer = customer,
-                            (search) => CustomerSearchText = search,
                             (transport) => SelectedTransport = transport,
-                            (search) => TransportSearchText = search,
                             (driver) => SelectedDriver = driver,
-                            (search) => DriverSearchText = search,
                             ShowErrorAsync,
                             LoadAllReferenceDataAsync,
                             Sites, Items, Customers, Transports, Drivers
@@ -156,19 +149,12 @@ namespace Weighbridge.ViewModels
                             (net) => NetWeight = net,
                             (remarks) => Remarks = remarks,
                             (reg) => VehicleRegistration = reg,
-                            (search) => VehicleSearchText = search,
                             (site) => SelectedSourceSite = site,
-                            (search) => SourceSiteSearchText = search,
                             (site) => SelectedDestinationSite = site,
-                            (search) => DestinationSiteSearchText = search,
                             (item) => SelectedItem = item,
-                            (search) => MaterialSearchText = search,
                             (customer) => SelectedCustomer = customer,
-                            (search) => CustomerSearchText = search,
                             (transport) => SelectedTransport = transport,
-                            (search) => TransportSearchText = search,
                             (driver) => SelectedDriver = driver,
-                            (search) => DriverSearchText = search,
                             ShowErrorAsync,
                             LoadAllReferenceDataAsync,
                             Sites, Items, Customers, Transports, Drivers
@@ -210,28 +196,9 @@ namespace Weighbridge.ViewModels
         public ICommand SimulateDocketsCommand { get; private set; }
         public ICommand UpdateTareCommand { get; private set; }
         public ICommand ZeroCommand { get; private set; }
+        public ICommand ClearFormCommand { get; private set; }
 
-        // ComboBox Properties for Material
-        private string _materialSearchText = string.Empty;
-        public string MaterialSearchText
-        {
-            get => _materialSearchText;
-            set
-            {
-                if (SetProperty(ref _materialSearchText, value))
-                {
-                    FilterItems();
-                    ShowMaterialSuggestions = !string.IsNullOrWhiteSpace(value);
-                }
-            }
-        }
-
-        private bool _showMaterialSuggestions;
-        public bool ShowMaterialSuggestions
-        {
-            get => _showMaterialSuggestions;
-            set => SetProperty(ref _showMaterialSuggestions, value);
-        }
+        
 
         public ObservableCollection<Item> FilteredItems { get; } = new();
 
@@ -240,27 +207,7 @@ namespace Weighbridge.ViewModels
         public ICommand OnMaterialSearchEntryFocusedCommand { get; private set; }
         public ICommand OnMaterialSearchEntryUnfocusedCommand { get; private set; }
 
-        // ComboBox Properties for Vehicle
-        private string _vehicleSearchText = string.Empty;
-        public string VehicleSearchText
-        {
-            get => _vehicleSearchText;
-            set
-            {
-                if (SetProperty(ref _vehicleSearchText, value))
-                {
-                    FilterVehicles();
-                    ShowVehicleSuggestions = !string.IsNullOrWhiteSpace(value);
-                }
-            }
-        }
-
-        private bool _showVehicleSuggestions;
-        public bool ShowVehicleSuggestions
-        {
-            get => _showVehicleSuggestions;
-            set => SetProperty(ref _showVehicleSuggestions, value);
-        }
+        
 
         public ObservableCollection<Vehicle> FilteredVehicles { get; } = new();
 
@@ -269,27 +216,7 @@ namespace Weighbridge.ViewModels
         public ICommand OnVehicleSearchEntryFocusedCommand { get; private set; }
         public ICommand OnVehicleSearchEntryUnfocusedCommand { get; private set; }
 
-        // ComboBox Properties for Source Site
-        private string _sourceSiteSearchText = string.Empty;
-        public string SourceSiteSearchText
-        {
-            get => _sourceSiteSearchText;
-            set
-            {
-                if (SetProperty(ref _sourceSiteSearchText, value))
-                {
-                    FilterSourceSites();
-                    ShowSourceSiteSuggestions = !string.IsNullOrWhiteSpace(value);
-                }
-            }
-        }
-
-        private bool _showSourceSiteSuggestions;
-        public bool ShowSourceSiteSuggestions
-        {
-            get => _showSourceSiteSuggestions;
-            set => SetProperty(ref _showSourceSiteSuggestions, value);
-        }
+        
 
         public ObservableCollection<Site> FilteredSourceSites { get; } = new();
 
@@ -298,27 +225,7 @@ namespace Weighbridge.ViewModels
         public ICommand OnSourceSiteSearchEntryFocusedCommand { get; private set; }
         public ICommand OnSourceSiteSearchEntryUnfocusedCommand { get; private set; }
 
-        // ComboBox Properties for Destination Site
-        private string _destinationSiteSearchText = string.Empty;
-        public string DestinationSiteSearchText
-        {
-            get => _destinationSiteSearchText;
-            set
-            {
-                if (SetProperty(ref _destinationSiteSearchText, value))
-                {
-                    FilterDestinationSites();
-                    ShowDestinationSiteSuggestions = !string.IsNullOrWhiteSpace(value);
-                }
-            }
-        }
-
-        private bool _showDestinationSiteSuggestions;
-        public bool ShowDestinationSiteSuggestions
-        {
-            get => _showDestinationSiteSuggestions;
-            set => SetProperty(ref _showDestinationSiteSuggestions, value);
-        }
+        
 
         public ObservableCollection<Site> FilteredDestinationSites { get; } = new();
 
@@ -327,27 +234,7 @@ namespace Weighbridge.ViewModels
         public ICommand OnDestinationSiteSearchEntryFocusedCommand { get; private set; }
         public ICommand OnDestinationSiteSearchEntryUnfocusedCommand { get; private set; }
 
-        // ComboBox Properties for Customer
-        private string _customerSearchText = string.Empty;
-        public string CustomerSearchText
-        {
-            get => _customerSearchText;
-            set
-            {
-                if (SetProperty(ref _customerSearchText, value))
-                {
-                    FilterCustomers();
-                    ShowCustomerSuggestions = !string.IsNullOrWhiteSpace(value);
-                }
-            }
-        }
-
-        private bool _showCustomerSuggestions;
-        public bool ShowCustomerSuggestions
-        {
-            get => _showCustomerSuggestions;
-            set => SetProperty(ref _showCustomerSuggestions, value);
-        }
+        
 
         public ObservableCollection<Customer> FilteredCustomers { get; } = new();
 
@@ -356,27 +243,7 @@ namespace Weighbridge.ViewModels
         public ICommand OnCustomerSearchEntryFocusedCommand { get; private set; }
         public ICommand OnCustomerSearchEntryUnfocusedCommand { get; private set; }
 
-        // ComboBox Properties for Transport
-        private string _transportSearchText = string.Empty;
-        public string TransportSearchText
-        {
-            get => _transportSearchText;
-            set
-            {
-                if (SetProperty(ref _transportSearchText, value))
-                {
-                    FilterTransports();
-                    ShowTransportSuggestions = !string.IsNullOrWhiteSpace(value);
-                }
-            }
-        }
-
-        private bool _showTransportSuggestions;
-        public bool ShowTransportSuggestions
-        {
-            get => _showTransportSuggestions;
-            set => SetProperty(ref _showTransportSuggestions, value);
-        }
+        
 
         public ObservableCollection<Transport> FilteredTransports { get; } = new();
 
@@ -385,27 +252,7 @@ namespace Weighbridge.ViewModels
         public ICommand OnTransportSearchEntryFocusedCommand { get; private set; }
         public ICommand OnTransportSearchEntryUnfocusedCommand { get; private set; }
 
-        // ComboBox Properties for Driver
-        private string _driverSearchText = string.Empty;
-        public string DriverSearchText
-        {
-            get => _driverSearchText;
-            set
-            {
-                if (SetProperty(ref _driverSearchText, value))
-                {
-                    FilterDrivers();
-                    ShowDriverSuggestions = !string.IsNullOrWhiteSpace(value);
-                }
-            }
-        }
-
-        private bool _showDriverSuggestions;
-        public bool ShowDriverSuggestions
-        {
-            get => _showDriverSuggestions;
-            set => SetProperty(ref _showDriverSuggestions, value);
-        }
+        
 
         public ObservableCollection<Driver> FilteredDrivers { get; } = new();
 
@@ -439,183 +286,106 @@ namespace Weighbridge.ViewModels
         private void FilterItems()
         {
             FilteredItems.Clear();
-            if (string.IsNullOrWhiteSpace(MaterialSearchText))
+            foreach (var item in Items)
             {
-                foreach (var item in Items)
-                {
-                    FilteredItems.Add(item);
-                }
-            }
-            else
-            {
-                foreach (var item in Items.Where(i => i.Name.Contains(MaterialSearchText, StringComparison.OrdinalIgnoreCase)))
-                {
-                    FilteredItems.Add(item);
-                }
+                FilteredItems.Add(item);
             }
         }
 
         private void OnItemSelected(Item selectedItem)
         {
             SelectedItem = selectedItem;
-            MaterialSearchText = selectedItem.Name;
-            ShowMaterialSuggestions = false;
+            // MaterialSearchText and ShowMaterialSuggestions are handled by PopupComboBox
         }
 
         private void FilterVehicles()
         {
             FilteredVehicles.Clear();
-            if (string.IsNullOrWhiteSpace(VehicleSearchText))
+            foreach (var vehicle in Vehicles)
             {
-                foreach (var vehicle in Vehicles)
-                {
-                    FilteredVehicles.Add(vehicle);
-                }
-            }
-            else
-            {
-                foreach (var vehicle in Vehicles.Where(v => v.LicenseNumber.Contains(VehicleSearchText, StringComparison.OrdinalIgnoreCase)))
-                {
-                    FilteredVehicles.Add(vehicle);
-                }
+                FilteredVehicles.Add(vehicle);
             }
         }
 
         private void OnVehicleSelected(Vehicle selectedVehicle)
         {
             SelectedVehicle = selectedVehicle;
-            VehicleSearchText = selectedVehicle.LicenseNumber;
-            ShowVehicleSuggestions = false;
+            // VehicleSearchText and ShowVehicleSuggestions are handled by PopupComboBox
         }
 
         private void FilterSourceSites()
         {
             FilteredSourceSites.Clear();
-            if (string.IsNullOrWhiteSpace(SourceSiteSearchText))
+            foreach (var site in Sites)
             {
-                foreach (var site in Sites)
-                {
-                    FilteredSourceSites.Add(site);
-                }
-            }
-            else
-            {
-                foreach (var site in Sites.Where(s => s.Name.Contains(SourceSiteSearchText, StringComparison.OrdinalIgnoreCase)))
-                {
-                    FilteredSourceSites.Add(site);
-                }
+                FilteredSourceSites.Add(site);
             }
         }
 
         private void OnSourceSiteSelected(Site selectedSite)
         {
             SelectedSourceSite = selectedSite;
-            SourceSiteSearchText = selectedSite.Name;
-            ShowSourceSiteSuggestions = false;
+            // SourceSiteSearchText and ShowSourceSiteSuggestions are handled by PopupComboBox
         }
 
         private void FilterDestinationSites()
         {
             FilteredDestinationSites.Clear();
-            if (string.IsNullOrWhiteSpace(DestinationSiteSearchText))
+            foreach (var site in Sites)
             {
-                foreach (var site in Sites)
-                {
-                    FilteredDestinationSites.Add(site);
-                }
-            }
-            else
-            {
-                foreach (var site in Sites.Where(s => s.Name.Contains(DestinationSiteSearchText, StringComparison.OrdinalIgnoreCase)))
-                {
-                    FilteredDestinationSites.Add(site);
-                }
+                FilteredDestinationSites.Add(site);
             }
         }
 
         private void OnDestinationSiteSelected(Site selectedSite)
         {
             SelectedDestinationSite = selectedSite;
-            DestinationSiteSearchText = selectedSite.Name;
-            ShowDestinationSiteSuggestions = false;
+            // DestinationSiteSearchText and ShowDestinationSiteSuggestions are handled by PopupComboBox
         }
 
         private void FilterCustomers()
         {
             FilteredCustomers.Clear();
-            if (string.IsNullOrWhiteSpace(CustomerSearchText))
+            foreach (var customer in Customers)
             {
-                foreach (var customer in Customers)
-                {
-                    FilteredCustomers.Add(customer);
-                }
-            }
-            else
-            {
-                foreach (var customer in Customers.Where(c => c.Name.Contains(CustomerSearchText, StringComparison.OrdinalIgnoreCase)))
-                {
-                    FilteredCustomers.Add(customer);
-                }
+                FilteredCustomers.Add(customer);
             }
         }
 
         private void OnCustomerSelected(Customer selectedCustomer)
         {
             SelectedCustomer = selectedCustomer;
-            CustomerSearchText = selectedCustomer.Name;
-            ShowCustomerSuggestions = false;
+            // CustomerSearchText and ShowCustomerSuggestions are handled by PopupComboBox
         }
 
         private void FilterTransports()
         {
             FilteredTransports.Clear();
-            if (string.IsNullOrWhiteSpace(TransportSearchText))
+            foreach (var transport in Transports)
             {
-                foreach (var transport in Transports)
-                {
-                    FilteredTransports.Add(transport);
-                }
-            }
-            else
-            {
-                foreach (var transport in Transports.Where(t => t.Name.Contains(TransportSearchText, StringComparison.OrdinalIgnoreCase)))
-                {
-                    FilteredTransports.Add(transport);
-                }
+                FilteredTransports.Add(transport);
             }
         }
 
         private void OnTransportSelected(Transport selectedTransport)
         {
             SelectedTransport = selectedTransport;
-            TransportSearchText = selectedTransport.Name;
-            ShowTransportSuggestions = false;
+            // TransportSearchText and ShowTransportSuggestions are handled by PopupComboBox
         }
 
         private void FilterDrivers()
         {
             FilteredDrivers.Clear();
-            if (string.IsNullOrWhiteSpace(DriverSearchText))
+            foreach (var driver in Drivers)
             {
-                foreach (var driver in Drivers)
-                {
-                    FilteredDrivers.Add(driver);
-                }
-            }
-            else
-            {
-                foreach (var driver in Drivers.Where(d => d.Name.Contains(DriverSearchText, StringComparison.OrdinalIgnoreCase)))
-                {
-                    FilteredDrivers.Add(driver);
-                }
+                FilteredDrivers.Add(driver);
             }
         }
 
         private void OnDriverSelected(Driver selectedDriver)
         {
             SelectedDriver = selectedDriver;
-            DriverSearchText = selectedDriver.Name;
-            ShowDriverSuggestions = false;
+            // DriverSearchText and ShowDriverSuggestions are handled by PopupComboBox
         }
 
         private void InitializeCommands()
@@ -633,26 +403,17 @@ namespace Weighbridge.ViewModels
             UpdateTareCommand = new Command(async () => await ExecuteSafelyAsync(OnUpdateTareClickedAsync));
             ZeroCommand = new Command(async () => await ExecuteSafelyAsync(OnZeroClickedAsync));
             ItemSelectedCommand = new Command<Item>(OnItemSelected);
-            OnMaterialSearchEntryFocusedCommand = new Command(() => ShowMaterialSuggestions = true);
-            OnMaterialSearchEntryUnfocusedCommand = new Command(() => ShowMaterialSuggestions = false);
+            
             VehicleSelectedCommand = new Command<Vehicle>(OnVehicleSelected);
-            OnVehicleSearchEntryFocusedCommand = new Command(() => ShowVehicleSuggestions = true);
-            OnVehicleSearchEntryUnfocusedCommand = new Command(() => ShowVehicleSuggestions = false);
+            
             SourceSiteSelectedCommand = new Command<Site>(OnSourceSiteSelected);
-            OnSourceSiteSearchEntryFocusedCommand = new Command(() => ShowSourceSiteSuggestions = true);
-            OnSourceSiteSearchEntryUnfocusedCommand = new Command(() => ShowSourceSiteSuggestions = false);
             DestinationSiteSelectedCommand = new Command<Site>(OnDestinationSiteSelected);
-            OnDestinationSiteSearchEntryFocusedCommand = new Command(() => ShowDestinationSiteSuggestions = true);
-            OnDestinationSiteSearchEntryUnfocusedCommand = new Command(() => ShowDestinationSiteSuggestions = false);
+            
             CustomerSelectedCommand = new Command<Customer>(OnCustomerSelected);
-            OnCustomerSearchEntryFocusedCommand = new Command(() => ShowCustomerSuggestions = true);
-            OnCustomerSearchEntryUnfocusedCommand = new Command(() => ShowCustomerSuggestions = false);
+            
             TransportSelectedCommand = new Command<Transport>(OnTransportSelected);
-            OnTransportSearchEntryFocusedCommand = new Command(() => ShowTransportSuggestions = true);
-            OnTransportSearchEntryUnfocusedCommand = new Command(() => ShowTransportSuggestions = false);
             DriverSelectedCommand = new Command<Driver>(OnDriverSelected);
-            OnDriverSearchEntryFocusedCommand = new Command(() => ShowDriverSuggestions = true);
-            OnDriverSearchEntryUnfocusedCommand = new Command(() => ShowDriverSuggestions = false);
+            ClearFormCommand = new Command(ResetForm);
         }
         private bool CanExecuteWeightCaptureCommands()
         {
@@ -724,19 +485,12 @@ namespace Weighbridge.ViewModels
                         (net) => NetWeight = net,
                         (remarks) => Remarks = remarks,
                         (reg) => VehicleRegistration = reg,
-                        (search) => VehicleSearchText = search,
                         (site) => SelectedSourceSite = site,
-                        (search) => SourceSiteSearchText = search,
                         (site) => SelectedDestinationSite = site,
-                        (search) => DestinationSiteSearchText = search,
                         (item) => SelectedItem = item,
-                        (search) => MaterialSearchText = search,
                         (customer) => SelectedCustomer = customer,
-                        (search) => CustomerSearchText = search,
                         (transport) => SelectedTransport = transport,
-                        (search) => TransportSearchText = search,
                         (driver) => SelectedDriver = driver,
-                        (search) => DriverSearchText = search,
                         ShowErrorAsync,
                         LoadAllReferenceDataAsync,
                         Sites, Items, Customers, Transports, Drivers
@@ -1004,19 +758,12 @@ namespace Weighbridge.ViewModels
                     (net) => NetWeight = net,
                     (remarks) => Remarks = remarks,
                     (reg) => VehicleRegistration = reg,
-                    (search) => VehicleSearchText = search,
                     (site) => SelectedSourceSite = site,
-                    (search) => SourceSiteSearchText = search,
                     (site) => SelectedDestinationSite = site,
-                    (search) => DestinationSiteSearchText = search,
                     (item) => SelectedItem = item,
-                    (search) => MaterialSearchText = search,
                     (customer) => SelectedCustomer = customer,
-                    (search) => CustomerSearchText = search,
                     (transport) => SelectedTransport = transport,
-                    (search) => TransportSearchText = search,
                     (driver) => SelectedDriver = driver,
-                    (search) => DriverSearchText = search,
                     LoadAllReferenceDataAsync,
                     Sites, Items, Customers, Transports, Drivers,
                     FormConfig
@@ -1171,8 +918,6 @@ namespace Weighbridge.ViewModels
             Remarks = string.Empty;
             TareWeight = string.Empty;
             VehicleRegistration = string.Empty;
-            SelectedVehicle = null;
-
             SelectedSourceSite = null;
             SelectedDestinationSite = null;
             SelectedItem = null;
@@ -1180,13 +925,10 @@ namespace Weighbridge.ViewModels
             SelectedTransport = null;
             SelectedDriver = null;
 
-            VehicleSearchText = string.Empty;
-            SourceSiteSearchText = string.Empty;
-            DestinationSiteSearchText = string.Empty;
-            MaterialSearchText = string.Empty;
-            CustomerSearchText = string.Empty;
-            TransportSearchText = string.Empty;
-            DriverSearchText = string.Empty;
+            // Clear SelectedVehicle and VehicleSearchText last to ensure UI updates correctly
+            SelectedVehicle = null;
+
+            // Removed SearchText properties as they are no longer needed with PopupComboBox
 
             IsInProgressWarningVisible = false;
             InProgressWarningText = string.Empty;

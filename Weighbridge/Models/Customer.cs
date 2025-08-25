@@ -12,5 +12,10 @@ namespace Weighbridge.Models
         public string Name { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
         public List<int>? RestrictedMaterials { get; set; } // Materials customer cannot receive
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }
