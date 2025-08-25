@@ -32,6 +32,23 @@ namespace Weighbridge.Tests
             _mockAlertService = new Mock<IAlertService>();
             _mockWeighingOperationService = new Mock<IWeighingOperationService>();
 
+            _mockWeighingOperationService
+                .Setup(s => s.OnUpdateTareClickedAsync(
+                    It.IsAny<Vehicle>(),
+                    It.IsAny<string>(),
+                    It.IsAny<Func<string, string, Task>>(),
+                    It.IsAny<Func<Vehicle, Task>>(), // This is the saveVehicleAsync delegate
+                    It.IsAny<Func<string, string, Task>>()
+                ))
+                .Callback<Vehicle, string, Func<string, string, Task>, Func<Vehicle, Task>, Func<string, string, Task>>(
+                    (vehicle, tareWeight, showError, saveVehicle, showInfo) =>
+                    {
+                        // Manually invoke the saveVehicle delegate
+                        saveVehicle(vehicle);
+                    }
+                )
+                .Returns(Task.CompletedTask); // Return a completed task
+
             _viewModel = new MainPageViewModel(
                 _mockWeighbridgeService.Object,
                 _mockDatabaseService.Object,

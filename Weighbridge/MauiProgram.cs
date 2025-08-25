@@ -52,6 +52,7 @@ public static class MauiProgram
 
         // Register services
         builder.Services.AddSingleton<ILoggingService, LoggingService>();
+        builder.Services.AddSingleton<IMainPageProvider, MainPageProvider>(); // Added
         builder.Services.AddSingleton<IAlertService, AlertService>();
         builder.Services.AddSingleton<MainFormConfig>(); // Added
         builder.Services.AddSingleton<WeightParserService>();

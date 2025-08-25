@@ -184,7 +184,7 @@ namespace Weighbridge.Services
                     DriverId = selectedDriver?.Id,
                     Remarks = remarks,
                     Timestamp = DateTime.Now,
-                    // Status will be set by state machine
+                    Status = "CLOSED", // Set status directly
                     TransactionType = currentMode switch
                     {
                         WeighingMode.TwoWeights => TransactionType.GrossAndTare,
@@ -195,12 +195,6 @@ namespace Weighbridge.Services
                     },
                     WeighingMode = currentMode.ToString()
                 };
-
-                if (!TryTransitionDocketState(docket, "CLOSED", showErrorAsync))
-                {
-                    _loggingService.LogError($"Failed to transition docket state to CLOSED for single weight docket {docket.Id}.");
-                    return; // Return immediately if state transition fails
-                }
                 await _databaseService.SaveItemAsync(docket);
                 await _auditService.LogEventAsync("Docket Completed", $"Single weight docket {docket.Id} for vehicle {vehicle.LicenseNumber}");
 
@@ -240,16 +234,10 @@ namespace Weighbridge.Services
                     DriverId = selectedDriver?.Id,
                     Remarks = remarks,
                     Timestamp = DateTime.Now,
-                    // Status will be set by state machine
+                    Status = "CLOSED", // Set status directly
                     TransactionType = TransactionType.StoredTare,
                     WeighingMode = currentMode.ToString()
                 };
-
-                if (!TryTransitionDocketState(docket, "CLOSED", showErrorAsync))
-                {
-                    _loggingService.LogError($"Failed to transition docket state to CLOSED for Entry+Tare docket {docket.Id}.");
-                    return; // Return immediately if state transition fails
-                }
                 await _databaseService.SaveItemAsync(docket);
                 await _auditService.LogEventAsync("Docket Completed", $"Entry+Tare docket {docket.Id} for vehicle {vehicle.LicenseNumber}");
 
@@ -764,7 +752,12 @@ namespace Weighbridge.Services
             WeighingMode currentMode,
             Func<string, string, Task> showErrorAsync,
             Func<string, string, Task<bool>> showConfirmationAsync,
-            MainFormConfig formConfig
+            MainFormConfig formConfig,
+            ObservableCollection<Site> sites,
+            ObservableCollection<Item> items,
+            ObservableCollection<Customer> customers,
+            ObservableCollection<Transport> transports,
+            ObservableCollection<Driver> drivers
         )
         {
             var validationRequest = new ValidationRequest
@@ -817,8 +810,8 @@ namespace Weighbridge.Services
                     {
                         await CompleteDocketAsync(
                             loadDocketId, liveWeight, remarks, vehicle, selectedSourceSite, selectedDestinationSite, selectedItem, selectedCustomer, selectedTransport, selectedDriver, currentMode, showErrorAsync,
-                            (d, v) => Task.CompletedTask, // Print handled by ViewModel
-                            (d, c) => Task.CompletedTask // Export handled by ViewModel
+                            async (docketToPrint, vehicleToPrint) => await PrintDocketAsync(docketToPrint, vehicleToPrint, sites, items, customers, transports, drivers, showErrorAsync),
+                            async (docketToExport, configToExport) => await ExportDocketAsync(docketToExport, configToExport, showErrorAsync)
                         );
 
                         return OperationResult.Succeeded("Docket completed successfully.", docket, vehicle, false, false, "");

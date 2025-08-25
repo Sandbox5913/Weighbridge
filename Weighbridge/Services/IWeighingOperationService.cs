@@ -78,7 +78,12 @@ namespace Weighbridge.Services
             WeighingMode currentMode,
             Func<string, string, Task> showErrorAsync,
             Func<string, string, Task<bool>> showConfirmationAsync,
-            MainFormConfig formConfig
+            MainFormConfig formConfig,
+            ObservableCollection<Site> sites,
+            ObservableCollection<Item> items,
+            ObservableCollection<Customer> customers,
+            ObservableCollection<Transport> transports,
+            ObservableCollection<Driver> drivers
         );
     }
 }

@@ -37,6 +37,10 @@ namespace Weighbridge.Tests
                 .Setup(sp => sp.GetService(typeof(IAuditService)))
                 .Returns(_mockAuditService.Object);
 
+            _mockServiceProvider
+                .Setup(sp => sp.GetService(typeof(ILoggingService)))
+                .Returns(Mock.Of<ILoggingService>()); // Return a mock ILoggingService
+
             _databaseService = new DatabaseService(_connection, _mockServiceProvider.Object);
         }
 

@@ -6,7 +6,7 @@ namespace Weighbridge.Models
     public class MainFormConfig
     {
         public FieldConfig Vehicle { get; set; } = new();
-        public FieldConfig SourceSite { get; set; } = new();
+        public FieldConfig SourceSite { get; set; } = new() ;
         public FieldConfig DestinationSite { get; set; } = new();
         public FieldConfig Item { get; set; } = new();
         public FieldConfig Customer { get; set; } = new();

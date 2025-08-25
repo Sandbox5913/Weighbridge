@@ -81,9 +81,43 @@ namespace Weighbridge.Data
             await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Vehicles (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 LicenseNumber TEXT NOT NULL UNIQUE,
-                TareWeight REAL NOT NULL DEFAULT 0
+                TareWeight REAL NOT NULL DEFAULT 0,
+                MaxWeight REAL NOT NULL DEFAULT 0,
+                IsActive BOOLEAN NOT NULL DEFAULT 1,
+                IsBlocked BOOLEAN NOT NULL DEFAULT 0,
+                CreatedDate TEXT NOT NULL,
+                LastWeighingDate TEXT,
+                RestrictedMaterials TEXT
             );"));
             Debug.WriteLine("[DatabaseService] Vehicles table created.");
+
+            // Migration: Add new columns to Vehicles table if they don't exist
+            var tableInfoVehicles = await ExecuteWithRetry(async () => await _dbConnection.QueryAsync<dynamic>("PRAGMA table_info(Vehicles);"));
+            if (!tableInfoVehicles.Any(c => c.name == "MaxWeight"))
+            {
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Vehicles ADD COLUMN MaxWeight REAL NOT NULL DEFAULT 0;"));
+            }
+            if (!tableInfoVehicles.Any(c => c.name == "IsActive"))
+            {
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Vehicles ADD COLUMN IsActive BOOLEAN NOT NULL DEFAULT 1;"));
+            }
+            if (!tableInfoVehicles.Any(c => c.name == "IsBlocked"))
+            {
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Vehicles ADD COLUMN IsBlocked BOOLEAN NOT NULL DEFAULT 0;"));
+            }
+            if (!tableInfoVehicles.Any(c => c.name == "CreatedDate"))
+            {
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Vehicles ADD COLUMN CreatedDate TEXT;")); // Make it nullable
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("UPDATE Vehicles SET CreatedDate = CURRENT_TIMESTAMP WHERE CreatedDate IS NULL;"));
+            }
+            if (!tableInfoVehicles.Any(c => c.name == "LastWeighingDate"))
+            {
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Vehicles ADD COLUMN LastWeighingDate TEXT;"));
+            }
+            if (!tableInfoVehicles.Any(c => c.name == "RestrictedMaterials"))
+            {
+                await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync("ALTER TABLE Vehicles ADD COLUMN RestrictedMaterials TEXT;"));
+            }
 
             Debug.WriteLine("[DatabaseService] Creating Sites table...");
             await ExecuteWithRetry(async () => await _dbConnection.ExecuteAsync(@"CREATE TABLE IF NOT EXISTS Sites (

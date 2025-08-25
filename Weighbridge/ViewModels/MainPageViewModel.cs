@@ -830,7 +830,8 @@ namespace Weighbridge.ViewModels
             {
                 var result = await _weighingOperationService.HandleSaveAndPrintOperationAsync(
                     LoadDocketId, LiveWeight, Remarks, VehicleRegistration, SelectedVehicle, SelectedSourceSite, SelectedDestinationSite, SelectedItem, SelectedCustomer, SelectedTransport, SelectedDriver, CurrentMode,
-                    ShowErrorAsync, ShowConfirmationAsync, FormConfig
+                    ShowErrorAsync, ShowConfirmationAsync, FormConfig,
+                    Sites, Items, Customers, Transports, Drivers
                 );
 
                 if (!result.Success)
@@ -851,9 +852,6 @@ namespace Weighbridge.ViewModels
                     ExitWeight = result.Docket.ExitWeight.ToString("F2");
                     NetWeight = result.Docket.NetWeight.ToString("F2");
 
-                    await _weighingOperationService.PrintDocketAsync(result.Docket, result.Vehicle, Sites, Items, Customers, Transports, Drivers, ShowErrorAsync);
-                    var config = _weighbridgeService.GetConfig();
-                    await _weighingOperationService.ExportDocketAsync(result.Docket, config, ShowErrorAsync);
                     ResetForm();
                 }
             }

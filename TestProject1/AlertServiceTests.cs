@@ -1,7 +1,6 @@
 using NUnit.Framework;
 using Moq;
 using Weighbridge.Services;
-using Microsoft.Maui.Controls;
 using System.Threading.Tasks;
 
 namespace TestProject1
@@ -9,26 +8,14 @@ namespace TestProject1
     [TestFixture]
     public class AlertServiceTests
     {
-        private Mock<Page> _mockMainPage;
+        private Mock<IMainPageProvider> _mockMainPageProvider;
         private AlertService _alertService;
 
         [SetUp]
         public void Setup()
         {
-            _mockMainPage = new Mock<Page>();
-            // Mock Application.Current.MainPage
-            var mockApplication = new Mock<Application>();
-            mockApplication.SetupGet(app => app.MainPage).Returns(_mockMainPage.Object);
-            Application.SetCurrentApplication(mockApplication.Object);
-
-            _alertService = new AlertService();
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            // Clean up the mocked application
-            Application.SetCurrentApplication(null);
+            _mockMainPageProvider = new Mock<IMainPageProvider>();
+            _alertService = new AlertService(_mockMainPageProvider.Object);
         }
 
         [Test]
@@ -39,14 +26,14 @@ namespace TestProject1
             string message = "Test Message";
             string cancel = "OK";
 
-            _mockMainPage.Setup(mp => mp.DisplayAlert(title, message, cancel))
-                         .Returns(Task.CompletedTask);
+            _mockMainPageProvider.Setup(mpp => mpp.DisplayAlert(title, message, cancel))
+                                 .Returns(Task.CompletedTask);
 
             // Act
             await _alertService.DisplayAlert(title, message, cancel);
 
             // Assert
-            _mockMainPage.Verify(mp => mp.DisplayAlert(title, message, cancel), Times.Once);
+            _mockMainPageProvider.Verify(mpp => mpp.DisplayAlert(title, message, cancel), Times.Once);
         }
 
         [Test]
@@ -59,14 +46,14 @@ namespace TestProject1
             string cancel = "No";
             bool expectedResult = true;
 
-            _mockMainPage.Setup(mp => mp.DisplayAlert(title, message, accept, cancel))
-                         .ReturnsAsync(expectedResult);
+            _mockMainPageProvider.Setup(mpp => mpp.DisplayAlert(title, message, accept, cancel))
+                                 .ReturnsAsync(expectedResult);
 
             // Act
             bool actualResult = await _alertService.DisplayConfirmation(title, message, accept, cancel);
 
             // Assert
-            _mockMainPage.Verify(mp => mp.DisplayAlert(title, message, accept, cancel), Times.Once);
+            _mockMainPageProvider.Verify(mpp => mpp.DisplayAlert(title, message, accept, cancel), Times.Once);
             Assert.That(actualResult, Is.EqualTo(expectedResult));
         }
     }
